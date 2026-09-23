@@ -57,7 +57,38 @@ npm run test:graphrag
 npm run test:curve
 npm run test:security
 npm run test:syntax
+npm run test:pending
 ```
+
+## 测试目录约定
+
+| 目录 | 内容 | 运行方式 |
+|---|---|---|
+| `server/test/unit/` | 进程内断言，可调用 Python 工具 | `npm run test:unit` |
+| `server/test/integration/` | 需临时服务与隔离数据库 | `npm run test:integration` |
+| `server/test/evaluate/` | 离线评测脚本，产物写入 `reports/` | 手动运行 |
+| `server/test/e2e/` | 端到端验收（`final_acceptance`），需服务已在运行 | 手动运行 |
+
+新增测试文件后，需要在 `server/scripts/run-tests.mjs` 的 `unitTests` 或 `integrationTests` 数组中登记，否则不会被 `npm test` 执行。
+
+## 环境隔离
+
+`npm test` 会在以下两点上主动与开发机环境隔离，避免"本机碰巧通过"：
+
+- **LLM 密钥**：单元与集成测试均清空 `DEEPSEEK_API_KEY` / `OPENAI_API_KEY` / `LLM_API_KEY`，强制走 Mock 与真实工具兜底；否则 `server/.env` 里的真实密钥会让断言 Mock 行为的用例失败。
+- **Python 解释器**：统一通过 `HTN_PYTHON` 指向仓库 `.venv`。未设置该变量时 `server/src/services/pythonRuntime.js` 会退化成裸 `python`，使结果取决于全局解释器是否装有 numpy/pandas。
+
+## 历史遗留测试
+
+`npm run test:pending` 运行 5 个与当前实现不一致的历史集成测试（GraphRAG 证据持久化、健康摘要、风险资料完整度、趋势预警）。它们既不在 `npm test` 中、也不应被直接删除，需逐个重写断言或正式废弃：
+
+- `server/test/integration/test_graph_grounding.mjs`
+- `server/test/integration/test_graphrag_ckd.mjs`
+- `server/test/integration/test_health_summary.mjs`
+- `server/test/integration/test_risk_profile.mjs`
+- `server/test/integration/test_trend_alerts.mjs`
+
+该分组只汇总现状，不因失败而中断，因此不阻塞主验收流程。已实测：Mock 与真实 DeepSeek 下均失败，说明并非模型配置问题。
 
 Python 入口也可在仓库根目录直接运行：
 
@@ -73,12 +104,13 @@ Python 入口也可在仓库根目录直接运行：
 
 | 能力 | 直接证据 |
 |---|---|
-| 注册、bcrypt 迁移、锁定、会话过期、登出 | `server/data/test_auth_integration.mjs` |
-| 家属授权、只读摘要、问卷代录、禁止直接代写测量值 | `server/data/test_care_permissions.mjs` |
-| 设备同步写入 `source=device` | `server/data/test_device_sync.mjs` |
-| 权限矩阵 | `server/src/test_permission_matrix.js` |
-| 智能体工具与行动不自动执行 | `server/src/test_agent_orchestrator_v2.js`、`server/data/test_agent_tools.mjs` |
-| 复测随访闭环 | `server/src/test_agent_followup_v3.js`、`server/data/test_quality_followup_review.mjs` |
+| 注册、bcrypt 迁移、锁定、会话过期、登出 | `server/test/integration/test_auth_integration.mjs` |
+| 家属授权、只读摘要、问卷代录、禁止直接代写测量值 | `server/test/integration/test_care_permissions.mjs` |
+| 设备同步写入 `source=device` | `server/test/integration/test_device_sync.mjs` |
+| 权限矩阵 | `server/test/unit/test_permission_matrix.js` |
+| 智能体工具与行动不自动执行 | `server/test/unit/test_agent_orchestrator_v2.js`、`server/test/integration/test_agent_tools.mjs` |
+| 复测随访闭环 | `server/test/unit/test_agent_followup_v3.js`、`server/test/integration/test_quality_followup_review.mjs` |
+| 静态资源边界（内部路径不泄漏） | `server/test/integration/test_static_asset_boundary.mjs` |
 | Curve | `tests/test_curve_regression_wrappers.py` 及 `ml/curve/test_*.py` |
 | GraphRAG 隔离与安全门槛 | `tests/test_graphrag_isolation.py` |
 | 容器不携带密钥、数据库或缓存产物 | `tests/test_container_hygiene.py` |

@@ -80,6 +80,28 @@ app.use('/api/auth', authRouter);
 app.get('/login', (_req, res) => res.redirect('/login.html'));
 app.get('/mobile', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'mobile.html')));
 app.get('/', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'index.html')));
+
+// 只公开前端资源：根目录 *.html、assets/、截图/。
+// ROOT_DIR 是仓库根，直接 express.static(ROOT_DIR) 会让整个项目可通过 HTTP 读取，
+// 包括 server/data/*.db（健康数据）、server/src/** 源码和 private-artifacts/ 模型包。
+const PUBLIC_STATIC_DIRS = new Set(['assets', '截图']);
+app.use((req, res, next) => {
+  // 业务 API 路由注册在本守卫之后，这里必须放行，否则会被全部挡成 404。
+  if (req.path === '/api' || req.path.startsWith('/api/')) return next();
+  let segments;
+  try {
+    segments = decodeURIComponent(req.path).split('/').filter(Boolean);
+  } catch {
+    return res.status(400).type('text/plain').send('Bad Request');
+  }
+  if (segments.some(segment => segment === '..' || segment.includes('\\'))) {
+    return res.status(404).type('text/plain').send('Not Found');
+  }
+  const isPublicPage = segments.length === 1 && /\.html$/i.test(segments[0]);
+  if (isPublicPage || PUBLIC_STATIC_DIRS.has(segments[0])) return next();
+  return res.status(404).type('text/plain').send('Not Found');
+});
+
 app.use(express.static(ROOT_DIR));
 
 // ===== 鉴权守卫 =====

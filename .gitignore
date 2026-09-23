@@ -27,6 +27,10 @@ server/data/*.db-shm
 server/data/*.db-wal
 server/data/*.db-journal
 server/data/backups/
+# 数据库快照备份（含健康数据，禁止入库）
+server/data/*.bak
+server/data/*.bak-shm
+server/data/*.bak-wal
 *.sqlite
 *.sqlite3
 

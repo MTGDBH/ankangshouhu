@@ -18,7 +18,8 @@
     "test:graphrag": "node scripts/run-tests.mjs graphrag",
     "test:curve": "node scripts/run-tests.mjs curve",
     "test:security": "node scripts/run-tests.mjs security",
-    "test:syntax": "node scripts/run-tests.mjs syntax"
+    "test:syntax": "node scripts/run-tests.mjs syntax",
+    "test:pending": "node scripts/run-tests.mjs pending"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

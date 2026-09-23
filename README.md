@@ -22,9 +22,9 @@
 | 复测随访闭环 | 已完成 | 支持建议、确认、执行、到期、候选测量匹配、结果回填、取消/拒绝等状态 |
 | Docker 与本地部署 | 已完成 | Windows 安装/启动/停止脚本；单容器 Dockerfile；Node 服务同时托管前端和 API |
 
-## 16 个根目录 HTML 页面
+## 19 个根目录 HTML 页面
 
-页面总数按仓库根目录 `*.html` 实际文件统计为 **16**：新增 1 个统一移动端应用，同时保留 11 个桌面功能页、2 个鉴权页和 2 个展示/开发页。
+页面总数按仓库根目录 `*.html` 实际文件统计为 **19**：新增 1 个统一移动端应用，同时保留 14 个桌面功能页、2 个鉴权页和 2 个展示/开发页。
 
 | 类型 | 页面 | 用途 |
 |---|---|---|
@@ -42,6 +42,9 @@
 | 功能 | `profile.html` | 个人资料、改密、授权关系和账号注销 |
 | 功能 | `settings.html` | LLM 状态及管理员配置入口 |
 | 功能 | `confidence.html` | 可信度评分细则 |
+| 功能 | `care.html` | 照护协同驾驶舱：家属/医生授权关系与只读摘要 |
+| 功能 | `intervention.html` | 我的改善计划：干预执行、复测随访与结果回填 |
+| 功能 | `privacy.html` | 隐私与数据管理中心：数据范围、访问记录、导出与二次确认删除 |
 | 展示 | `showcase.html` | 产品展示页 |
 | 开发 | `dev.html` | 开发导航与页面入口 |
 
@@ -150,13 +153,17 @@ npm test
 
 ```text
 .
-├── *.html                         # 15 个根目录页面
+├── *.html                         # 19 个根目录页面
 ├── assets/                        # 共享 CSS、API/鉴权/批量录入脚本
 ├── server/
 │   ├── src/auth.js                # 注册、登录、登出、会话中间件
 │   ├── src/services/authService.js# bcrypt、锁定、会话过期
 │   ├── src/db.js                  # SQLite schema 与兼容迁移
 │   ├── src/routes/                # 健康、预测、GraphRAG、行动、授权等路由
+│   ├── test/unit/                 # Node 单元测试（进程内断言）
+│   ├── test/integration/          # 集成测试（临时服务 + 隔离数据库）
+│   ├── test/evaluate/             # 离线评测脚本
+│   ├── test/e2e/                  # 端到端验收（final_acceptance）
 │   └── scripts/run-tests.mjs      # Node/Python 统一验收入口
 ├── ml/                            # Curve、疾病风险、模型包与验证工具
 ├── elderly-health-rag/            # GraphRAG 索引、检索、安全门槛与评测

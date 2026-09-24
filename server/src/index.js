@@ -25,6 +25,8 @@ app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
 async function ensureSeedData() {
   const userCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
   if (userCount > 0) return;
+  // A new hosted database must not expose the well-known local demo accounts.
+  if (process.env.DISABLE_DEMO_SEED === '1') return;
 
   console.log('[seed] users table empty, loading demo data...');
   await import('../data/seed.js');
@@ -37,6 +39,20 @@ cleanupPrivacyRetention();
 app.use((req, res, next) => {
   req.request_id = String(req.get('x-request-id') || crypto.randomUUID()).slice(0, 100);
   res.setHeader('X-Request-Id', req.request_id);
+  next();
+});
+const gatewaySecret = process.env.SITES_GATEWAY_SECRET || '';
+if (process.env.REQUIRE_SITES_GATEWAY === '1' && !gatewaySecret) {
+  throw new Error('SITES_GATEWAY_SECRET is required for this deployment');
+}
+app.use((req, res, next) => {
+  // Railway's health probe remains available; all account and health data stays behind Sites.
+  if (!gatewaySecret || (req.method === 'GET' && req.path === '/api/health')) return next();
+  const supplied = Buffer.from(req.get('x-sites-gateway-token') || '');
+  const expected = Buffer.from(gatewaySecret);
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
+    return res.status(403).json({ error: '访问被拒绝' });
+  }
   next();
 });
 app.use(requestLimits);

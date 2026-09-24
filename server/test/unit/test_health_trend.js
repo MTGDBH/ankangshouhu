@@ -8,6 +8,9 @@ import 'dotenv/config';
 import { analyzeHealthTrend, TREND_METRICS } from '../../src/ai/tools/healthTrend.js';
 import { chat, RISK_TOOL_SCHEMA, ANALYZE_TREND_TOOL_SCHEMA } from '../../src/ai/agent.js';
 import { riskPredict } from '../../src/ai/tools/riskPredict.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 let pass = 0, fail = 0;
 const ok = (name, cond, detail = '') => {
@@ -94,7 +97,12 @@ ok('普通血压问题 → mock', rn.source === 'mock', rn.source);
 
 console.log('=== 12. risk_predict 回归 ===');
 const rp = await riskPredict(user1.id, user1);
-ok('riskPredict 仍正常（含 risk_probability）', rp.success === true && typeof rp.risk_probability === 'number');
+const modelFile = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../ml/models/htn_xgb/candidate_model.json');
+if (fs.existsSync(modelFile)) {
+  ok('riskPredict 仍正常（含 risk_probability）', rp.success === true && typeof rp.risk_probability === 'number');
+} else {
+  ok('未安装私有模型时不返回虚构概率', rp.success === false && rp.risk_probability == null);
+}
 process.env.OPENAI_API_KEY = 'sk-test-fake';
 const calls2 = mockLLM({ content: '风险结果回答', plan: [], confidence: { type: 'data', score: 80 } });
 await chat([], '未来两年高血压风险是多少？', healthSummary, user1);

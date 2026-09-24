@@ -48,6 +48,9 @@ function dashboardCard(row, access) {
   const latest = context ? latestTypes.map(type => context.latest?.[type]).filter(Boolean).map(item => ({
     type: item.type, value: item.value, value2: item.value2, unit: item.unit, recorded_at: item.recorded_at,
   })) : undefined;
+  const metricCounts = context ? db.prepare(`SELECT type,COUNT(*) AS count FROM metrics
+    WHERE user_id=? AND recorded_at>=? GROUP BY type ORDER BY count DESC,type ASC`)
+    .all(row.senior_id, new Date(Date.now() - 30 * 86400000).toISOString()) : undefined;
   const severeAlerts = scopes.includes('view_alerts') ? db.prepare(`SELECT id,severity,title,created_at FROM alerts
     WHERE user_id=? AND severity='critical' AND status='pending' ORDER BY id DESC LIMIT 3`).all(row.senior_id) : undefined;
   const overdueRetests = scopes.includes('view_retest') ? db.prepare(`SELECT id,metric_type,due_at,status FROM followups
@@ -61,7 +64,7 @@ function dashboardCard(row, access) {
     senior: { id: senior.id, name: senior.name, age: senior.age, avatar_color: senior.avatar_color },
     authorization: serializeRelationship(row),
     capabilities: Object.fromEntries(Object.keys(CARE_SCOPE_DEFINITIONS).map(scope => [scope, scopes.includes(scope)])),
-    ...(context ? { recent_health: latest, data_missing: context.missing_common_metrics, data_points_30d: context.data_points } : {}),
+    ...(context ? { recent_health: latest, data_missing: context.missing_common_metrics, data_points_30d: context.data_points, metric_counts_30d: metricCounts } : {}),
     ...(severeAlerts !== undefined ? { severe_alerts: severeAlerts } : {}),
     ...(overdueRetests !== undefined ? { overdue_retests: overdueRetests } : {}),
     ...(activePlans !== undefined ? { active_interventions: activePlans } : {}),

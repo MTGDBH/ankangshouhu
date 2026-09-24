@@ -53,7 +53,7 @@
     slot.outerHTML = `
       ${skipLink}
       <header class="app-desktop-topbar desktop-only">
-        <a href="index.html" class="app-desktop-brand" aria-label="小康健康管家首页"><span>康</span><strong>小康健康</strong></a>
+        <a href="/" class="app-desktop-brand" aria-label="长寿康 Pro 首页"><span>♡</span><strong>长寿康 Pro</strong></a>
         <div class="app-desktop-tools">
           <span class="app-sync-state"><i></i> 数据已同步</span>
           <a href="alerts.html" class="app-desktop-icon" aria-label="预警中心">♢<i class="bell-badge" data-alert-badge hidden></i></a>
@@ -66,7 +66,7 @@
         <div class="app-sidebar-help"><span>?</span><div><strong>需要帮助？</strong><small>查看使用指南</small></div><a href="settings.html" aria-label="系统设置与 API 配置" style="display:grid;place-items:center;width:28px;height:28px;margin-left:auto;border-radius:8px;background:#fff0f3;color:#ff5268;font-size:12px;font-weight:800">⚙</a></div>
       </aside>
       <header class="app-mobilebar">
-        <a href="index.html" class="app-mobile-brand"><span>康</span><strong>小康·健康管家</strong></a>
+        <a href="/" class="app-mobile-brand"><span>♡</span><strong>长寿康 Pro</strong></a>
         <span class="app-mobile-page-title">${mobileTitle}</span>
         <button type="button" class="app-mobile-a11y" data-mobile-a11y-launch aria-label="打开显示与朗读工具"><span aria-hidden="true">辅</span></button>
         <a href="alerts.html" class="app-mobile-alert" aria-label="预警中心"><span aria-hidden="true">醒</span><i class="bell-badge" data-alert-badge hidden></i></a>

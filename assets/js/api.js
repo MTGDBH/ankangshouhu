@@ -11,16 +11,26 @@
     document.documentElement.style.colorScheme = theme;
   } catch {}
 
-  // 手机端统一进入新版应用；保留 desktop=1 作为桌面版显式入口。
+  // 手机端统一进入新版应用；desktop=1 用于访问详细功能页，并在站内导航中保持。
   const mobileAppPath = location.pathname === '/mobile' || /mobile\.html$/.test(location.pathname);
   const forceDesktop = new URLSearchParams(location.search).get('desktop') === '1';
+  if (forceDesktop) {
+    document.addEventListener('click', event => {
+      const link = event.target.closest?.('a[href]');
+      if (!link || link.target && link.target !== '_self') return;
+      const url = new URL(link.href, location.href);
+      if (url.origin !== location.origin || !/\.html$/i.test(url.pathname) || /\/(login|register)\.html$/i.test(url.pathname)) return;
+      url.searchParams.set('desktop', '1');
+      link.href = url.href;
+    }, true);
+  }
   if (!mobileAppPath && !forceDesktop && window.matchMedia?.('(max-width: 900px)').matches) {
     const page = location.pathname.split('/').pop() || 'index.html';
     const viewByPage = {
-      'index.html':'home', 'login.html':'home', 'register.html':'home', 'monitoring.html':'monitor', 'metric.html':'monitor',
-      'prediction.html':'trends', 'alerts.html':'risk', 'assessment.html':'assessment', 'intervention.html':'plans',
-      'agent.html':'chat', 'knowledge.html':'knowledge', 'confidence.html':'knowledge', 'care.html':'care',
-      'profile.html':'profile', 'privacy.html':'settings', 'settings.html':'settings',
+      'index.html':'overview', 'monitoring.html':'trends', 'metric.html':'trends',
+      'prediction.html':'trends', 'alerts.html':'care', 'assessment.html':'trends', 'intervention.html':'meds',
+      'agent.html':'butler', 'knowledge.html':'butler', 'confidence.html':'butler', 'care.html':'care',
+      'profile.html':'profile', 'privacy.html':'profile', 'settings.html':'profile',
     };
     location.replace(`/mobile?view=${encodeURIComponent(viewByPage[page] || 'home')}`);
     return;

@@ -77,6 +77,7 @@ npm run test:pending
 
 - **LLM 密钥**：单元与集成测试均清空 `DEEPSEEK_API_KEY` / `OPENAI_API_KEY` / `LLM_API_KEY`，强制走 Mock 与真实工具兜底；否则 `server/.env` 里的真实密钥会让断言 Mock 行为的用例失败。
 - **Python 解释器**：统一通过 `HTN_PYTHON` 指向仓库 `.venv`。未设置该变量时 `server/src/services/pythonRuntime.js` 会退化成裸 `python`，使结果取决于全局解释器是否装有 numpy/pandas。
+- **私有模型包**：`ml/models/` 被 `.gitignore` 排除，GitHub Actions 的全新检出不含模型。核心验收会运行公开代码的测试和无模型降级断言；依赖真实模型的 `test_htn_predictor`、`test_population_prediction`、`test_tool_calling` 仅在已安装模型包清单时运行。需要验收预测数值时，先按部署文档安装签名模型包，再运行 `npm run test:unit`；CI 通过不代表模型数值验收通过。
 
 ## 历史遗留测试
 

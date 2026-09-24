@@ -70,6 +70,14 @@ const unitTests = [
   'test/unit/test_tool_calling.js',
   'test/unit/test_weather.js',
 ];
+// Private inference artifacts are intentionally ignored by Git. A clean CI
+// checkout can verify the public-code contracts, while an installation with
+// the signed local bundle also runs the real-model tests.
+const privateModelTests = new Set([
+  'test/unit/test_htn_predictor.js',
+  'test/unit/test_population_prediction.js',
+  'test/unit/test_tool_calling.js',
+]);
 const integrationTests = [
   'test/integration/test_actions.mjs',
   'test/integration/test_agent_tools.mjs',
@@ -141,7 +149,14 @@ function runUnit(tempRoot) {
   // Build one deterministic fixture database instead of copying the developer's
   // ignored server/data/app.db, which does not exist in GitHub Actions.
   const seedDatabase = createSeedDatabase(tempRoot);
-  for (const file of unitTests) runNodeFile(file, tempRoot, seedDatabase);
+  const hasPrivateModelBundle = fs.existsSync(path.join(repoRoot, 'ml', 'models', 'manifest.json'));
+  for (const file of unitTests) {
+    if (!hasPrivateModelBundle && privateModelTests.has(file)) {
+      console.log(`Private model bundle absent; model acceptance requires an installed bundle: ${file}`);
+      continue;
+    }
+    runNodeFile(file, tempRoot, seedDatabase);
+  }
 }
 
 function runSecurityNodeTests(tempRoot) {

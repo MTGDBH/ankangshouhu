@@ -9,6 +9,10 @@ async function call(path, { method = 'GET', cookie = '', body } = {}) {
 assert.equal((await call('/api/health')).status, 200);
 assert.equal((await call('/mobile')).status, 200);
 assert.equal((await call('/family')).status, 200);
+assert.equal((await call('/login.html')).status, 200);
+assert.equal((await call('/register.html')).status, 200);
+assert.equal((await call('/assets/css/pro-auth.css')).status, 200);
+assert.equal((await call('/assets/js/pro-auth.js')).status, 200);
 assert.equal((await call('/assets/js/pro-mobile.js')).status, 200);
 assert.equal((await call('/assets/js/pro-family.js')).status, 200);
 assert.equal((await call('/api/care/subjects')).status, 401);
@@ -33,6 +37,7 @@ assert.equal(subjects.status, 200);
 assert.equal(subjects.data.items.length, 1);
 assert.equal(subjects.data.items[0].senior.name, '张奶奶');
 assert.ok(subjects.data.items[0].recent_health?.length);
+assert.ok(subjects.data.items[0].metric_counts_30d?.some(row => row.count > 0));
 const summary = await call(`/api/care/seniors/${subjects.data.items[0].senior.id}/summary`, {cookie:caregiver.cookie});
 assert.equal(summary.status, 200);
 console.log('Pro smoke: public pages, auth, health data, care invitation, authorized summary PASS');

@@ -20,13 +20,13 @@ for (const asset of publicAssets) {
   if (status !== 200) throw new Error(`前端资源被误挡：${asset} -> ${status}`);
 }
 
-// 2) 内部内容必须被阻断。先确认本地文件存在，否则 404 无证明力。
+// 2) 内部内容必须被阻断。使用 Git 跟踪的真实文件，确保全新检出时也能证明 404。
 const internalPaths = [
-  '/server/data/app.db',
+  '/server/data/seed.js',
   '/server/src/index.js',
   '/server/src/db.js',
   '/server/package.json',
-  '/private-artifacts/health-model-bundle-local-20260822.zip',
+  '/ml/model_bundle.py',
   '/ml/prediction_contract.json',
   '/elderly-health-rag/output/dense_index.json',
   '/README.md',

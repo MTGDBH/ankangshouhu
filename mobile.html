@@ -1,19 +1,207 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f8f6">
-  <meta name="format-detection" content="telephone=no">
-  <title>小康健康</title>
-  <link rel="stylesheet" href="assets/css/mobile-app.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>长寿康 Pro</title>
+<link href="assets/css/pro-tailwind.css" rel="stylesheet"/>
+<link href="assets/css/fontawesome.min.css" rel="stylesheet"/>
+<style>
+    /* 适老字体层级定义 */
+    body.font-mode-standard { font-size: 16px; }
+    body.font-mode-large { font-size: 18.5px; }
+    body.font-mode-xlarge { font-size: 21.5px; }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    input, textarea {
+      user-select: text;
+    }
+
+    /* Apple Liquid Glassmorphism 毛玻璃质感 */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 0 1px 1px rgba(255, 255, 255, 0.8) inset;
+    }
+
+    .glass-card-subtle {
+      background: rgba(255, 255, 255, 0.52);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(30px) saturate(200%);
+      -webkit-backdrop-filter: blur(30px) saturate(200%);
+      border-top: 1px solid rgba(255, 255, 255, 0.75);
+    }
+
+    .glass-header {
+      background: rgba(245, 245, 247, 0.88);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-bottom: 1px solid rgba(230, 230, 235, 0.75);
+    }
+
+    /* 高清晰高对比辅助模式 */
+    body.high-contrast-mode {
+      filter: contrast(1.15);
+    }
+    body.high-contrast-mode .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid #27272a;
+    }
+    body.high-contrast-mode .text-zinc-500,
+    body.high-contrast-mode .text-zinc-400 {
+      color: #3f3f46 !important;
+    }
+
+    /* 底部安全区加高，防内容被底栏阻隔 */
+    .phone-content-bottom {
+      padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 1.5rem));
+    }
+
+    /* 页面平滑过渡 */
+    .view-fade {
+      animation: viewFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes viewFadeIn {
+      from { opacity: 0; transform: translateY(6px) scale(0.995); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* 语音波动光效 */
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(0.97); }
+    }
+    .speaking-pulse {
+      animation: subtlePulse 1.4s ease-in-out infinite;
+    }
+
+    /* 平滑隐藏滚动条但保留功能 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
 </head>
-<body>
-  <main id="mobile-app" class="mobile-stage" aria-live="polite">
-    <div class="app-loading"><span></span><p>正在连接健康服务…</p></div>
-  </main>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/bluetooth-health.js"></script>
-  <script src="assets/js/mobile-app.js"></script>
+<body class="bg-[#ECECEE] text-zinc-900 font-mode-large min-h-screen flex items-center justify-center p-0 sm:p-4 md:p-6 antialiased selection:bg-zinc-200">
+<!-- 手机外壳容器（自适应桌面端与移动端） -->
+<div class="w-full max-w-[430px] h-[100dvh] sm:h-[890px] bg-apple-bg sm:rounded-[52px] flex flex-col relative overflow-hidden sm:shadow-[0_25px_70px_rgba(0,0,0,0.18)] sm:border-[8px] sm:border-[#1F2024]">
+<!-- 顶部状态栏与灵动岛 (iOS Style) -->
+<div class="h-11 w-full flex items-center justify-between px-7 shrink-0 z-40 bg-transparent select-none">
+<span class="text-xs font-semibold text-zinc-800 tracking-tight" id="statusTime">09:41</span>
+<div class="w-24 h-5 bg-black rounded-full hidden sm:flex items-center justify-end px-2">
+<div class="w-2.5 h-2.5 rounded-full bg-zinc-900 border border-zinc-800"></div>
+</div>
+<div class="flex items-center gap-1.5 text-zinc-800 text-xs">
+<i class="fa-solid fa-signal text-[11px]"></i>
+<i class="fa-solid fa-wifi text-[11px]"></i>
+<i class="fa-solid fa-battery-full text-xs"></i>
+</div>
+</div>
+<!-- ============================================================== -->
+<!-- 视图 0: 适老极简免密与验证码登入界面                             -->
+<!-- ============================================================== -->
+<section class="view-fade flex-1 flex flex-col justify-between px-6 pt-4 pb-8 z-30 overflow-y-auto no-scrollbar" id="view-login"></section>
+<!-- ============================================================== -->
+<!-- 主应用界面 (登录成功后展示)                                    -->
+<!-- ============================================================== -->
+<div class="hidden flex-1 flex flex-col h-full relative overflow-hidden" id="main-app">
+<!-- 统一毛玻璃顶部标题栏 -->
+<header class="glass-header sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between">
+<div>
+<span class="text-[11px] font-semibold tracking-wider text-zinc-400 uppercase" id="currentDateStr">--月--日 星期-</span>
+<h2 class="text-2xl font-black tracking-tight text-zinc-900" id="mainHeaderTitle">健康概览</h2>
+</div>
+<!-- 朗读 & 字体大小调节 & 个人中心 -->
+<div class="flex items-center gap-2">
+<button class="h-9 px-3.5 rounded-full glass-card flex items-center gap-1.5 text-xs font-bold text-zinc-800 shadow-glass-button active:scale-95 transition-all" id="voiceActionBtn" onclick="handleVoiceButtonClick()" title="朗读或停止">
+<i class="fa-solid fa-volume-high text-zinc-600" id="voiceIcon"></i>
+<span id="voiceLabel">朗读</span>
+</button>
+<button class="h-9 px-3 rounded-full glass-card flex items-center gap-1 text-xs font-bold text-zinc-800 shadow-glass-button active:scale-95 transition-all" onclick="cycleFontSize()" title="切换字号大小">
+<span class="text-zinc-400 font-normal">字号</span>
+<span class="bg-zinc-200/80 px-1.5 py-0.5 rounded text-[11px] font-black" id="fontBadge">大</span>
+</button>
+<button class="w-9 h-9 rounded-full bg-zinc-900 text-white font-bold text-xs flex items-center justify-center active:scale-95 transition-all shadow-sm" id="btnProfileEntry" onclick="switchTab('profile')" title="个人中心与适老设置">
+            王
+          </button>
+</div>
+</header>
+<!-- 主视图滚动区域 -->
+<main class="flex-1 overflow-y-auto px-5 pt-3 phone-content-bottom space-y-4 no-scrollbar" id="mainScrollArea">
+<!-- ==================== Tab 1: 今日健康概览 ==================== -->
+<div class="tab-pane space-y-4 view-fade" id="tab-overview"></div>
+<!-- ==================== Tab 2: 智能健康管家 ==================== -->
+<div class="tab-pane hidden space-y-4 view-fade" id="tab-butler"></div>
+<!-- ==================== Tab 3: 服药管家 ==================== -->
+<div class="tab-pane hidden space-y-4 view-fade" id="tab-meds"></div>
+<!-- ==================== Tab 4: 档案与趋势 ==================== -->
+<div class="tab-pane hidden space-y-4 view-fade" id="tab-trends"></div>
+<!-- ==================== Tab 5: 亲情与安全守护 ==================== -->
+<div class="tab-pane hidden space-y-4 view-fade" id="tab-care"></div>
+<!-- ==================== Tab 6: 个人中心与适老设置 ==================== -->
+<div class="tab-pane hidden space-y-4 view-fade" id="tab-profile"></div>
+</main>
+<!-- 毛玻璃底部五键导航条 -->
+<nav class="glass-nav absolute bottom-0 left-0 right-0 px-2 py-2 flex items-center justify-around z-30 select-none pb-4">
+<button class="nav-tab active flex flex-col items-center justify-center w-14 py-1 text-zinc-900 font-black active:scale-90 transition-transform" data-view="overview" onclick="switchTab('overview')">
+<i class="fa-solid fa-house text-lg mb-0.5"></i>
+<span class="text-[11px]">概览</span>
+</button>
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="butler" onclick="switchTab('butler')">
+<div class="relative">
+<i class="fa-solid fa-wand-magic-sparkles text-lg mb-0.5"></i>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 absolute -top-0.5 -right-1"></span>
+</div>
+<span class="text-[11px]">管家</span>
+</button>
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="meds" onclick="switchTab('meds')">
+<i class="fa-solid fa-pills text-lg mb-0.5"></i>
+<span class="text-[11px]">用药</span>
+</button>
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="trends" onclick="switchTab('trends')">
+<i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
+<span class="text-[11px]">趋势</span>
+</button>
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="care" onclick="switchTab('care')">
+<i class="fa-solid fa-shield-heart text-lg mb-0.5"></i>
+<span class="text-[11px]">守护</span>
+</button>
+</nav>
+</div>
+<!-- ==================== 弹窗组件群 (z-50) ==================== -->
+<!-- 弹窗 A: 短信大字验证码登录弹窗 -->
+<!-- 弹窗 B: 录入体征数据 -->
+<!-- 弹窗 C: 录入新药品 -->
+<!-- 弹窗 D: 检查单详情抽屉 -->
+<!-- 弹窗 E: SOS 呼救 5 秒倒计时 -->
+<!-- 顶部 Toast 提示条 -->
+<div class="absolute top-12 left-1/2 -translate-x-1/2 z-50 glass-card bg-zinc-900/90 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-all duration-300" id="toastMessage">
+<span id="toastContent">已更新</span>
+</div>
+<!-- 底部 iOS Home 条 -->
+<div class="h-5 w-full flex items-center justify-center shrink-0 z-40 pb-1">
+<div class="w-32 h-1 bg-zinc-300 rounded-full"></div>
+</div>
+</div>
+<script src="assets/js/pro-core.js"></script>
+<script src="assets/js/pro-mobile.js"></script>
 </body>
 </html>

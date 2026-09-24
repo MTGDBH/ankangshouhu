@@ -56,7 +56,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; frame-ancestors 'none'");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'");
   console.log(JSON.stringify({ time: new Date().toISOString(), request_id: req.request_id, method: req.method, path: req.path }));
   next();
 });
@@ -79,7 +79,8 @@ app.use('/api/auth', authRouter);
 // ===== 静态前端（Sealos / 单容器部署）=====
 app.get('/login', (_req, res) => res.redirect('/login.html'));
 app.get('/mobile', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'mobile.html')));
-app.get('/', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'index.html')));
+app.get('/family', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'family.html')));
+app.get('/', (req, res) => res.redirect(req.user?.role === 'caregiver' || req.user?.role === 'doctor' ? '/family' : '/mobile'));
 
 // 只公开前端资源：根目录 *.html、assets/、截图/。
 // ROOT_DIR 是仓库根，直接 express.static(ROOT_DIR) 会让整个项目可通过 HTTP 读取，

@@ -14,6 +14,9 @@
     body.font-mode-large { font-size: 18.5px; }
     body.font-mode-xlarge { font-size: 21.5px; }
 
+    .pro-answer { font-size: 19px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    body.font-mode-xlarge .pro-answer { font-size: 22px; }
+
     * {
       -webkit-tap-highlight-color: transparent;
       box-sizing: border-box;
@@ -53,6 +56,9 @@
       -webkit-backdrop-filter: blur(25px);
       border-bottom: 1px solid rgba(230, 230, 235, 0.75);
     }
+
+    .nav-tab { color: #a1a1aa; font-weight: 500; }
+    .nav-tab.active { color: #18181b; font-weight: 900; }
 
     /* 高清晰高对比辅助模式 */
     body.high-contrast-mode {
@@ -132,7 +138,7 @@
 </div>
 <!-- 朗读 & 字体大小调节 & 个人中心 -->
 <div class="flex items-center gap-2">
-<button class="h-9 px-3.5 rounded-full glass-card flex items-center gap-1.5 text-xs font-bold text-zinc-800 shadow-glass-button active:scale-95 transition-all" id="voiceActionBtn" onclick="handleVoiceButtonClick()" title="朗读或停止">
+<button class="h-9 px-3.5 rounded-full glass-card flex items-center gap-1.5 text-xs font-bold text-zinc-800 shadow-glass-button active:scale-95 transition-all" id="voiceActionBtn" onclick="handleVoiceButtonClick()" title="朗读本页重点或停止" aria-pressed="false">
 <i class="fa-solid fa-volume-high text-zinc-600" id="voiceIcon"></i>
 <span id="voiceLabel">朗读</span>
 </button>
@@ -159,29 +165,31 @@
 <div class="tab-pane hidden space-y-4 view-fade" id="tab-care"></div>
 <!-- ==================== Tab 6: 个人中心与适老设置 ==================== -->
 <div class="tab-pane hidden space-y-4 view-fade" id="tab-profile"></div>
+<!-- 个人中心内的账号安全与隐私管理 -->
+<div class="tab-pane hidden space-y-4 view-fade" id="tab-account"></div>
 </main>
 <!-- 毛玻璃底部五键导航条 -->
 <nav class="glass-nav absolute bottom-0 left-0 right-0 px-2 py-2 flex items-center justify-around z-30 select-none pb-4">
-<button class="nav-tab active flex flex-col items-center justify-center w-14 py-1 text-zinc-900 font-black active:scale-90 transition-transform" data-view="overview" onclick="switchTab('overview')">
+<button class="nav-tab active flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform" data-view="overview" aria-current="page" onclick="switchTab('overview')">
 <i class="fa-solid fa-house text-lg mb-0.5"></i>
 <span class="text-[11px]">概览</span>
 </button>
-<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="butler" onclick="switchTab('butler')">
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="butler" onclick="switchTab('butler')">
 <div class="relative">
 <i class="fa-solid fa-wand-magic-sparkles text-lg mb-0.5"></i>
 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 absolute -top-0.5 -right-1"></span>
 </div>
 <span class="text-[11px]">管家</span>
 </button>
-<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="meds" onclick="switchTab('meds')">
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="meds" onclick="switchTab('meds')">
 <i class="fa-solid fa-pills text-lg mb-0.5"></i>
 <span class="text-[11px]">计划</span>
 </button>
-<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="trends" onclick="switchTab('trends')">
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="trends" onclick="switchTab('trends')">
 <i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
 <span class="text-[11px]">趋势</span>
 </button>
-<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 text-zinc-400 font-medium active:scale-90 transition-transform hover:text-zinc-800" data-view="care" onclick="switchTab('care')">
+<button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="care" onclick="switchTab('care')">
 <i class="fa-solid fa-shield-heart text-lg mb-0.5"></i>
 <span class="text-[11px]">守护</span>
 </button>
@@ -204,6 +212,7 @@
 </div>
 <script src="assets/js/pro-core.js"></script>
 <script src="assets/js/pro-charts.js"></script>
+<script src="assets/js/pro-voice-summary.js"></script>
 <script src="assets/js/pro-mobile.js"></script>
 </body>
 </html>

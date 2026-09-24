@@ -83,6 +83,34 @@ Set-Location 'D:\BIGCHUANG\-'
 .\scripts\Stop-Local.ps1
 ```
 
+### 本机自然语音朗读（可选）
+
+移动端朗读优先使用本机 Kokoro 中文语音模型，朗读文字只在本机生成音频，不发送到在线语音服务。首次使用需要额外安装 Python 3.12 或 3.13，并下载约 218 MB 的模型文件：
+
+```powershell
+Set-Location 'D:\BIGCHUANG\-'
+.\scripts\Install-Local-Voice.ps1
+.\scripts\Stop-Local.ps1
+.\scripts\Start-Local.ps1 -SkipSetup
+```
+
+模型文件和独立 Python 环境保存在 `ml/models/tts/`，不会提交到 Git。移动端“个人中心”可选女声或男声并试听。缺少模型时页面会提示本机语音不可用。模型来自 [Kokoro 中文模型](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh)，推理库来自 [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)。
+
+### 管家本机语音输入（可选）
+
+管家输入框旁的麦克风使用本机 SenseVoice 普通话模型识别。点麦克风开始录音，再点一次停止；最长录制 20 秒。识别文字只填入输入框，核对后由用户手动发送。录音只传给同机的 `/api/voice/transcribe`，不会送到在线语音识别服务。聊天消息在按“发送”后仍按现有管家后端配置处理。
+
+首次使用安装约 239 MB 的本机识别模型：
+
+```powershell
+Set-Location 'D:\BIGCHUANG\-'
+.\scripts\Install-Local-ASR.ps1
+.\scripts\Stop-Local.ps1
+.\scripts\Start-Local.ps1 -SkipSetup
+```
+
+模型和独立 Python 环境保存在 `ml/models/asr/`，不会提交到 Git。模型来自 [SenseVoice 的 sherpa-onnx 导出](https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17)，接口见 [官方普通话识别文档](https://k2-fsa.github.io/sherpa/onnx/sense-voice/pretrained.html)。浏览器首次录音需要允许 `localhost` 使用麦克风。
+
 未配置私有模型包时，站点、Curve 和 GraphRAG 仍可运行，疾病人群模型在页面中显示降级/未安装。未配置 LLM 密钥时使用本地 Mock/工具降级，不伪装为真实大模型调用。
 
 ### Node 手动启动
@@ -146,6 +174,8 @@ npm test
 | 行动/随访 | `/api/actions*`、`/api/actions/followups*` | 建议、确认、执行和复测闭环 |
 | 照护授权 | `POST /api/care/invitations`、`POST /api/care/accept`、`GET /api/care/relationships`、`GET /api/care/seniors/:id/summary` | 授权码、关系和只读摘要 |
 | 账号 | `GET/PUT /api/profile/me`、`POST /api/profile/password`、`DELETE /api/profile/me` | 资料、改密和注销 |
+| 本机朗读 | `GET /api/voice/status`、`POST /api/voice/speech` | 登录后在本机生成中文朗读音频 |
+| 本机语音输入 | `GET /api/voice/input-status`、`POST /api/voice/transcribe` | 登录后在本机将最长 20 秒的 WAV 录音转成文字 |
 
 完整路由事实以 `server/src/index.js` 和 `server/src/routes/` 为准。
 

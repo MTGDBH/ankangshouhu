@@ -55,8 +55,8 @@ app.use(cors({
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'");
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' https:; frame-ancestors 'none'");
   console.log(JSON.stringify({ time: new Date().toISOString(), request_id: req.request_id, method: req.method, path: req.path }));
   next();
 });
@@ -123,6 +123,7 @@ import actionsRouter from './routes/actions.js';
 import careRouter from './routes/care.js';
 import weatherRouter from './routes/weather.js';
 import privacyRouter from './routes/privacy.js';
+import voiceRouter from './routes/voice.js';
 
 app.use('/api/health', healthRouter);
 app.use('/api', apiRouter);
@@ -136,6 +137,7 @@ app.use('/api/actions', actionsRouter);
 app.use('/api/care', careRouter);
 app.use('/api/weather', weatherRouter);
 app.use('/api/privacy', privacyRouter);
+app.use('/api/voice', voiceRouter);
 app.use('/api/ops', opsRouter);
 
 // 错误处理

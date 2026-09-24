@@ -1,0 +1,4 @@
+# Separate Python 3.12/3.13 environment for offline Chinese speech.
+kokoro-onnx==0.6.1
+misaki[zh] @ git+https://github.com/hexgrad/misaki.git@fba1236595f2d2bf21d414ba6e57d25256afada3
+soundfile==0.14.0

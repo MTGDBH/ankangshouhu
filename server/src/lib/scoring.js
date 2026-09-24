@@ -271,7 +271,7 @@ export function evaluateHealth(metrics, ctx = {}) {
   const usedDimensions = Object.keys(subscores).map(key => dimensionLabels[key]).filter(Boolean);
   const coverage = scoring_details.coverage_percent;
   const summary = total == null
-    ? '暂无足够健康数据，先到"健康监测"录入一次吧。'
+    ? '近 7 天暂无足够测量数据，可到“健康监测”继续记录。'
     : `根据近 7 天有数据的${usedDimensions.join('、')}维度加权计算，您今天的健康评分 ${total} 分${
         coverage < 40 ? `；当前数据覆盖率 ${coverage}%，仅供有限参考`
           : total >= 80 ? '，整体状态良好' : total >= 60 ? '，需关注' : '，建议尽快复诊'

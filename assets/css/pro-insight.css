@@ -1,0 +1,343 @@
+/* ============================================================================
+   风险筛查 / 证据检索 / 行动确认 组件
+   ----------------------------------------------------------------------------
+   与 pro-tailwind 的玻璃拟态保持一致：白底半透明 + 26px 圆角 + 细描边，
+   状态色只用浅底 + 深字，避免在适老界面上出现过重的色块。
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- 风险总览 */
+.risk-hero {
+  border-radius: 26px;
+  padding: 20px 22px;
+  border: 1px solid transparent;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, .06);
+}
+.risk-hero.is-critical { background: rgba(252, 235, 235, .9); border-color: rgba(226, 75, 74, .3); }
+.risk-hero.is-warning  { background: rgba(250, 238, 218, .9); border-color: rgba(239, 159, 39, .32); }
+.risk-hero.is-stable   { background: rgba(234, 243, 222, .9); border-color: rgba(99, 153, 34, .3); }
+.risk-hero-kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .72);
+  margin-bottom: 10px;
+}
+.risk-hero.is-critical .risk-hero-kicker { color: #A32D2D; }
+.risk-hero.is-warning  .risk-hero-kicker { color: #854F0B; }
+.risk-hero.is-stable   .risk-hero-kicker { color: #3B6D11; }
+.risk-hero h3 { font-size: 19px; font-weight: 900; line-height: 1.35; margin: 0 0 6px; color: #18181b; }
+.risk-hero p { font-size: 13px; line-height: 1.6; margin: 0; color: #52525b; }
+.risk-hero-action {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .78);
+  font-size: 13px;
+  font-weight: 700;
+  color: #27272a;
+}
+
+/* ---------------------------------------------------------------- 疾病卡片 */
+.risk-grid { display: grid; gap: 10px; }
+@media (min-width: 600px) { .risk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.risk-item {
+  background: rgba(255, 255, 255, .78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 22px;
+  padding: 16px 18px;
+  min-width: 0;
+}
+.risk-item-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.risk-name { font-size: 16px; font-weight: 900; color: #18181b; }
+.risk-badge {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.risk-badge.is-manage  { background: #E6F1FB; color: #185FA5; }
+.risk-badge.is-limited { background: #F1EFE8; color: #5F5E5A; }
+.risk-badge.is-ok      { background: #EAF3DE; color: #3B6D11; }
+.risk-badge.is-warn    { background: #FAEEDA; color: #854F0B; }
+.risk-desc { font-size: 12.5px; line-height: 1.6; color: #52525b; margin: 0 0 8px; overflow-wrap: anywhere; }
+.risk-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 11.5px;
+  color: #a1a1aa;
+}
+.risk-meta b { color: #52525b; font-weight: 700; }
+
+/* ------------------------------------------------------------ 证据门禁展开 */
+.risk-gate {
+  margin-top: 12px;
+  border-top: 1px solid #f0f0f2;
+  padding-top: 10px;
+}
+.risk-gate > summary {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #3f3f46;
+  cursor: pointer;
+  list-style: none;
+}
+.risk-gate > summary::-webkit-details-marker { display: none; }
+.risk-gate > summary::after { content: " ▾"; color: #a1a1aa; }
+.risk-gate[open] > summary::after { content: " ▴"; }
+
+.gate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  margin: 12px 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.gate-grid li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  min-width: 0;
+}
+.gate-grid li span { flex: 0 0 auto; font-weight: 900; }
+.gate-grid li.is-ok { color: #3B6D11; }
+.gate-grid li.is-no { color: #A32D2D; }
+.gate-note { font-size: 11.5px; line-height: 1.55; color: #71717a; margin: 6px 0 0; overflow-wrap: anywhere; }
+.gate-metrics { font-size: 11.5px; line-height: 1.55; color: #52525b; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+
+.risk-disclaimer {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #a1a1aa;
+  margin: 4px 2px 0;
+}
+
+/* ------------------------------------------------------------ 知识证据检索 */
+.evi-search {
+  display: flex;
+  gap: 8px;
+}
+.evi-search input {
+  min-width: 0;
+  flex: 1;
+  border-radius: 14px;
+  border: 1px solid #e4e4e7;
+  background: #fff;
+  padding: 12px 14px;
+  font-size: 15px;
+}
+.evi-search button {
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: #18181b;
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 0 18px;
+}
+.evi-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.evi-chips button {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .82);
+  border: 1px solid rgba(0, 0, 0, .06);
+  color: #3f3f46;
+}
+
+.evi-stat {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+}
+.evi-stat > div {
+  background: rgba(255, 255, 255, .78);
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 16px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+.evi-stat span { display: block; font-size: 11px; color: #a1a1aa; font-weight: 700; }
+.evi-stat strong { display: block; font-size: 16px; font-weight: 900; color: #18181b; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.evi-stat strong.is-code { font-size: 10.5px; letter-spacing: -.2px; overflow-wrap: anywhere; line-height: 1.35; }
+
+.evi-card {
+  background: rgba(255, 255, 255, .78);
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 22px;
+  padding: 16px 18px;
+}
+.evi-card + .evi-card { margin-top: 10px; }
+.evi-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.evi-head h4 { font-size: 14.5px; font-weight: 900; color: #18181b; margin: 0; line-height: 1.4; }
+.evi-level {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #E6F1FB;
+  color: #185FA5;
+  white-space: nowrap;
+}
+.evi-text { font-size: 12.5px; line-height: 1.7; color: #52525b; margin: 0 0 10px; overflow-wrap: anywhere; }
+.evi-foot { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: #a1a1aa; }
+.evi-foot code { font-family: var(--font-mono, monospace); font-size: 10.5px; }
+
+.evi-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(244, 244, 245, .8);
+  font-size: 11.5px;
+  color: #3f3f46;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.evi-path i { color: #a1a1aa; font-style: normal; font-weight: 900; }
+.evi-path b { font-weight: 800; color: #18181b; }
+.evi-path small { color: #a1a1aa; }
+
+.evi-meter {
+  height: 6px;
+  border-radius: 999px;
+  background: #f0f0f2;
+  overflow: hidden;
+  margin: 8px 0 6px;
+}
+.evi-meter > div { height: 100%; border-radius: 999px; background: #18181b; }
+
+.evi-gate {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(230, 241, 251, .78);
+  border: 1px solid rgba(55, 138, 221, .18);
+  font-size: 12px;
+  line-height: 1.6;
+  color: #0C447C;
+}
+.evi-gate strong { font-weight: 900; }
+
+/* ------------------------------------------------------------ 行动确认卡片 */
+.act-card {
+  margin-top: 10px;
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: rgba(250, 238, 218, .82);
+  border: 1px solid rgba(239, 159, 39, .34);
+}
+.act-card.is-done { background: rgba(234, 243, 222, .82); border-color: rgba(99, 153, 34, .3); }
+.act-card.is-cancelled { background: rgba(241, 239, 232, .8); border-color: rgba(0, 0, 0, .06); }
+.act-kicker {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: #854F0B;
+  margin-bottom: 6px;
+}
+.act-card strong { display: block; font-size: 14.5px; font-weight: 900; color: #18181b; line-height: 1.4; }
+.act-desc { font-size: 12px; line-height: 1.6; color: #52525b; margin: 6px 0 0; }
+.act-when {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, .1);
+  background: #fff;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.act-controls { display: flex; gap: 8px; margin-top: 12px; }
+.act-controls button {
+  flex: 1;
+  border-radius: 12px;
+  padding: 11px 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+.act-controls button[data-act="confirm"] { background: #18181b; color: #fff; }
+.act-controls button[data-act="dismiss"] { background: rgba(255, 255, 255, .8); color: #3f3f46; border: 1px solid rgba(0, 0, 0, .07); }
+.act-controls button:disabled { opacity: .5; }
+.act-status { font-size: 11.5px; color: #71717a; margin: 8px 0 0; }
+
+/* -------------------------------------------------------------- 回答依据块 */
+.ans-basis {
+  margin-top: 10px;
+  border-radius: 14px;
+  background: rgba(244, 244, 245, .78);
+  padding: 10px 12px;
+}
+.ans-basis > summary {
+  font-size: 12px;
+  font-weight: 800;
+  color: #52525b;
+  cursor: pointer;
+  list-style: none;
+}
+.ans-basis > summary::-webkit-details-marker { display: none; }
+.ans-basis > summary::after { content: " ▾"; color: #a1a1aa; }
+.ans-basis[open] > summary::after { content: " ▴"; }
+.ans-basis p { font-size: 0.8rem; line-height: 1.65; color: #71717a; margin: 8px 0 0; }
+.ans-basis ul { margin: 8px 0 0; padding-left: 16px; }
+.ans-basis li { font-size: 0.8rem; line-height: 1.65; color: #52525b; }
+
+/* ============================================================================
+   适老字号（全部用 rem，随 html 根字号一起缩放）
+   目标：正文不低于 0.88rem（≈15px），辅助信息不低于 0.76rem（≈13px）
+   ============================================================================ */
+.risk-hero-kicker { font-size: 0.76rem; }
+.risk-hero h3 { font-size: 1.15rem; }
+.risk-hero p { font-size: 0.9rem; }
+.risk-hero-action { font-size: 0.9rem; }
+.risk-name { font-size: 1rem; }
+.risk-badge { font-size: 0.76rem; }
+.risk-desc { font-size: 0.88rem; }
+.risk-meta { font-size: 0.8rem; }
+.risk-gate > summary { font-size: 0.88rem; }
+.gate-grid li { font-size: 0.84rem; }
+.gate-note,
+.gate-metrics { font-size: 0.8rem; }
+.risk-disclaimer { font-size: 0.8rem; }
+
+.evi-search input { font-size: 0.95rem; }
+.evi-search button { font-size: 0.9rem; }
+.evi-chips button { font-size: 0.84rem; }
+.evi-stat span { font-size: 0.76rem; }
+.evi-stat strong { font-size: 1.05rem; }
+.evi-stat strong.is-code { font-size: 0.72rem; }
+.evi-head h4 { font-size: 0.95rem; }
+.evi-level { font-size: 0.72rem; }
+.evi-text { font-size: 0.88rem; }
+.evi-foot { font-size: 0.76rem; }
+.evi-foot code { font-size: 0.72rem; }
+.evi-path { font-size: 0.8rem; }
+.evi-gate { font-size: 0.84rem; }
+
+.act-kicker { font-size: 0.72rem; }
+.act-card strong { font-size: 0.95rem; }
+.act-desc { font-size: 0.84rem; }
+.act-when { font-size: 0.9rem; }
+.act-controls button { font-size: 0.92rem; }
+.act-status { font-size: 0.8rem; }
+
+.ans-basis > summary { font-size: 0.84rem; }
+.ans-basis p,
+.ans-basis li { font-size: 0.8rem; }

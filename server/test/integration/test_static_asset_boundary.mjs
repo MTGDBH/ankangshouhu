@@ -42,6 +42,7 @@ const internalPaths = [
   '/server/data/seed.js',
   '/frontend/app/mobile.html',
   '/frontend/desktop/index.html',
+  '/frontend/archive/mobile-v1/mobile-app.js',
   '/server/src/index.js',
   '/server/src/db.js',
   '/server/package.json',

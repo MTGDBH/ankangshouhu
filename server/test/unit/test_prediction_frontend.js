@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-const html = fs.readFileSync(new URL('../../../prediction.html', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../../../frontend/desktop/prediction.html', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../../../assets/css/styles.css', import.meta.url), 'utf8');
 const script = html.match(/<script>\s*([\s\S]*?)<\/script>\s*<\/body>/)?.[1];
 assert.ok(script, 'inline prediction script is required');

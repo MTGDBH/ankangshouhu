@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const mobile = fs.readFileSync(new URL('../../../mobile.html', import.meta.url), 'utf8');
-const family = fs.readFileSync(new URL('../../../family.html', import.meta.url), 'utf8');
+const mobile = fs.readFileSync(new URL('../../../frontend/app/mobile.html', import.meta.url), 'utf8');
+const family = fs.readFileSync(new URL('../../../frontend/app/family.html', import.meta.url), 'utf8');
 const script = fs.readFileSync(new URL('../../../assets/js/pro-voice-summary.js', import.meta.url), 'utf8');
 const context = { window: {} };
 vm.runInNewContext(script, context);

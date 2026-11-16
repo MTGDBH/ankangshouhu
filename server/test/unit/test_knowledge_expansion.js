@@ -10,7 +10,7 @@ assert.ok(medicationArticles.length && medicationArticles.every(row => row.body.
 const titles = new Set(expandedKnowledgeArticles.map(row => row.title));
 assert.equal(titles.size, expandedKnowledgeArticles.length, '文章标题重复');
 
-const html = fs.readFileSync(new URL('../../../knowledge.html', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../../../frontend/desktop/knowledge.html', import.meta.url), 'utf8');
 for (const text of ['研究预览', '已审核', '图谱关联发现', '测试版研究预览', '不代表直接因果', '联网查研究', '外部资料 · 尚未审核', '不发送姓名、健康档案或测量数据']) assert.ok(html.includes(text), `页面缺少：${text}`);
 
 console.log(`knowledge expansion: PASS (${expandedKnowledgeArticles.length} articles)`);

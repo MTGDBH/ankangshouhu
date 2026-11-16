@@ -12,7 +12,7 @@ const sample = { profile: { name: '张奶奶' }, health: { measurements: [{ note
 assert.match(serializeExport(sample, 'json').body, /张奶奶/);
 const csv = serializeExport(sample, 'csv').body;
 assert.match(csv, /^\uFEFFcategory,path,value/); assert.match(csv, /含,逗号和""引号""/);
-const html = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
+const html = fs.readFileSync(path.join(root, 'frontend/desktop/privacy.html'), 'utf8');
 const js = fs.readFileSync(path.join(root, 'assets', 'js', 'privacy.js'), 'utf8');
 for (const text of ['系统保存了什么', '谁访问过', '导出 JSON', '导出 CSV', '数据保留与删除范围', '再次确认删除', '不宣称已获得']) assert.ok(html.includes(text), `privacy UI missing ${text}`);
 for (const endpoint of ['/api/privacy/overview', '/api/privacy/authorizations', '/api/privacy/access-records', '/api/privacy/exports', '/api/privacy/deletion-requests']) assert.ok(js.includes(endpoint), `privacy client missing ${endpoint}`);

@@ -3,10 +3,10 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read = path => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
-const mobile = read('../../../mobile.html');
-const family = read('../../../family.html');
-const login = read('../../../login.html');
-const register = read('../../../register.html');
+const mobile = read('../../../frontend/app/mobile.html');
+const family = read('../../../frontend/app/family.html');
+const login = read('../../../frontend/auth/login.html');
+const register = read('../../../frontend/auth/register.html');
 const core = read('../../../assets/js/pro-core.js');
 const authJs = read('../../../assets/js/pro-auth.js');
 const mobileJs = read('../../../assets/js/pro-mobile.js');
@@ -15,6 +15,7 @@ const chartJs = read('../../../assets/js/pro-charts.js');
 const chartCss = read('../../../assets/css/pro-charts.css');
 const css = read('../../../assets/css/pro-tailwind.css');
 const server = read('../../src/index.js');
+const pages = read('../../src/routes/pages.js');
 
 for (const js of [core,authJs,mobileJs,familyJs,chartJs]) new Function(js);
 for (const html of [login,register]) {
@@ -58,8 +59,9 @@ for (const endpoint of ['/api/care/subjects','/api/care/accept','/api/care/senio
   assert.ok(familyJs.includes(endpoint), `family endpoint missing: ${endpoint}`);
 }
 assert.match(core, /replace\(\/\[&<>"'\]\//, 'dynamic content must be escaped');
-assert.match(server, /app\.get\('\/mobile'/);
-assert.match(server, /app\.get\('\/family'/);
-assert.match(server, /req\.user\?\.role/);
+assert.match(pages, /router\.get\('\/mobile'/);
+assert.match(pages, /router\.get\('\/family'/);
+assert.match(pages, /req\.user\?\.role/);
+assert.match(server, /app\.use\(pagesRouter\)/);
 assert.doesNotMatch(server, /cdn\.tailwindcss\.com|unsafe-eval/);
 console.log('Pro frontend contract: PASS');

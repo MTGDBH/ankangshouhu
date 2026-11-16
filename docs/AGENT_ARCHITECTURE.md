@@ -1,6 +1,6 @@
 # 智能管家架构
 
-生产聊天请求只进入 `POST /api/chat`，由 `routes/api.js` 绑定操作者、健康对象、会话与幂等键后调用 `orchestratorV3.js`。V3 负责目标与对话任务状态；V2 文件保留为兼容执行内核，不再是生产 HTTP 入口。
+生产聊天请求只进入 `POST /api/chat`，由 `server/src/routes/chat.js` 绑定操作者、健康对象、会话与幂等键后调用 `orchestratorV3.js`。V3 负责目标与对话任务状态；V2 文件保留为兼容执行内核，不再是生产 HTTP 入口。
 
 执行顺序：身份/对象授权 → 急症与攻击检查 → 四层上下文 → Goal Resolver → 最多三个工具的计划 → Policy Engine → Tool Executor → Result Verifier → 最多一次重新规划 → 结构化响应。所有数据库写入仍由专用路由完成，智能体只生成确认预览。
 

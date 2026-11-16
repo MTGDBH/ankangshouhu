@@ -6,6 +6,8 @@ server/node_modules/
 # ===== ML 产物（CHARLS 衍生数据与模型文件，含受访者编码，禁止入库）=====
 ml/data/
 ml/models/
+# CHARLS respondent-level derived tables stay local for licensed research use.
+ml/disease_risk/datasets/*_incidence_w1w2.csv
 private-artifacts/
 __pycache__/
 *.py[cod]

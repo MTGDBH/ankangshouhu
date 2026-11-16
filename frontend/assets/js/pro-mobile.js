@@ -24,6 +24,8 @@
   let knowledgeQuery = null, riskLoading = false;
   const requestedTab = new URLSearchParams(location.search).get('view');
   let user = null, data = null, currentTab = panes.includes(requestedTab) ? requestedTab : 'overview';
+  let mobileConversationId = null;
+  let mobileHistoryVersion = 0;
   const voiceChoices = new Set(['zf_001', 'zf_002', 'zm_009']);
   let voiceAudio = null, voiceRequest = null, voiceUrl = null;
   let trendVoicePoints = null, activeAuthorizationCount = null;
@@ -430,22 +432,32 @@
       <p class="act-status" role="status">确认后才会写入，系统不会自动打电话或发短信。</p>
     </div>`;
   }
-  function answerExtras(result) {
+  function answerExtras(result, allowActions = true) {
     let html = '';
     const conf = result.confidence;
-    if (conf) {
-      const basis = conf.type === 'data' ? `数据依据 · ${conf.score} 分` : '一般健康知识';
-      const items = (result.evidence && result.evidence.items || []).slice(0, 3)
-        .map(it => `<li>${P.esc(it.metric || '')} ${P.esc(it.latest_value ?? '')}${it.unit ? ` ${P.esc(it.unit)}` : ''}</li>`).join('');
-      html += `<details class="ans-basis"><summary>查看回答依据</summary><p>${P.esc(basis)}${conf.reasoning ? `：${P.esc(conf.reasoning)}` : ''}</p>${items ? `<ul>${items}</ul>` : ''}<p>依据充分程度不代表患病概率，也不能替代医生诊断。</p></details>`;
-    }
+    const source = result.llm?.call_status === 'success' ? '大模型整理' :
+      result.llm?.call_status === 'mock' || result.source === 'mock' ? '本地演示' :
+      result.source === 'safety_rule' ? '安全规则' : '本地工具或知识';
+    const items = (result.evidence?.items || []).slice(0, 3).map(it => {
+      const time = it.measured_at ? HealthOverview.date(it.measured_at) : '时间未标注';
+      const origin = HealthOverview.sources[it.source] || '来源未标注';
+      return `<li>${P.esc(it.label || it.metric || '测量记录')} ${P.esc(it.latest_value ?? it.value ?? '')} ${P.esc(it.unit || '')}<br><small>${P.esc(time)} · ${P.esc(origin)}</small></li>`;
+    }).join('');
+    const toolNames = { health_summary:'健康摘要', health_trend:'指标趋势', knowledge:'知识检索', alerts:'健康提醒', disease_risk:'风险筛查', htn_risk:'风险筛查', behavior:'睡眠与活动', device:'设备状态', followup_status:'复测随访', propose_intervention:'个体干预建议', list_active_interventions:'改善计划', record_adherence:'执行记录', evaluate_intervention:'干预评价', explain_intervention_result:'评价依据' };
+    const toolTrace = (result.tool_trace || result.evidence?.tool_trace || []).map(tool =>
+      `<li>${P.esc(tool.label || toolNames[tool.name] || '健康工具')} · ${tool.status === 'success' ? '已完成' : '未完成或暂不可用'}</li>`).join('');
+    html += `<details class="ans-basis"><summary>查看回答依据</summary><p>回答来源：${source}</p>
+      ${conf?.reasoning ? `<p>${P.esc(conf.reasoning)}</p>` : ''}
+      ${items ? `<ul>${items}</ul>` : '<p>本次没有可展示的个人健康数据依据。</p>'}
+      ${toolTrace ? `<h4>工具记录</h4><ul>${toolTrace}</ul>` : ''}
+      <p>依据充分程度不代表患病概率，也不能替代医生诊断。</p></details>`;
     const g = result.graph_evidence_snapshot;
     if (g && (g.results || []).length) {
       const top = g.results.slice(0, 3).map(r => `<li>${P.esc(r.section || r.source_id || '证据片段')}</li>`).join('');
       html += `<details class="ans-basis"><summary>关联证据（GraphRAG · ${P.esc(g.index_version || '')}）</summary><ul>${top}</ul><p>关系与来源可追溯，未通过医学门禁的关系不会进入回答。</p></details>`;
     }
     const previews = (result.action_previews && result.action_previews.length ? result.action_previews : result.plan) || [];
-    previews.filter(p => p && p.requires_confirmation).forEach(p => { html += actionCard(p); });
+    if (allowActions) previews.filter(p => p?.requires_confirmation).forEach(p => { html += actionCard(p); });
     return html;
   }
   async function handleActionCard(btn) {
@@ -487,6 +499,11 @@
           ? '已确认，待办已加入「概览」页。'
           : '已确认并记录。';
       if (status) status.textContent = doneText;
+      if (type === 'create_todo') {
+        await readOverview(['todos']);
+        renderOverview();
+        renderMobileAgentContext();
+      }
       toast('行动已确认');
     } catch (error) {
       card.dataset.busy = '';
@@ -539,6 +556,7 @@
     if (tab === 'risk') renderRisk();
     if (tab === 'knowledge') renderKnowledge(knowledgeQuery || '');
     if (tab === 'care') loadFollowups();
+    if (tab === 'butler' && changed) loadMobileConversations();
   }
   window.switchTab = switchTab;
   const FONT_MODES = ['standard', 'large', 'xlarge'];
@@ -575,16 +593,131 @@
     $('pro-login').addEventListener('submit', async event => { event.preventDefault(); const form=new FormData(event.currentTarget); try { await P.post('/api/auth/login',{identifier:form.get('identifier'),password:form.get('password')}); await load(); } catch(error) { $('pro-login-error').textContent=error.message; } });
   }
   const line = (label, value) => `<div class="flex justify-between gap-4 py-3 border-b border-zinc-100 text-sm"><span class="text-zinc-500">${P.esc(label)}</span><strong class="text-right">${P.esc(value)}</strong></div>`;
+  function renderOverview() {
+    const host = $('tab-overview');
+    const chart = $('pro-overview-chart');
+    HealthOverview.render(host, user, data, { mobile: true });
+    if (chart) $('pro-overview-chart').replaceWith(chart);
+  }
+
+  function renderMobileAgentContext() {
+    const host = $('pro-agent-context');
+    if (!host) return;
+    const names = { bp: '血压', glucose: '血糖', hr: '心率' };
+    const records = Object.keys(names).filter(type => data.metrics?.[type]).map(type => {
+      const row = data.metrics[type];
+      return '<li><strong>' + names[type] + ' · ' + P.esc(P.metric(row, type)) + '</strong><small>' +
+        P.esc(HealthOverview.date(row.recorded_at)) + ' · ' +
+        P.esc(HealthOverview.sources[row.source] || '来源未标注') + '</small></li>';
+    });
+    host.innerHTML = '<h3>最近健康记录</h3>' +
+      (records.length ? '<ul>' + records.join('') + '</ul>' :
+        (data.metrics ? '<p>暂无测量记录。</p>' : '<p>健康记录暂时无法读取。</p>')) +
+      '<h3>今日安排</h3>' + (data.todos ? '<p>还有 ' + data.todos.filter(task => !task.completed).length + ' 项待完成。</p>' : '<p>今日安排暂时无法读取。</p>') +
+      '<button type="button" class="health-link" data-pro-action="care">查看提醒与复测</button>';
+  }
+
+  async function readMobileConversation(id) {
+    const box = $('pro-chat');
+    const send = $('pro-chat-form').querySelector('[type="submit"]');
+    const version = ++mobileHistoryVersion;
+    mobileConversationId = id;
+    $('pro-chat-retry').hidden = true;
+    box.textContent = id ? '正在读取历史对话…' : '还没有对话。可以从一个健康问题开始。';
+    send.disabled = Boolean(id);
+    if (!id) return;
+    try {
+      const messages = await P.get('/api/chat/history?conversation_id=' + encodeURIComponent(id));
+      if (version !== mobileHistoryVersion || !box.isConnected) return;
+      box.replaceChildren();
+      if (!messages.length) box.textContent = '这是一个新对话。可以从一个健康问题开始。';
+      messages.forEach(message => appendMobileMessage(box, message));
+      box.scrollTop = box.scrollHeight;
+    } catch {
+      if (version === mobileHistoryVersion && box.isConnected) {
+        box.textContent = '历史对话暂时无法读取，请重新选择或点击重试。';
+        $('pro-chat-retry').hidden = false;
+      }
+    } finally {
+      if (version === mobileHistoryVersion && send.isConnected) send.disabled = false;
+    }
+  }
+
+  function appendMobileMessage(box, message, allowActions = false) {
+    const userMessage = message.role === 'user';
+    const article = document.createElement('article');
+    article.className = 'health-chat-message' + (userMessage ? ' health-chat-user' : '');
+    const label = document.createElement('strong');
+    label.textContent = userMessage ? '我' : '小康';
+    const content = document.createElement('p');
+    content.className = 'pro-answer';
+    content.textContent = message.content;
+    article.append(label, content);
+    if (!userMessage && message.content) article.insertAdjacentHTML('beforeend', answerExtras(message, allowActions));
+    box.append(article);
+    return { article, content };
+  }
+
+  async function loadMobileConversations(reload = false) {
+    const select = $('pro-chat-history');
+    if (!select || select.dataset.loading || (!reload && select.dataset.loaded)) return;
+    select.dataset.loading = 'true';
+    const send = $('pro-chat-form').querySelector('[type="submit"]');
+    send.disabled = true;
+    const retry = $('pro-chat-retry');
+    retry.hidden = true;
+    try {
+      const result = await P.get('/api/chat/conversations');
+      if (!select.isConnected) return;
+      const items = (result.items || []).filter(item => item.status === 'active');
+      const active = items.find(item => item.id === mobileConversationId) || items[0];
+      select.replaceChildren(...items.map(item => new Option(item.title || '健康对话', String(item.id))));
+      if (!active) select.append(new Option('暂无历史会话', ''));
+      select.value = active ? String(active.id) : '';
+      select.dataset.loaded = 'true';
+      if (reload || mobileConversationId !== (active?.id ?? null) || !$('pro-chat').children.length) {
+        await readMobileConversation(active?.id ?? null);
+      }
+    } catch {
+      retry.hidden = false;
+      $('pro-chat').textContent = '暂时无法读取会话。您仍可发送问题，或重试读取历史。';
+    } finally {
+      delete select.dataset.loading;
+      if (send.isConnected) send.disabled = false;
+    }
+  }
+
   function render() {
     cancelMic();
     activeAuthorizationCount = null;
     trendVoicePoints = null;
-    const m=data.metrics, s=data.summary, todos=data.todos, alerts=data.alerts;
+    const alerts = data.alerts || [];
     $('view-login')?.classList.add('hidden'); $('main-app')?.classList.remove('hidden');
     if ($('btnProfileEntry')) $('btnProfileEntry').textContent=user.name?.slice(0,1)||'我';
-    if ($('currentDateStr')) $('currentDateStr').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
-    $('tab-overview').innerHTML = P.card('今日健康摘要',`<p class="text-sm leading-relaxed">${P.esc(s.summary || '继续记录健康数据，可查看个人趋势。')}</p><p class="text-xs text-zinc-400 mt-3">最新数据来自健康服务 · ${P.esc(s.today)}</p>`) + `<div class="metric-grid">${[['血压','bp'],['血糖','glucose'],['静息心率','hr'],['步数','steps']].map(([name,type])=>`<div class="glass-card rounded-[24px] p-4"><p class="text-xs text-zinc-500">${name}</p><p class="metric-value font-black mt-2">${P.esc(P.metric(m[type],type))}</p><p class="text-xs text-zinc-400 mt-2">${P.esc(P.date(m[type]?.recorded_at))}</p></div>`).join('')}</div>` + P.card('快捷操作',`<div class="flex flex-wrap gap-2">${P.btn('录入血压/血糖','measure')}${P.btn('风险评估','risk')}${P.btn('知识证据','knowledge',true)}${P.btn('查看趋势','trends',true)}${P.btn('查看提醒','care',true)}</div>`) + P.card('今日待办',todos.length ? todos.map(t=>line(t.title,t.completed?'已完成':t.time||'待完成')).join('') : '<p class="text-sm text-zinc-500">暂无待办</p>');
-    $('tab-butler').innerHTML = P.card('智能健康管家',`<p class="text-xs text-zinc-500 mb-3">回答来源由后端标记；健康建议不能替代诊疗。</p><div id="pro-chat" class="space-y-3 overflow-y-auto mb-3" style="max-height:clamp(200px,40dvh,420px)"></div><form id="pro-chat-form" class="flex gap-2"><input name="message" required maxlength="1000" class="min-w-0 flex-1 rounded-xl p-3 border border-zinc-200" placeholder="输入健康问题" aria-label="健康问题"><button id="pro-mic-button" type="button" class="rounded-xl border border-zinc-300 bg-white px-3 text-zinc-800 font-bold" aria-label="开始语音输入" title="开始语音输入" aria-pressed="false"><i class="fa-solid fa-microphone" aria-hidden="true"></i></button><button type="submit" class="bg-zinc-900 text-white rounded-xl px-4 font-bold">发送</button></form><p id="pro-mic-status" role="status" class="mt-2 text-xs text-zinc-500">点击麦克风开始说话，说完再点一次停止。识别文字会填入输入框。</p><div class="mt-3">${P.btn('知识证据 · GraphRAG','knowledge',true)}</div>`);
+    if ($('currentDateStr')) $('currentDateStr').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'});
+    renderOverview();
+    $('tab-butler').innerHTML = `<section class="health-panel health-mobile-chat" aria-label="智能管家">
+      <header class="health-panel-heading"><h1>和小康聊一聊</h1></header>
+      <div class="health-mobile-chat-panels">
+        <details><summary>历史会话</summary><div class="health-mobile-history">
+          <label for="pro-chat-history">选择对话</label><select id="pro-chat-history"><option>等待读取</option></select>
+          <button id="pro-chat-new" type="button" class="health-button health-button-secondary">新建对话</button>
+          <button id="pro-chat-retry" type="button" class="health-link" hidden>重试</button>
+        </div></details>
+        <details><summary>摘要与安排</summary><div id="pro-agent-context" class="agent-summary"></div></details>
+      </div>
+      <div id="pro-chat" class="health-chat-feed" aria-label="对话内容" tabindex="0">还没有对话。可以从一个健康问题开始。</div>
+      <form id="pro-chat-form" class="health-mobile-composer">
+        <label class="health-chat-label" for="pro-chat-input">输入健康问题</label>
+        <div><input id="pro-chat-input" name="message" required maxlength="1000" placeholder="如：最近血压怎么样？">
+          <button id="pro-mic-button" type="button" class="health-button health-button-secondary" aria-label="开始语音输入" title="开始语音输入" aria-pressed="false">语音</button>
+          <button type="submit" class="health-button health-button-primary">发送</button>
+        </div>
+      </form>
+      <p id="pro-mic-status" role="status" class="health-meta">录音结束后，识别文字会填入输入框。</p>
+      <button type="button" class="health-link" data-pro-action="knowledge">查看知识证据</button>
+    </section>`;
+    renderMobileAgentContext();
     $('pro-mic-button').addEventListener('click', toggleMic);
     checkMicAvailability();
     $('tab-trends').innerHTML = '<div id="pro-trends" class="space-y-4"><p class="text-sm text-zinc-500">正在读取测量记录…</p></div>';
@@ -594,39 +727,62 @@
     if ($('pro-local-voice')) $('pro-local-voice').value = voiceChoices.has(localStorage.getItem('pro-local-voice')) ? localStorage.getItem('pro-local-voice') : 'zf_001';
     $('tab-profile').innerHTML += P.card('账号安全与隐私管理', `<p class="text-sm text-zinc-500 mb-3">管理密码、授权和个人数据。</p>${P.btn('进入管理','account',true)}`);
     renderAccount();
-    $('tab-overview').innerHTML += '<div id="pro-overview-chart"></div>';
     switchTab(currentTab);
+    if (currentTab === 'butler') loadMobileConversations();
     loadTrends();
-    $('pro-chat-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const input = e.target.elements.message, msg = input.value.trim();
-      if (!msg) return;
-      input.value = '';
+    const select = $('pro-chat-history');
+    const newChat = $('pro-chat-new');
+    select.addEventListener('change', () => readMobileConversation(Number(select.value) || null));
+    $('pro-chat-retry').addEventListener('click', () => loadMobileConversations(true));
+    newChat.addEventListener('click', async () => {
+      newChat.disabled = select.disabled = true;
+      try {
+        const created = await P.post('/api/chat/conversations', { title: '新对话' });
+        mobileConversationId = created.id;
+        await loadMobileConversations(true);
+        $('pro-chat-input').focus();
+      } catch (error) {
+        showError(error);
+      } finally {
+        newChat.disabled = select.disabled = false;
+      }
+    });
+    $('pro-chat-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const input = form.elements.message;
+      const send = form.querySelector('[type="submit"]');
+      const message = input.value.trim();
+      if (!message || send.disabled) return;
       const box = $('pro-chat');
-      const question = document.createElement('div');
-      question.className = 'rounded-xl bg-zinc-100 p-3 text-base';
-      question.textContent = `我：${msg}`;
-      box.append(question);
-      const answer = document.createElement('div');
-      answer.className = 'rounded-xl bg-white p-4';
-      const name = document.createElement('strong');
-      name.className = 'text-sm text-zinc-500';
-      name.textContent = '小康';
-      const content = document.createElement('p');
-      content.className = 'pro-answer mt-2';
-      content.textContent = '正在整理回答…';
-      answer.append(name, content);
-      box.append(answer);
+      if (!box.children.length) box.replaceChildren();
+      appendMobileMessage(box, { role: 'user', content: message });
+      const pending = appendMobileMessage(box, { role: 'assistant', content: '' });
+      pending.content.setAttribute('role', 'status');
+      pending.content.textContent = '正在整理回答…';
+      input.value = '';
+      send.disabled = select.disabled = newChat.disabled = true;
       box.scrollTop = box.scrollHeight;
       try {
-        const result = await P.post('/api/chat', { message: msg });
-        content.textContent = `${result.content || '暂无回复'}${result.llm?.call_status === 'mock' ? '（演示模式）' : ''}`;
-        answer.insertAdjacentHTML('beforeend', answerExtras(result));
+        const result = await P.post('/api/chat', { message, conversation_id: mobileConversationId });
+        if (result.conversation_id && result.conversation_id !== mobileConversationId) {
+          mobileConversationId = result.conversation_id;
+          if (!Array.from(select.options).some(option => option.value === String(mobileConversationId))) {
+            if (!select.value) select.replaceChildren();
+            select.append(new Option('健康对话', String(mobileConversationId)));
+          }
+          select.value = String(mobileConversationId);
+        }
+        pending.article.remove();
+        appendMobileMessage(box, { ...result, role: 'assistant' }, true);
       } catch (error) {
-        content.textContent = '暂时无法回答，请稍后再试。';
+        pending.content.textContent = '暂时无法回答。问题已放回输入框，可以重新发送。';
+        input.value = message;
         showError(error);
+      } finally {
+        send.disabled = select.disabled = newChat.disabled = false;
+        box.scrollTop = box.scrollHeight;
       }
-      box.scrollTop = box.scrollHeight;
     });
   }
   async function loadTrends() {
@@ -649,7 +805,55 @@
       preview.innerHTML = first ? window.ProCharts.line({ title: first.value.meta?.name || '健康趋势', points: first.value.points, unit: first.value.meta?.unit || '', secondary: first.value.type === 'bp' }) : P.notice('趋势预览', '保存一次健康测量后，趋势图会在这里出现。');
     }
   }
-  async function load() { try { user=await P.get('/api/auth/me'); if(user.role!=='senior'){location.replace('/family');return;} const results=await Promise.all([P.get('/api/health/summary'),P.get('/api/health/metrics'),P.get('/api/todos/today'),P.get('/api/alerts?status=pending')]); data={summary:results[0],metrics:results[1],todos:results[2],alerts:results[3].items||[]}; render(); } catch(error) { if(error.status===401)showLogin(); else {$('view-login').innerHTML=P.notice('连接失败',error.message)+`<div class="p-6">${P.btn('重试','refresh')}</div>`;} } }
+  const overviewEndpoints = {
+    summary: '/api/health/summary', metrics: '/api/health/metrics',
+    todos: '/api/todos/today', alerts: '/api/alerts?status=pending',
+  };
+  async function readOverview(keys = Object.keys(overviewEndpoints)) {
+    await Promise.all(keys.map(async key => {
+      try {
+        const result = await P.get(overviewEndpoints[key]);
+        data[key] = key === 'alerts' ? result.items : result;
+      } catch {
+        data[key] = null;
+      }
+    }));
+  }
+  async function load() {
+    try {
+      user = await P.get('/api/auth/me');
+      if (user.role !== 'senior') { location.replace('/family'); return; }
+      data = {};
+      await readOverview();
+      render();
+    } catch (error) {
+      if (error.status === 401) showLogin();
+      else $('view-login').innerHTML = P.notice('连接失败', error.message) +
+        '<div class="p-6">' + P.btn('重试', 'refresh') + '</div>';
+    }
+  }
+  $('tab-overview').addEventListener('click', async event => {
+    const button = event.target.closest('[data-home-retry], [data-home-todo]');
+    if (!button || button.disabled) return;
+    button.disabled = true;
+    const { homeRetry, homeTodo, homeCompleted } = button.dataset;
+    try {
+      if (homeRetry) await readOverview([homeRetry]);
+      else {
+        await P.patch('/api/todos/' + encodeURIComponent(homeTodo), { completed: homeCompleted !== '1' });
+        await readOverview(['todos', 'summary']);
+      }
+      renderOverview();
+      renderMobileAgentContext();
+      if (homeTodo) {
+        $('tab-overview').querySelector('[data-home-todo="' + homeTodo + '"]')?.focus();
+        toast(homeCompleted === '1' ? '已撤销完成' : '任务已完成');
+      }
+    } catch (error) {
+      button.disabled = false;
+      showError(error);
+    }
+  });
   document.addEventListener('click', event => {
     const actBtn = event.target.closest('[data-act]');
     if (actBtn) { handleActionCard(actBtn); return; }

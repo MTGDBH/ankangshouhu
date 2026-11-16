@@ -35,6 +35,7 @@
 <!-- shared-styles -->
 <link href="/assets/css/pro-responsive.css" rel="stylesheet"/>
 <link href="/assets/css/pro-insight.css" rel="stylesheet"/>
+<link href="/assets/css/health-workspace.css" rel="stylesheet"/>
 <script>
   /* 首屏前恢复上次选择的字号，避免闪一下再变大 */
   try {
@@ -146,7 +147,7 @@
 <i class="fa-solid fa-volume-high text-zinc-600" id="voiceIcon"></i>
 <span id="voiceLabel">朗读</span>
 </button>
-<button class="h-9 px-3 rounded-full glass-card flex items-center gap-1 text-xs font-bold text-zinc-800 shadow-glass-button active:scale-95 transition-all" onclick="cycleFontSize()" aria-label="切换字号" title="切换字号大小">
+<button id="fontToggleBtn" class="h-9 px-3 rounded-full glass-card flex items-center gap-1 text-xs font-bold text-zinc-800 shadow-glass-button active:scale-95 transition-all" onclick="cycleFontSize()" aria-label="切换字号" title="切换字号大小">
 <span class="text-zinc-400 font-normal" id="fontLabelText">字号</span>
 <span class="bg-zinc-200/80 px-1.5 py-0.5 rounded text-[11px] font-black" id="fontBadge">大</span>
 </button>
@@ -156,8 +157,8 @@
 </div>
 </header>
 <main class="app-main flex-1 overflow-y-auto pt-3 phone-content-bottom space-y-4 no-scrollbar" id="mainScrollArea">
-<div class="tab-pane space-y-4 view-fade" id="tab-overview"></div>
-<div class="tab-pane hidden space-y-4 view-fade" id="tab-butler"></div>
+<div class="tab-pane health-home space-y-4 view-fade" id="tab-overview"></div>
+<div class="tab-pane health-mobile-agent hidden space-y-4 view-fade" id="tab-butler"></div>
 <div class="tab-pane hidden space-y-4 view-fade" id="tab-risk"></div>
 <div class="tab-pane hidden space-y-4 view-fade" id="tab-trends"></div>
 <div class="tab-pane hidden space-y-4 view-fade" id="tab-care"></div>
@@ -167,23 +168,23 @@
 </main>
 <nav aria-label="主要功能" class="app-nav glass-nav absolute bottom-0 left-0 right-0 py-2 flex items-center justify-around z-30 select-none">
 <button class="nav-tab active flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform" data-view="overview" aria-current="page" onclick="switchTab('overview')">
-<i class="fa-solid fa-house text-lg mb-0.5"></i>
+<span class="health-nav-icon" aria-hidden="true">⌂</span>
 <span class="text-[11px]">概览</span>
 </button>
 <button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="butler" onclick="switchTab('butler')">
-<i class="fa-solid fa-wand-magic-sparkles text-lg mb-0.5"></i>
+<span class="health-nav-icon" aria-hidden="true">◇</span>
 <span class="text-[11px]">管家</span>
 </button>
 <button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="risk" onclick="switchTab('risk')">
-<i class="fa-solid fa-heart-pulse text-lg mb-0.5"></i>
+<span class="health-nav-icon" aria-hidden="true">♡</span>
 <span class="text-[11px]">风险</span>
 </button>
 <button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="trends" onclick="switchTab('trends')">
-<i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
+<span class="health-nav-icon" aria-hidden="true">↗</span>
 <span class="text-[11px]">趋势</span>
 </button>
 <button class="nav-tab flex flex-col items-center justify-center w-14 py-1 active:scale-90 transition-transform hover:text-zinc-800" data-view="care" onclick="switchTab('care')">
-<i class="fa-solid fa-shield-heart text-lg mb-0.5"></i>
+<span class="health-nav-icon" aria-hidden="true">◎</span>
 <span class="text-[11px]">守护</span>
 </button>
 </nav>
@@ -193,6 +194,7 @@
 </div>
 </div>
 <!-- shared-scripts -->
+<script src="/assets/js/health-overview.js"></script>
 <script src="/assets/js/pro-mobile.js"></script>
 </template>
 
@@ -494,333 +496,25 @@
 <!-- shared-scripts -->
 </template>
 
-<template data-view="index" data-layout="desktop">
-<title>概览 · 长寿康 Pro</title>
-  <!-- shared-styles -->
+<template data-view="index" data-layout="desktop" class="health-overview-page">
+<title>健康总览 · 长寿康 Pro</title>
+<!-- shared-styles -->
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
 <!-- view-content -->
 <div id="app-nav"></div>
-
-  <main class="main">
-    <section class="desktop-dashboard desktop-only" aria-label="健康总览">
-      <header class="desktop-page-heading">
-        <div><h1>早上好，<span id="desktop-user-name">您好</span></h1><p id="desktop-date">今天也要照顾好自己</p></div>
-        <a class="desktop-primary-action" href="monitoring.html">＋ 记录健康数据</a>
-      </header>
-      <div class="desktop-overview-grid">
-        <article class="desktop-score-panel">
-          <div class="desktop-card-title"><div><span class="desktop-icon-tile">♥</span><strong>今日健康状态</strong></div><a href="assessment.html">查看报告 ›</a></div>
-          <div class="desktop-score-body"><div class="desktop-score-ring"><strong id="desktop-score">--</strong><span>分</span></div><div><h2 id="desktop-score-status">正在读取</h2><p>较昨日 <b id="desktop-score-trend">--</b></p><small>睡眠、活动与关键指标综合得分</small></div></div>
-        </article>
-        <article class="desktop-alert-panel" id="desktop-alert-panel">
-          <div class="desktop-alert-icon">!</div><div><span>需要关注</span><h2 id="desktop-alert-title">血压略有波动</h2><p id="desktop-alert-desc">建议保持静坐后复测并记录</p></div><a href="alerts.html">查看详情 ›</a>
-        </article>
-      </div>
-      <section class="desktop-vitals-section">
-        <div class="desktop-section-heading"><div><h2>关键指标</h2><p>最近一次测量</p></div><a href="monitoring.html">全部记录 ›</a></div>
-        <div class="desktop-vitals-grid">
-          <a href="metric.html?type=bp"><span class="vital-icon pink">压</span><div><small>血压</small><strong id="desktop-bp">--/--</strong><em>mmHg</em></div><b>›</b></a>
-          <a href="metric.html?type=hr"><span class="vital-icon orange">心</span><div><small>心率</small><strong id="desktop-hr">--</strong><em>次/分</em></div><b>›</b></a>
-          <a href="metric.html?type=glucose"><span class="vital-icon purple">糖</span><div><small>血糖</small><strong id="desktop-glucose">--</strong><em>mmol/L</em></div><b>›</b></a>
-          <a href="metric.html?type=weight"><span class="vital-icon blue">重</span><div><small>体重</small><strong id="desktop-weight">--</strong><em>kg</em></div><b>›</b></a>
-        </div>
-      </section>
-      <div class="desktop-bottom-grid">
-        <section class="desktop-task-panel"><div class="desktop-section-heading"><div><h2>今日任务</h2><p id="desktop-task-count">0 项待完成</p></div><a href="intervention.html">全部计划 ›</a></div><div id="desktop-task-list" class="desktop-task-list"><p class="desktop-empty">正在读取今日任务…</p></div></section>
-        <aside class="desktop-reminder-panel"><span>✦</span><div><small>小康提醒</small><h2>每天一点小改变</h2><p>晚饭后散步 20 分钟，有助于维持血糖和睡眠状态。</p><a href="agent.html">问问智能管家 →</a></div></aside>
-      </div>
-    </section>
-    <!-- 问候栏 -->
-    <section class="greeting">
-      <div class="greeting-left">
-        <div class="greeting-icon" aria-hidden="true">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="16" r="7" fill="#F4A261"/>
-            <path d="M16 3 L16 6 M16 26 L16 29 M3 16 L6 16 M26 16 L29 16 M6.3 6.3 L8.4 8.4 M23.6 23.6 L25.7 25.7 M25.7 6.3 L23.6 8.4 M8.4 23.6 L6.3 25.7" stroke="#F4A261" stroke-width="2.4" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <div>
-          <div class="greeting-title"><span data-bind="greeting">您好</span></div>
-          <div class="greeting-date" data-bind="today">—</div>
-        </div>
-      </div>
-      <div class="greeting-right">
-        <div class="weather-widget">
-          <button class="pill pill-warm weather-button" id="weather-button" type="button" aria-label="获取当前位置天气">
-            <span class="weather-icon" id="weather-icon" aria-hidden="true">☀</span>
-            <span id="weather-text">获取当前位置天气</span>
-            <span class="weather-refresh" aria-hidden="true">↻</span>
-          </button>
-          <span class="weather-location" id="weather-location">点击定位；位置仅用于本次天气查询</span>
-        </div>
-        <span class="pill pill-green">
-          <span class="pill-dot"></span>
-          数据实时同步
-        </span>
-      </div>
-    </section>
-
-    <section class="overview-row">
-      <!-- 左：评分卡 -->
-      <div class="score-card">
-        <div class="score-header">
-          <div class="score-title">今日健康分 <span class="date" data-bind="today-short">—</span></div>
-          <span class="trend-pill" data-bind="trend">--</span>
-        </div>
-        <div class="score-number">
-          <span class="score-number-main" data-bind="total_score">--</span>
-          <div class="score-number-unit">
-            <span class="of">/ 100</span>
-            <span class="status" data-bind="status">读取中…</span>
-          </div>
-        </div>
-        <div class="subscore-grid">
-          <div class="subscore" style="background:var(--color-purple-light)">
-            <div class="subscore-dot" style="width:10px;height:10px;border-radius:50%;background:var(--color-purple)"></div>
-            <div class="subscore-label">睡眠</div>
-            <div class="subscore-value" data-bind="sleep">--</div>
-            <div class="subscore-trend" data-bind="sleep-trend">—</div>
-          </div>
-          <div class="subscore" style="background:var(--color-primary-light)">
-            <div class="subscore-dot" style="width:10px;height:10px;border-radius:50%;background:var(--color-primary)"></div>
-            <div class="subscore-label">营养</div>
-            <div class="subscore-value" data-bind="nutrition">--</div>
-            <div class="subscore-trend" data-bind="nutrition-trend">—</div>
-          </div>
-          <div class="subscore" style="background:var(--color-coral-light)">
-            <div class="subscore-dot" style="width:10px;height:10px;border-radius:50%;background:var(--color-coral)"></div>
-            <div class="subscore-label">情绪</div>
-            <div class="subscore-value" data-bind="mood">--</div>
-            <div class="subscore-trend" data-bind="mood-trend">—</div>
-          </div>
-          <div class="subscore" style="background:var(--color-green-light)">
-            <div class="subscore-dot" style="width:10px;height:10px;border-radius:50%;background:var(--color-green)"></div>
-            <div class="subscore-label">活动</div>
-            <div class="subscore-value" data-bind="activity">--</div>
-            <div class="subscore-trend" data-bind="activity-trend">—</div>
-          </div>
-        </div>
-        <div class="score-footer">
-          <a class="link" href="assessment.html">查看完整健康评估 →</a>
-          <span class="meta" data-bind="last-assess">—</span>
-        </div>
-      </div>
-
-      <!-- 右：待办 + 提醒 + CTA -->
-      <div class="todo-col">
-        <div class="todo-header">
-          <span class="todo-title">今日待办</span>
-          <span class="todo-meta" data-bind="todo-count">--</span>
-        </div>
-        <div class="todo-list" id="todo-list"></div>
-        <div class="alert" id="alert-box" hidden>
-          <div class="alert-mark">!</div>
-          <div class="text">
-            <div class="name" data-bind="alert-title">—</div>
-            <div class="desc" data-bind="alert-desc">—</div>
-          </div>
-          <a href="alerts.html" class="arrow">→</a>
-        </div>
-        <a href="agent.html" class="cta">
-          <div class="cta-row">
-            <div class="cta-mark">康</div>
-            <div class="cta-text">
-              <div class="cta-title">和小康聊聊</div>
-              <div class="cta-sub" data-bind="cta-sub">基于今日数据，AI 定制方案</div>
-            </div>
-          </div>
-          <div class="cta-action">
-            <span>立即开口问</span>
-            <span>→</span>
-          </div>
-        </a>
-      </div>
-    </section>
-
-    <!-- 快捷入口 -->
-    <section class="quick-row">
-      <a class="quick-card" href="monitoring.html">
-        <div class="quick-mark" style="background:var(--color-primary-light);color:var(--color-primary)">+</div>
-        <div class="text">
-          <div class="name">录入数据</div>
-          <div class="sub">血压 / 血糖 / 心率 / 血氧</div>
-        </div>
-      </a>
-      <a class="quick-card" href="metric.html?type=bp">
-        <div class="quick-mark" style="background:var(--color-green-light);color:var(--color-green-dark)">报</div>
-        <div class="text">
-          <div class="name">查看报告</div>
-          <div class="sub">单指标 7/30/90 天趋势</div>
-        </div>
-      </a>
-      <a class="quick-card" href="alerts.html">
-        <div class="quick-mark" style="background:var(--color-coral-light);color:var(--color-coral-dark)">!</div>
-        <div class="text">
-          <div class="name">预警中心</div>
-          <div class="sub" data-bind="alert-sub">— 条待处理</div>
-        </div>
-      </a>
-      <a class="quick-card" href="agent.html">
-        <div class="quick-mark" style="background:#F4D5C9;color:var(--color-coral-dark)">急</div>
-        <div class="text">
-          <div class="name">智能管家</div>
-          <div class="sub">和 AI 聊聊健康</div>
-        </div>
-      </a>
-    </section>
-  </main>
-
-  <!-- shared-scripts -->
+<main class="main health-overview-main">
+  <div id="health-home" class="health-home" aria-busy="true"><p class="health-empty" role="status">正在读取健康总览…</p></div>
+  <div class="weather-widget health-weather">
+    <button class="health-button health-button-secondary" id="weather-button" type="button" aria-label="获取当前位置天气">
+      <span class="weather-icon" id="weather-icon" aria-hidden="true">☀</span><span id="weather-text">获取当前位置天气</span>
+    </button>
+    <span class="health-meta" id="weather-location">点击定位后，可查看当地天气</span>
+  </div>
+</main>
+<!-- shared-scripts -->
 <script src="/assets/js/weather.js"></script>
-  <script>
-    document.addEventListener('auth:ready', (e) => {
-      const u = e.detail;
-      document.querySelector('[data-bind="greeting"]').textContent = greeting(u.name);
-      loadDesktopDashboard(u);
-      loadSummary();
-      loadTodos();
-      loadAlerts();
-      WeatherWidget.init();
-    });
-    Auth.init();
-
-    function greeting(name) {
-      const h = new Date().getHours();
-      const time = h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
-      return `${name || '您'}，${time}`;
-    }
-
-    async function loadDesktopDashboard(user) {
-      document.getElementById('desktop-user-name').textContent = user.name || '您好';
-      document.getElementById('desktop-date').textContent = `${new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })} · 今天也要照顾好自己`;
-      try {
-        const [summary, metrics, todos] = await Promise.all([
-          API.get('/api/health/summary'), API.get('/api/health/metrics'), API.get('/api/todos/today')
-        ]);
-        document.getElementById('desktop-score').textContent = summary.total_score ?? '--';
-        document.getElementById('desktop-score-status').textContent = summary.total_score >= 80 ? '整体状态良好' : summary.total_score >= 60 ? '有几项需要关注' : '建议及时评估';
-        document.getElementById('desktop-score-trend').textContent = summary.trend || '保持稳定';
-        const show = (id, metric, formatter) => {
-          const item = metrics[metric];
-          document.getElementById(id).textContent = item ? formatter(item) : '--';
-        };
-        show('desktop-bp', 'bp', v => `${Math.round(v.value)}/${Math.round(v.value2)}`);
-        show('desktop-hr', 'hr', v => Math.round(v.value));
-        show('desktop-glucose', 'glucose', v => Number(v.value).toFixed(1));
-        show('desktop-weight', 'weight', v => Number(v.value).toFixed(1));
-        const pending = (todos || []).filter(item => !item.completed);
-        document.getElementById('desktop-task-count').textContent = `${pending.length} 项待完成`;
-        document.getElementById('desktop-task-list').innerHTML = pending.length ? pending.slice(0, 3).map((item, index) => `<a href="intervention.html"><i>${index + 1}</i><div><strong>${escapeHTML(item.title || item.content || '健康任务')}</strong><small>${escapeHTML(item.time || item.scheduled_time || '今天完成')}</small></div><span>去完成 ›</span></a>`).join('') : '<p class="desktop-empty">今天的任务已全部完成，做得很好。</p>';
-      } catch {}
-      try {
-        const alertData = await API.get('/api/alerts?status=pending');
-        const first = alertData.items?.[0];
-        if (first) {
-          document.getElementById('desktop-alert-title').textContent = first.title || '有一项指标需要关注';
-          document.getElementById('desktop-alert-desc').textContent = first.description || first.message || '查看详情并按建议处理';
-        }
-      } catch {}
-    }
-
-    async function loadSummary() {
-      const d = await API.get('/api/health/summary');
-      document.querySelector('[data-bind="today"]').textContent =
-        `${d.today} · ${weekdayCN(d.today)}`;
-      document.querySelector('[data-bind="today-short"]').textContent = d.today;
-      document.querySelector('[data-bind="total_score"]').textContent = d.total_score;
-      const status = d.total_score >= 80 ? '状态良好' : d.total_score >= 60 ? '需关注' : '需复诊';
-      document.querySelector('[data-bind="status"]').textContent = status;
-      const trend = d.subscores;
-      f('sleep', trend.sleep);
-      f('nutrition', trend.nutrition);
-      f('mood', trend.mood);
-      f('activity', trend.activity);
-
-      try {
-        const list = await API.get('/api/assessments');
-        if (list.length > 1) {
-          const last = list[0];
-          const dt = (last.created_at || '').slice(0, 10);
-          document.querySelector('[data-bind="last-assess"]').textContent = `上次评估：${dt}`;
-          if (last.total_score) {
-            const diff = d.total_score - last.total_score;
-            const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '·';
-            document.querySelector('[data-bind="trend"]').textContent = `${arrow} ${Math.abs(diff)}`;
-          }
-        } else {
-          document.querySelector('[data-bind="trend"]').textContent = '· 基线';
-          document.querySelector('[data-bind="last-assess"]').textContent = '尚无历史评估';
-        }
-      } catch {
-        document.querySelector('[data-bind="trend"]').textContent = '· —';
-      }
-    }
-
-    function f(key, value) {
-      const num = document.querySelector(`[data-bind="${key}"]`);
-      if (num) num.textContent = value ?? '--';
-      const order = value >= 80 ? '持平良好' : value >= 60 ? '需留意' : '偏低';
-      const tr = document.querySelector(`[data-bind="${key}-trend"]`);
-      if (tr) tr.textContent = order;
-    }
-
-    async function loadTodos() {
-      const todos = await API.get('/api/todos/today');
-      const done = todos.filter(t => t.completed).length;
-      document.querySelector('[data-bind="todo-count"]').textContent = `${todos.length} 项 · 已完成 ${done}`;
-      const host = document.getElementById('todo-list');
-      if (!todos.length) {
-        host.innerHTML = '<div class="empty">今天没有待办，享受轻松的一天</div>';
-        return;
-      }
-      host.innerHTML = todos.map(t => `
-        <button class="todo-item ${t.completed ? 'done' : ''}" data-id="${t.id}" data-completed="${t.completed ? '1' : '0'}">
-          <div class="quick-mark" style="background:${iconColor(t.kind)};color:#fff;width:36px;height:36px;border-radius:18px;font-size:15px;display:flex;align-items:center;justify-content:center">${iconChar(t.kind)}</div>
-          <div class="text">
-            <div class="name">${escapeHTML(t.title)}</div>
-            <div class="meta">${t.time}${t.completed ? ' · 已完成' : ' · 待完成'}</div>
-          </div>
-        </button>
-      `).join('');
-      host.querySelectorAll('button.todo-item').forEach(b => {
-        b.addEventListener('click', async () => {
-          const id = parseInt(b.dataset.id, 10);
-          const completed = b.dataset.completed !== '1';
-          try {
-            await API.patch(`/api/todos/${id}`, { completed });
-            loadTodos();
-          } catch (err) {
-            toast(err.message, 'error');
-          }
-        });
-      });
-    }
-
-    async function loadAlerts() {
-      try {
-        const s = await API.get('/api/alerts/summary');
-        document.querySelector('[data-bind="alert-sub"]').textContent = `${s.pending} 条待处理`;
-        if (s.pending === 0) return;
-        const { items } = await API.get('/api/alerts?status=pending');
-        if (items.length) {
-          const a = items[0];
-          document.getElementById('alert-box').hidden = false;
-          document.querySelector('[data-bind="alert-title"]').textContent = a.title;
-          document.querySelector('[data-bind="alert-desc"]').textContent = a.message;
-        }
-      } catch {}
-    }
-
-    function iconColor(kind) {
-      return { medication: '#F4A261', exercise: '#7FB069', todo: '#F4A261', meal: '#9C7BC9', sleep: '#9C7BC9' }[kind] || '#F4A261';
-    }
-    function iconChar(kind) {
-      return { medication: '药', exercise: '走', todo: '测', meal: '食', sleep: '眠' }[kind] || '·';
-    }
-    function weekdayCN(dateStr) {
-      return ['周日','周一','周二','周三','周四','周五','周六'][new Date(dateStr).getDay()];
-    }
-    function escapeHTML(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]); }
-  </script>
+<script src="/assets/js/health-overview.js"></script>
+<script src="/assets/js/desktop-overview.js"></script>
 </template>
 
 <template data-view="monitoring" data-layout="desktop">
@@ -1759,33 +1453,34 @@
   </script>
 </template>
 
-<template data-view="agent" data-layout="desktop" class="agent-page">
+<template data-view="agent" data-layout="desktop" class="agent-page health-agent-page">
 <title>智能管家 · 长寿康 Pro</title>
   <!-- shared-styles -->
 <link rel="stylesheet" href="/assets/css/agent-accessibility.css">
-  <style>@media(min-width:901px){body.has-app-shell.agent-page{padding:64px 0 0 196px!important}body.has-app-shell.agent-page>.app-sidebar{display:flex!important}.agent-page .agent-console>.agent-row{position:relative!important;display:grid!important;width:100%!important;grid-template-columns:minmax(0,1fr) 360px!important;gap:18px!important;height:calc(100vh - 154px)!important;overflow:hidden!important}.agent-page .agent-home-link{display:inline-flex!important;align-items:center;gap:7px;background:#fff!important;border:1px solid #e9ebf0!important;color:#ff5268!important}.agent-page .agent-home-link span{font-size:17px;line-height:1}.agent-page .agent-home-link:hover{border-color:#ffc2ca!important;background:#fff5f6!important}.agent-page .plan-area{padding:14px 12px!important}.agent-page .agent-inbox-sidebar{max-height:370px;overflow:hidden}.agent-page .agent-inbox-sidebar .agent-inbox-list{max-height:275px;overflow:auto;padding:8px}.agent-page .agent-inbox-sidebar .agent-inbox-item{padding:10px;font-size:12px;line-height:1.45}.agent-page .agent-inbox-sidebar .agent-inbox-item-head strong{font-size:14px}.agent-page .agent-inbox-sidebar .agent-inbox-item-head time{font-size:10px}.agent-page .agent-inbox-sidebar .followup-pair{gap:6px;margin:8px 0}.agent-page .agent-inbox-sidebar .followup-pair>div{padding:9px}.agent-page .agent-inbox-sidebar .followup-pair strong{font-size:16px}.agent-page .agent-inbox-sidebar .agent-inbox-actions{gap:6px;margin-top:8px}.agent-page .agent-inbox-sidebar .agent-inbox-actions button,.agent-page .agent-inbox-sidebar .agent-inbox-actions .btn{min-height:34px;padding:5px 7px;font-size:11px}.agent-page .agent-row .chat-history{padding:22px 30px!important}.agent-page .agent-row .msg-bubble{max-width:760px}}</style>
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
 <!-- view-content -->
 <div id="app-nav"></div>
 
   <main class="main agent-main">
     <header class="agent-studio-toolbar">
       <div class="agent-studio-title">
-        <span class="agent-studio-mark" aria-hidden="true">AI</span>
-        <div><h1>智能管家</h1><p><i aria-hidden="true"></i>小康在线 · 已连接您的健康记录</p></div>
+        <span class="agent-studio-mark" aria-hidden="true">康</span>
+        <div><h1>智能管家</h1></div>
       </div>
       <div class="agent-studio-actions">
+        <button type="button" id="agent-history-toggle" aria-expanded="false" aria-controls="agent-history-panel">历史会话</button>
         <a class="agent-home-link desktop-only" href="index.html"><span aria-hidden="true">←</span><strong>返回主界面</strong></a>
         <a id="agent-intervention-link" href="intervention.html"><span aria-hidden="true">✓</span><strong>改善计划</strong></a>
-        <button type="button" class="agent-plan-toggle" id="agent-plan-toggle" aria-expanded="false" aria-controls="agent-plan-drawer"><span aria-hidden="true">☷</span><strong>今日安排</strong></button>
+        <button type="button" class="agent-plan-toggle" id="agent-plan-toggle" aria-expanded="false" aria-controls="agent-plan-drawer"><span aria-hidden="true">☷</span><strong>摘要与安排</strong></button>
         <button type="button" id="agent-daily-plan"><span aria-hidden="true">✦</span><strong>生成今日方案</strong></button>
       </div>
     </header>
 
     <section class="agent-console" aria-label="智能管家工作台">
-      <aside class="agent-control-rail" aria-label="智能体和会话管理">
+      <aside class="agent-control-rail" id="agent-history-panel" aria-label="智能体和会话管理">
         <div class="agent-identity-card">
           <div class="agent-identity-mark" aria-hidden="true">康<span></span></div>
-          <div><span>当前智能体</span><strong>小康健康管家</strong><small><i></i> 在线 · 健康数据实时读取</small></div>
+          <div><span>服务对象</span><strong>小康健康管家</strong><small><i></i> 健康管理与记录查询</small></div>
         </div>
 
         <div class="agent-rail-section agent-rail-context">
@@ -1815,7 +1510,7 @@
           <a href="intervention.html"><span aria-hidden="true">✓</span><span>改善计划<small>执行、复测与评价</small></span><b aria-hidden="true">›</b></a>
         </nav>
 
-        <div class="agent-rail-status" id="agent-context-note"><span aria-hidden="true">盾</span><p><strong>安全运行中</strong><small>健康建议需经您确认才会创建行动</small></p></div>
+        <div class="agent-rail-status" id="agent-context-note"><p>安全运行中 · 行动须经确认</p></div>
       </aside>
 
       <section class="agent-row" aria-label="对话与今日辅助">
@@ -1824,11 +1519,11 @@
           <div><span>健康对话</span><h2>和小康聊一聊</h2></div>
           <small class="agent-live-status"><i aria-hidden="true"></i>按问题实时读取健康数据</small>
         </header>
-        <div class="chat-history" id="chat-history"></div>
+        <div class="chat-history" id="chat-history" aria-label="对话内容" tabindex="0"><p class="health-empty" role="status">正在读取对话…</p></div>
         <div class="agent-chat-composer">
           <div class="agent-composer-label"><strong>可以这样问</strong><span>建议仅作健康管理参考</span></div>
           <div class="agent-run-progress" id="agent-run-progress" role="status" aria-live="polite" hidden>
-            <span id="agent-run-stage">正在读取健康记录…</span>
+            <span id="agent-run-stage">正在提交问题…</span>
             <button type="button" id="agent-stop-wait">停止等待</button>
           </div>
           <div class="quick-prompts" id="quick-prompts"></div>
@@ -1843,13 +1538,21 @@
         <span aria-hidden="true">⋮</span>
       </div>
 
-      <aside class="plan-area" id="agent-plan-drawer" aria-label="今日健康辅助区" aria-hidden="true">
+      <aside class="plan-area" id="agent-plan-drawer" aria-label="今日健康辅助区">
         <div class="plan-header">
-          <div><span class="agent-side-eyebrow">今日辅助</span><span class="plan-title">今日健康安排</span><small>按优先顺序完成即可</small></div>
+          <div><span class="plan-title">今日健康安排</span><small>按优先顺序完成即可</small></div>
           <span class="plan-badge" id="plan-count">— 项</span>
           <button type="button" class="agent-plan-close" id="agent-plan-close" aria-label="关闭今日安排">×</button>
         </div>
-        <div class="plan-sub"><span class="plan-sub-dot" aria-hidden="true"></span>AI 实时生成 · <span id="plan-today">—</span></div>
+        <section class="agent-summary" aria-labelledby="agent-summary-title">
+          <h2 id="agent-summary-title">最近健康记录</h2>
+          <div id="agent-summary-list" role="status">等待读取…</div>
+        </section>
+        <section class="agent-summary" id="agent-reply-evidence" aria-labelledby="agent-reply-evidence-title" hidden>
+          <h2 id="agent-reply-evidence-title">最近回答的依据</h2>
+          <div id="agent-reply-evidence-body"></div>
+        </section>
+        <div class="plan-sub">对话建议 · <span id="plan-today">—</span></div>
         <section class="agent-inbox agent-inbox-sidebar" id="agent-inbox" aria-live="polite" hidden>
           <button type="button" class="agent-inbox-head" id="agent-inbox-toggle" aria-expanded="false" aria-controls="agent-inbox-list">
             <div><span>站内主动提醒</span><h2>待处理健康事项</h2></div>
@@ -1873,6 +1576,7 @@
   </main>
 
   <!-- shared-scripts -->
+<script src="/assets/js/health-overview.js"></script>
 <script>
     document.addEventListener('auth:ready', async () => {
       bindTabs();
@@ -1883,18 +1587,18 @@
       bindAgentContext();
       bindAgentPlanDrawer();
       bindAgentSplitter();
-      bindAgentWorkspaceHeight();
       renderQuickPrompts();
-      await initAgentContext();
-      loadPlan();
-      loadInbox();
-      loadDailyTip();
+      try {
+        await initAgentContext();
+        await Promise.all([loadPlan(), loadInbox(), loadDailyTip(), loadAgentSummary()]);
+      } catch (error) {
+        document.getElementById('chat-history').textContent = '暂时无法读取会话。请刷新页面重试。';
+      }
     });
     Auth.init();
 
     const PROMPTS = ['看看我的总体健康', '看看最近血压', '生成今日健康方案', '我想问一个健康问题'];
     const AGENT_SPLIT_KEY = 'xiaokang-agent-split-ratio-v2';
-    const AGENT_WORKSPACE_HEIGHT_KEY = 'xiaokang-agent-workspace-height-v3';
 
     function bindAgentSplitter() {
       const row = document.querySelector('.agent-row');
@@ -1906,15 +1610,15 @@
       if (!Number.isFinite(ratio)) ratio = 0.64;
 
       const clampRatio = value => Math.max(0.54, Math.min(0.74, Number(value) || 0.64));
-      const isStacked = () => window.matchMedia('(max-width: 1260px)').matches;
+      const isStacked = () => window.matchMedia('(max-width: 1239px)').matches;
       function applyRatio(next, persist = false) {
         ratio = clampRatio(next);
         if (isStacked()) {
           row.style.removeProperty('--agent-chat-width');
         } else {
           const available = Math.max(0, row.getBoundingClientRect().width - splitter.offsetWidth);
-          const minRatio = Math.max(0.54, Math.min(0.62, 620 / Math.max(1, available)));
-          const maxRatio = Math.min(0.74, Math.max(0.64, 1 - 390 / Math.max(1, available)));
+          const minRatio = Math.max(0.54, Math.min(0.62, 390 / Math.max(1, available)));
+          const maxRatio = Math.min(0.74, Math.max(0.64, 1 - 275 / Math.max(1, available)));
           ratio = Math.max(minRatio, Math.min(maxRatio, ratio));
           row.style.setProperty('--agent-chat-width', `${Math.round(available * ratio)}px`);
           splitter.setAttribute('aria-valuemin', String(Math.round(minRatio * 100)));
@@ -1970,75 +1674,11 @@
       applyRatio(ratio);
     }
 
-    function bindAgentWorkspaceHeight() {
-      const row = document.querySelector('.agent-row');
-      const handle = document.getElementById('agent-workspace-height-resizer');
-      if (!row || !handle || handle.dataset.bound === '1') return;
-      handle.dataset.bound = '1';
-      const isStacked = () => window.matchMedia('(max-width: 1260px)').matches;
-      const defaultHeight = () => Math.max(620, Math.min(900, Math.round(window.innerHeight - 300)));
-      const clamp = value => Math.max(560, Math.min(1100, Math.round(Number(value) || defaultHeight())));
-      let height = clamp(Number(localStorage.getItem(AGENT_WORKSPACE_HEIGHT_KEY)) || defaultHeight());
-      let dragging = false;
-      let startY = 0;
-      let startHeight = height;
-
-      function applyHeight(next, persist = false) {
-        height = clamp(next);
-        if (isStacked()) row.style.removeProperty('--agent-workspace-height');
-        else row.style.setProperty('--agent-workspace-height', `${height}px`);
-        handle.setAttribute('aria-valuenow', String(height));
-        handle.setAttribute('aria-valuetext', `工作区高度约${height}像素`);
-        if (persist) localStorage.setItem(AGENT_WORKSPACE_HEIGHT_KEY, String(height));
-      }
-      handle.addEventListener('pointerdown', event => {
-        if (isStacked()) return;
-        dragging = true;
-        startY = event.clientY;
-        startHeight = row.getBoundingClientRect().height;
-        handle.setPointerCapture(event.pointerId);
-        document.body.classList.add('agent-is-resizing-height');
-        event.preventDefault();
-      });
-      handle.addEventListener('pointermove', event => {
-        if (dragging) applyHeight(startHeight + event.clientY - startY);
-      });
-      const finish = event => {
-        if (!dragging) return;
-        dragging = false;
-        if (handle.hasPointerCapture?.(event.pointerId)) handle.releasePointerCapture(event.pointerId);
-        document.body.classList.remove('agent-is-resizing-height');
-        applyHeight(height, true);
-      };
-      handle.addEventListener('pointerup', finish);
-      handle.addEventListener('pointercancel', finish);
-      handle.addEventListener('dblclick', () => {
-        localStorage.removeItem(AGENT_WORKSPACE_HEIGHT_KEY);
-        applyHeight(defaultHeight());
-      });
-      handle.addEventListener('keydown', event => {
-        if (isStacked() || !['ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) return;
-        applyHeight(event.key === 'Home' ? defaultHeight() : height + (event.key === 'ArrowUp' ? -30 : 30), true);
-        event.preventDefault();
-      });
-      document.getElementById('agent-layout-reset')?.addEventListener('click', () => {
-        localStorage.removeItem(AGENT_WORKSPACE_HEIGHT_KEY);
-        applyHeight(defaultHeight());
-      });
-      document.getElementById('agent-height-decrease')?.addEventListener('click', () => applyHeight(height - 80, true));
-      document.getElementById('agent-height-increase')?.addEventListener('click', () => applyHeight(height + 80, true));
-      window.addEventListener('resize', () => applyHeight(height));
-      applyHeight(height);
-    }
-
-    let lastUserMessage = '';
-    let ttsUtterance = null;
     let me = null;
     let subjectId = null;
     let conversationId = null;
     let activeChatController = null;
     let activeClientRequestId = null;
-    let chatProgressTimer = null;
 
     const agentQuery = () => `subject_user_id=${encodeURIComponent(subjectId)}${conversationId ? `&conversation_id=${encodeURIComponent(conversationId)}` : ''}`;
     const requestId = () => (globalThis.crypto?.randomUUID?.() || `web-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -2047,7 +1687,7 @@
       document.getElementById('agent-subject').addEventListener('change', async e => {
         subjectId = Number(e.target.value); conversationId = null;
         syncInterventionLink();
-        await loadConversations(); await Promise.all([loadChat(), loadMemories(), loadPlan(), loadInbox(), loadDailyTip()]);
+        await loadConversations(); await Promise.all([loadChat(), loadMemories(), loadPlan(), loadInbox(), loadDailyTip(), loadAgentSummary()]);
       });
       document.getElementById('agent-conversation').addEventListener('change', async e => { conversationId = Number(e.target.value); syncConversationList(); await Promise.all([loadChat(), loadPlan()]); });
       document.getElementById('agent-conversation-list').addEventListener('click', async e => {
@@ -2074,17 +1714,73 @@
     }
 
     function bindAgentPlanDrawer() {
-      const drawer = document.getElementById('agent-plan-drawer');
-      const toggle = document.getElementById('agent-plan-toggle');
-      const close = document.getElementById('agent-plan-close');
-      const setOpen = open => {
-        drawer.classList.toggle('is-open', open);
-        drawer.setAttribute('aria-hidden', String(!open));
-        toggle.setAttribute('aria-expanded', String(open));
+      const compact = window.matchMedia('(max-width: 1239px)');
+      const panels = [
+        { panel: 'agent-history-panel', toggle: 'agent-history-toggle' },
+        { panel: 'agent-plan-drawer', toggle: 'agent-plan-toggle', close: 'agent-plan-close' },
+      ].map(({ panel, toggle, close }) => ({
+        panel: document.getElementById(panel),
+        toggle: document.getElementById(toggle),
+        close: close && document.getElementById(close),
+      }));
+      const setPanel = ({ panel, toggle }, open) => {
+        panel.hidden = compact.matches && !open;
+        panel.classList.toggle('is-open', open);
+        toggle.setAttribute('aria-expanded', String(!panel.hidden));
       };
-      toggle.addEventListener('click', () => setOpen(!drawer.classList.contains('is-open')));
-      close.addEventListener('click', () => setOpen(false));
-      document.addEventListener('keydown', event => { if (event.key === 'Escape') setOpen(false); });
+      const reset = () => panels.forEach(panel => setPanel(panel, false));
+      panels.forEach(entry => {
+        entry.toggle.addEventListener('click', () => {
+          const open = entry.panel.hidden;
+          reset();
+          setPanel(entry, open);
+          if (open) entry.panel.setAttribute('tabindex', '-1');
+          if (open) entry.panel.focus();
+        });
+        entry.close?.addEventListener('click', () => {
+          setPanel(entry, false);
+          entry.toggle.focus();
+        });
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || !compact.matches) return;
+        const entry = panels.find(item => !item.panel.hidden);
+        if (entry) {
+          setPanel(entry, false);
+          entry.toggle.focus();
+        }
+      });
+      compact.addEventListener('change', reset);
+      reset();
+    }
+
+    async function loadAgentSummary() {
+      const id = subjectId;
+      const host = document.getElementById('agent-summary-list');
+      host.textContent = '正在读取最近记录…';
+      try {
+        const rows = id === me.id
+          ? Object.values(await API.get('/api/health/metrics'))
+          : (await API.get('/api/care/seniors/' + encodeURIComponent(id) + '/summary')).recent_health;
+        if (id !== subjectId) return;
+        const names = { bp: '血压', glucose: '血糖', hr: '心率', weight: '体重', spo2: '血氧' };
+        const metrics = (rows || []).filter(row => names[row?.type]).sort((left, right) =>
+          Date.parse(right.recorded_at) - Date.parse(left.recorded_at)).slice(0, 3);
+        host.innerHTML = metrics.length ? '<ul>' + metrics.map(row =>
+          '<li><strong>' + names[row.type] + ' · ' + escapeHTML(metricValue(row)) + '</strong><small>' +
+          escapeHTML(HealthOverview.date(row.recorded_at)) + ' · ' +
+          escapeHTML(HealthOverview.sources[row.source] || '来源未标注') + '</small></li>').join('') + '</ul>'
+          : '<p>暂无可显示的健康记录。</p>';
+      } catch (error) {
+        if (id === subjectId) host.textContent = error.status === 403 ? '当前授权未包含健康摘要。' : '记录暂时无法读取，请稍后刷新。';
+      }
+    }
+
+    function showAgentReplyEvidence(message) {
+      const panel = document.getElementById('agent-reply-evidence');
+      const host = document.getElementById('agent-reply-evidence-body');
+      panel.hidden = !message;
+      host.innerHTML = message ? renderCardBasis(message, replySource(message)) : '';
     }
 
     function syncConversationList() {
@@ -2126,7 +1822,7 @@
         <button type="button" role="option" data-conversation-id="${x.id}" ${x.status === 'archived' ? 'disabled' : ''} aria-selected="${Number(x.id) === Number(conversationId)}" class="${Number(x.id) === Number(conversationId) ? 'is-active' : ''}">
           <span aria-hidden="true">${x.status === 'archived' ? '□' : '○'}</span><strong>${escapeHTML(x.title || '健康对话')}</strong>${x.status === 'archived' ? '<small>已归档</small>' : ''}
         </button>`).join('') : '<div class="agent-history-empty">还没有历史对话</div>';
-      document.getElementById('agent-context-note').textContent = `正在分析：${data.subject?.name || me.name} · 健康数据实时读取`;
+      document.getElementById('agent-context-note').textContent = `当前服务对象：${data.subject?.name || me.name}`;
     }
 
     async function loadMemories() {
@@ -2226,8 +1922,11 @@
 
     async function loadChat() {
       const hist = document.getElementById('chat-history');
+      const query = agentQuery();
+      showAgentReplyEvidence(null);
       try {
-        const msgs = await API.get(`/api/chat/history?${agentQuery()}`);
+        const msgs = await API.get(`/api/chat/history?${query}`);
+        if (query !== agentQuery()) return;
         if (!msgs.length) {
           hist.innerHTML = renderMsg({
             role: 'assistant',
@@ -2238,8 +1937,10 @@
           return;
         }
         hist.innerHTML = msgs.map(renderMsg).join('');
+        showAgentReplyEvidence([...msgs].reverse().find(message => message.role === 'assistant'));
         scrollChat();
       } catch (err) {
+        if (query !== agentQuery()) return;
         hist.innerHTML = `<div class="empty">对话读取失败：${escapeHTML(err.message)}</div>`;
       }
     }
@@ -2469,12 +2170,14 @@
       const trace = m.tool_trace || m.evidence?.tool_trace || [];
       const traceHtml = trace.length ? `<div class="agent-card-trace"><strong>读取内容</strong>${trace.map(item => `<span class="${item.status==='success'?'ok':'error'}">${escapeHTML(displayTool(item))} · ${item.status==='success'?'已完成':'暂不可用'}${item.freshness?` · ${escapeHTML(displayDate(item.freshness))}`:''}</span>`).join('')}</div>` : '';
       const conf = m.confidence || {};
+      const evidenceBody = renderEvidenceBody(m.evidence);
+      const gap = evidenceBody ? '' : '<p>本次没有可展示的个人健康数据依据。</p>';
       const level = Number(conf.score) >= 85 ? '较高' : Number(conf.score) >= 70 ? '中等' : '有限';
       const confidenceHtml = conf.type === 'data' ? `<div class="agent-confidence-explain"><strong>可信度 ${escapeHTML(conf.score ?? '—')} · ${level}</strong>
         <p>${escapeHTML(conf.reasoning || '根据可用数据、记录完整度和后端核验规则计算。')}</p>
         ${(conf.sources || []).length ? `<small>计算依据：${conf.sources.slice(0, 4).map(escapeHTML).join('；')}</small>` : ''}
         <small>可信度表示本次回答的证据充分程度，不表示疾病发生概率，也不能替代医生诊断。</small></div>` : `<div class="agent-confidence-explain"><strong>一般健康知识</strong><p>本次没有足够个人数据用于量化可信度。</p></div>`;
-      return `<details class="agent-card-basis"><summary>查看依据与可信度</summary><div class="agent-card-basis-inner"><div class="agent-card-provider">回答来源：${escapeHTML(providerLabel)}</div>${confidenceHtml}${traceHtml}${renderEvidenceBody(m.evidence) || '<p>本次没有读取个人健康数据。</p>'}</div></details>`;
+      return `<details class="agent-card-basis"><summary>查看依据与可信度</summary><div class="agent-card-basis-inner"><div class="agent-card-provider">回答来源：${escapeHTML(providerLabel)}</div>${confidenceHtml}${traceHtml}${evidenceBody}${gap}</div></details>`;
     }
 
     function renderHealthCard(m, providerLabel) {
@@ -2510,11 +2213,15 @@
       return `<article class="agent-clarification-card"><span>需要您确认</span><h3>${escapeHTML(p.status?.title || '请选择一项')}</h3><p>${escapeHTML(p.status?.text || m.content || '')}</p><div>${(p.choices || []).map(choice => `<button data-clarification-value="${encodeURIComponent(choice.value || choice.label)}">${escapeHTML(choice.label)}</button>`).join('')}</div><small>${escapeHTML(p.safety?.text || '')}</small></article>`;
     }
 
-    function renderMsg(m) {
+    function replySource(m) {
       const llmMeta = m.llm || {};
-      const providerLabel = llmMeta.call_status === 'success'
+      return llmMeta.call_status === 'success'
         ? '健康智能分析'
         : (llmMeta.call_status === 'fallback' ? '本地健康工具结果' : (m.source === 'mock' ? '本地演示结果' : m.source === 'tool' ? '健康工具结果' : '本地健康知识结果'));
+    }
+
+    function renderMsg(m) {
+      const providerLabel = replySource(m);
       const sourceHtml = m.role === 'assistant' ? `<div class="agent-source-label">回答来源：${escapeHTML(providerLabel)}</div>` : '';
       const hasHealthCard = m.presentation?.mode === 'health_card' || m.presentation?.mode === 'emergency';
       const hasClarification = m.presentation?.mode === 'clarification';
@@ -2552,7 +2259,7 @@
       if (activeChatController) return;
       const input = document.getElementById('chat-input');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text || !conversationId) return;
       input.value = '';
       lastUserMessage = text;
       appendUserMsg(text);
@@ -2560,24 +2267,20 @@
       const btn = document.getElementById('btn-send');
       const progress = document.getElementById('agent-run-progress');
       const stage = document.getElementById('agent-run-stage');
-      const stages = ['正在读取健康记录…', '正在分析趋势和风险…', '正在核对数据与知识依据…'];
-      let stageIndex = 0;
       activeChatController = new AbortController();
       activeClientRequestId = requestId();
       btn.disabled = true;
       input.disabled = true;
       progress.hidden = false;
-      stage.textContent = stages[0];
-      chatProgressTimer = setInterval(() => {
-        stageIndex = Math.min(stageIndex + 1, stages.length - 1);
-        stage.textContent = stages[stageIndex];
-      }, 1400);
+      stage.textContent = '正在提交问题…';
+      const query = agentQuery();
       try {
         let streamedText = '';
         const r = await API.stream('/api/chat/stream', { message: text, subject_user_id: subjectId, conversation_id: conversationId, client_request_id: activeClientRequestId }, {
           signal: activeChatController.signal, timeoutMs: 65_000,
           onEvent(event, payload) {
             if (event === 'progress' && payload.text) stage.textContent = payload.text;
+             // 阶段由后端报告，例如正在读取健康记录、正在分析趋势和风险。
             if (event === 'delta') {
               streamedText += payload.content || '';
               const bubble = typingEl.querySelector('.msg-bubble');
@@ -2585,6 +2288,7 @@
             }
           },
         });
+        if (query !== agentQuery()) { typingEl.remove(); return; }
         conversationId = r.conversation_id || conversationId;
         typingEl.remove();
         document.getElementById('chat-history').insertAdjacentHTML('beforeend',
@@ -2603,20 +2307,21 @@
             id: r.id
           })
         );
+        showAgentReplyEvidence(r);
+        loadPlan();
         scrollChat();
         if (r.plan && r.plan.length) {
           toast('小康给了你 ' + r.plan.length + ' 条建议', 'success');
         }
       } catch (err) {
         typingEl.remove();
+        if (query !== agentQuery()) return;
         if (err.code === 'CLIENT_CANCELLED' || err.code === 'AGENT_CANCELLED') appendAssistantMsg('本次分析已在服务器停止，没有保存未完成的回答。', []);
         else {
           const trace = err.requestId ? `（请求编号：${err.requestId}）` : '';
           appendAssistantMsg(`${err.message || '本次回答暂时失败'}${trace}${err.retryable ? '，可以稍后重试。' : '。'}`, []);
         }
       } finally {
-        clearInterval(chatProgressTimer);
-        chatProgressTimer = null;
         activeChatController = null;
         activeClientRequestId = null;
         btn.disabled = false;
@@ -2897,8 +2602,12 @@
     }
 
     async function loadPlan() {
+      const query = agentQuery();
+      const host = document.getElementById('plan-list');
+      host.textContent = '正在读取建议…';
       try {
-        const messages = await API.get(`/api/chat/history?${agentQuery()}`);
+        const messages = await API.get(`/api/chat/history?${query}`);
+        if (query !== agentQuery()) return;
         let plan = [];
         for (const message of [...messages].reverse()) {
           if (message.role !== 'assistant' || !message.plan?.length) continue;
@@ -2906,8 +2615,8 @@
           if (usable.length) { plan = usable; break; }
         }
         document.getElementById('plan-count').textContent = `${plan.length} 项`;
-        document.getElementById('plan-today').textContent = new Date().toISOString().slice(0, 10);
-        document.getElementById('plan-list').innerHTML = plan.map(p => `
+        document.getElementById('plan-today').textContent = new Date().toLocaleDateString('zh-CN');
+        host.innerHTML = plan.map(p => `
           <div class="plan-card" style="background:${planColorBg(p.color)}">
             <div class="plan-card-icon" style="background:${planColorFg(p.color)};color:#fff">${escapeHTML(p.icon)}</div>
             <div class="plan-card-text">
@@ -2917,9 +2626,9 @@
             </div>
               ${renderPlanControl({ ...p, metric_type: inferActionMetric(p) })}
           </div>
-        `).join('') || '<div class="empty">暂无方案，先在左边和小康聊聊</div>';
+        `).join('') || '<div class="empty">暂无待确认建议。可在对话中请小康拟定方案。</div>';
       } catch (err) {
-        document.getElementById('plan-list').innerHTML = '<div class="empty">加载失败</div>';
+        if (query === agentQuery()) host.textContent = '建议暂时无法读取，请稍后刷新。';
       }
     }
 

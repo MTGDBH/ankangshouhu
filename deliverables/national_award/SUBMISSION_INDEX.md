@@ -9,13 +9,13 @@
 ## 项目总结书
 
 - LaTeX 源码：`D:\BIGCHUANG\-\deliverables\national_award\latex\project_summary.tex`
-- 编译 PDF：`D:\BIGCHUANG\-\deliverables\national_award\latex\project_summary.pdf`（2026-08-21 历史快照；当前事实以已更新的 `.tex`、`FINAL_DELIVERY.md` 和 2026-08-28 文档审计为准，提交前需重新编译）
+- 编译 PDF：`D:\BIGCHUANG\-\deliverables\national_award\latex\project_summary.pdf`（2026-08-21 历史快照；当前事实以已更新的 `.tex`、[最终交付说明](../../docs/final-delivery.md) 和 2026-08-28 文档审计为准，提交前需重新编译）
 
 ## 汇报材料
 
 - 汇报 PPT：`D:\BIGCHUANG\-\deliverables\national_award\elderly_health_national_award.pptx`（历史快照；提交前需同步 v9 索引 83/129/192/557 与 90 条待医生审核范围）
 - 5 分钟演示脚本：`D:\BIGCHUANG\-\deliverables\national_award\demo_script.md`
-- 最终交付说明：`D:\BIGCHUANG\-\FINAL_DELIVERY.md`
+- 最终交付说明：[项目交付说明](../../docs/final-delivery.md)
 - 一键提交包：`D:\BIGCHUANG\-\deliverables\national_award\national_award_submission_bundle.zip`
 
 ## 证据与自检

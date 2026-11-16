@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const api = fs.readFileSync(new URL('../../../assets/js/api.js', import.meta.url), 'utf8');
-const auth = fs.readFileSync(new URL('../../../assets/js/auth.js', import.meta.url), 'utf8');
-const main = fs.readFileSync(new URL('../../../assets/js/main.js', import.meta.url), 'utf8');
-const css = fs.readFileSync(new URL('../../../assets/css/styles.css', import.meta.url), 'utf8');
+const api = fs.readFileSync(new URL('../../../frontend/assets/js/api.js', import.meta.url), 'utf8');
+const auth = fs.readFileSync(new URL('../../../frontend/assets/js/auth.js', import.meta.url), 'utf8');
+const main = fs.readFileSync(new URL('../../../frontend/assets/js/desktop-ui.js', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../../../frontend/assets/css/desktop-base.css', import.meta.url), 'utf8');
 
 new Function(api);
 new Function(auth);

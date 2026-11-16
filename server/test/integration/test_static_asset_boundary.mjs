@@ -1,5 +1,6 @@
-// 静态资源边界回归：页面 URL 保持根路径，源码移到 frontend/ 后不能直接暴露该目录。
+// 旧 URL 仍提供各自的页面，只公开渲染后的视图与浏览器资源。
 // 整个项目（健康数据库、后端源码、私有模型包）不能经 HTTP 无鉴权读取。
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -11,38 +12,29 @@ async function probe(path) {
   return res.status;
 }
 
-// 1) 前端资源必须仍可公开访问，否则界面直接坏掉
-const publicAssets = new Map([
-  ['/index.html', 'frontend/desktop/index.html'],
-  ['/login.html', 'frontend/auth/login.html'],
-  ['/mobile.html', 'frontend/app/mobile.html'],
-  ['/family.html', 'frontend/app/family.html'],
-  ['/assets/css/styles.css', 'assets/css/styles.css'],
-  ['/assets/js/api.js', 'assets/js/api.js'],
-]);
-for (const [url, file] of publicAssets) {
-  if (!fs.existsSync(repoRoot + file)) throw new Error(`测试前置失败：本地不存在 ${file}`);
-  const status = await probe(url);
-  if (status !== 200) throw new Error(`前端资源被误挡：${url} -> ${status}`);
+const pages = [
+  'mobile', 'family', 'login', 'register', 'index', 'agent', 'alerts', 'assessment',
+  'care', 'confidence', 'intervention', 'knowledge', 'metric', 'monitoring',
+  'prediction', 'privacy', 'profile', 'settings', 'showcase', 'dev',
+];
+const pageUrls = [...pages.map(name => `/${name}.html`), '/mobile', '/family'];
+const publicAssets = new Set(['/assets/css/styles.css', '/assets/js/main.js']);
+for (const url of pageUrls) {
+  const response = await fetch(base + url);
+  assert.equal(response.status, 200, url);
+  assert.match(response.headers.get('content-type'), /^text\/html/, url);
+  const html = await response.text();
+  assert.match(html, /<title>[^<]+<\/title>/, url);
+  assert.doesNotMatch(html, /<template data-view=|<!-- (?:shared-|view-)|class="local-entry"/, url);
+  for (const [, asset] of html.matchAll(/(?:href|src)="(\/assets\/[^"]+)"/g)) publicAssets.add(asset);
 }
-let pageCount = 0;
-for (const section of ['app', 'auth', 'desktop', 'demo']) {
-  for (const file of fs.readdirSync(repoRoot + `frontend/${section}`)) {
-    if (!file.endsWith('.html')) continue;
-    const url = `/${file}`;
-    const status = await probe(url);
-    if (status !== 200) throw new Error(`页面旧地址失效：${url} -> ${status}`);
-    pageCount += 1;
-  }
-}
-if (pageCount !== 20) throw new Error(`页面数量异常：${pageCount}`);
+for (const url of publicAssets) assert.equal(await probe(url), 200, url);
 
 // 2) 内部内容必须被阻断。使用 Git 跟踪的真实文件，确保全新检出时也能证明 404。
 const internalPaths = [
   '/server/data/seed.js',
-  '/frontend/app/mobile.html',
-  '/frontend/desktop/index.html',
-  '/frontend/archive/mobile-v1/mobile-app.js',
+  '/frontend/index.html',
+  '/frontend/assets/css/desktop-base.css',
   '/server/src/index.js',
   '/server/src/db.js',
   '/server/package.json',
@@ -50,8 +42,8 @@ const internalPaths = [
   '/ml/prediction_contract.json',
   '/elderly-health-rag/output/dense_index.json',
   '/README.md',
-  '/FINAL_DELIVERY.md',
-  '/TESTING.md',
+  '/docs/final-delivery.md',
+  '/docs/testing.md',
   '/docs/AGENT_ARCHITECTURE.md',
   '/tests/test_runtime_service.py',
   '/scripts/run_python_tests.py',
@@ -76,7 +68,7 @@ if (apiStatus !== 200) throw new Error(`/api/health 被静态边界误挡：${ap
 console.log(JSON.stringify({
   pass: true,
   public_assets_served: publicAssets.size,
-  page_urls_served: pageCount,
+  page_urls_served: pageUrls.length,
   internal_paths_blocked: internalPaths.length,
   api_unaffected: true,
 }));

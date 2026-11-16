@@ -1,11 +1,12 @@
+import { renderPage } from '../../src/lib/renderPage.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const html = fs.readFileSync(new URL('../../../frontend/desktop/intervention.html', import.meta.url), 'utf8');
-const css = fs.readFileSync(new URL('../../../assets/css/styles.css', import.meta.url), 'utf8');
-const js = fs.readFileSync(new URL('../../../assets/js/intervention.js', import.meta.url), 'utf8');
-const auth = fs.readFileSync(new URL('../../../assets/js/auth.js', import.meta.url), 'utf8');
+const html = renderPage('intervention');
+const css = fs.readFileSync(new URL('../../../frontend/assets/css/desktop-base.css', import.meta.url), 'utf8');
+const js = fs.readFileSync(new URL('../../../frontend/assets/js/intervention.js', import.meta.url), 'utf8');
+const auth = fs.readFileSync(new URL('../../../frontend/assets/js/auth.js', import.meta.url), 'utf8');
 
 new Function(js);
 const sandbox = {
@@ -77,6 +78,6 @@ assert.ok((html.match(/<button\b/g) || []).length >= 4);
 assert.match(html, /aria-live="polite"/);
 assert.match(html, /aria-busy="true"/);
 assert.match(auth, /intervention\.html/);
-assert.match(fs.readFileSync(new URL('../../../frontend/desktop/agent.html', import.meta.url), 'utf8'), /id="agent-intervention-link"/);
+assert.match(renderPage('agent'), /id="agent-intervention-link"/);
 
 console.log('intervention frontend contract: PASS');

@@ -4,7 +4,24 @@
 
 > 当前定位：工程原型与研究演示系统，不是医疗器械，不输出诊断、处方或个体用药调整。演示账号和部分评测使用合成数据；AI 证据预审核不等同于医生审核。
 
-**仓库导航**：前端版本见 [`frontend/`](frontend/README.md)，共享资源在 `assets/`；API 在 [`server/`](server/README.md)，曲线与疾病风险代码在 `ml/`，证据检索在 [`elderly-health-rag/`](elderly-health-rag/README.md)。运行与测试分别见下文“快速开始”和 [`TESTING.md`](TESTING.md)；研究报告与提交材料在 `reports/`、`deliverables/`。
+## 从哪里开始
+
+在已有依赖的 Windows 环境中，从项目根目录运行：
+
+```powershell
+.\scripts\Start-Local.ps1 -SkipSetup
+```
+
+打开 [长寿康](http://localhost:3001/)。首次安装见下方 [快速开始](#快速开始)。
+
+| 要找什么 | 看哪里 |
+|---|---|
+| 改界面 | [`frontend/index.html`](frontend/index.html) 是唯一的 HTML 源码。样式、脚本和图片都在 [`frontend/assets/`](frontend/assets/) |
+| 改后端 API | [`server/src/`](server/src/) 与 [后端说明](server/README.md) |
+| 改健康趋势和风险模型 | [`ml/`](ml/) |
+| 改知识图谱和证据检索 | [`elderly-health-rag/`](elderly-health-rag/README.md) |
+| 安装、启动和验收 | [`scripts/`](scripts/)、[测试指南](docs/testing.md) |
+| 找项目材料 | [`docs/`](docs/) 放使用和设计说明，[`reports/`](reports/) 放评测报告，[`deliverables/`](deliverables/) 放提交材料 |
 
 ## 当前能力与证据等级
 
@@ -24,9 +41,9 @@
 | 复测随访闭环 | 已完成 | 支持建议、确认、执行、到期、候选测量匹配、结果回填、取消/拒绝等状态 |
 | Docker 与本地部署 | 已完成 | Windows 安装/启动/停止脚本；单容器 Dockerfile；Node 服务同时托管前端和 API |
 
-## 前端版本与页面
+## 页面入口
 
-`frontend/` 共 **20** 个 HTML 页面：2 个 Pro 主界面、14 个桌面功能页、2 个鉴权页和 2 个展示/开发页。旧的根路径 URL 继续可用，源码归类与资源边界见 [`frontend/README.md`](frontend/README.md)。
+所有页面视图集中在 [`frontend/index.html`](frontend/index.html)，启动 Node 服务后用下列地址访问。 [前端目录说明](frontend/README.md)
 
 | 类型 | 页面 | 用途 |
 |---|---|---|
@@ -157,7 +174,7 @@ Set-Location .\server
 npm test
 ```
 
-测试会使用临时数据库/临时输出目录，并在前后比较 Git 状态。分组命令及 CI 说明见 [TESTING.md](TESTING.md)。
+测试会使用临时数据库/临时输出目录，并在前后比较 Git 状态。分组命令及 CI 说明见 [测试指南](docs/testing.md)。
 
 ## API 速查
 
@@ -181,33 +198,6 @@ npm test
 | 本机语音输入 | `GET /api/voice/input-status`、`POST /api/voice/transcribe` | 登录后在本机将最长 20 秒的 WAV 录音转成文字 |
 
 完整路由事实以 `server/src/index.js` 和 `server/src/routes/` 为准。
-
-## 项目结构
-
-```text
-.
-├── frontend/                      # Pro 主界面、鉴权、桌面版、展示页（20 个 HTML）
-├── assets/                        # 共享 CSS、API/鉴权/批量录入脚本
-├── server/
-│   ├── src/auth.js                # 注册、登录、登出、会话中间件
-│   ├── src/services/authService.js# bcrypt、锁定、会话过期
-│   ├── src/db.js                  # SQLite schema 与兼容迁移
-│   ├── src/routes/                # 页面、评估、待办、设备、对话及其他业务路由
-│   ├── test/unit/                 # Node 单元测试（进程内断言）
-│   ├── test/integration/          # 集成测试（临时服务 + 隔离数据库）
-│   ├── test/evaluate/             # 离线评测脚本
-│   ├── test/e2e/                  # 端到端验收（final_acceptance）
-│   └── scripts/run-tests.mjs      # Node/Python 统一验收入口
-├── ml/                            # Curve、疾病风险、模型包与验证工具
-├── elderly-health-rag/            # GraphRAG 索引、检索、安全门槛与评测
-├── tests/                         # Python 隔离、安全与回归测试
-├── scripts/                       # 本地安装/启动/停止、容器启动脚本
-├── deliverables/national_award/   # 提交材料、数据卡、模型卡、演示脚本
-├── reports/                       # 内部审计、评测与外部验证协议
-├── Dockerfile
-├── FINAL_DELIVERY.md
-└── TESTING.md
-```
 
 研究队列的受访者级派生 CSV 仅留在授权研究者本机。公开仓库保留构建脚本、哈希清单和汇总报告；离线训练与评测需要先在本机准备对应数据，详见 [`ml/DATA_CLASSIFICATION.md`](ml/DATA_CLASSIFICATION.md)。
 

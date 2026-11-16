@@ -1,6 +1,6 @@
 # 设计令牌（Design Tokens）
 
-所有视觉常量都沉淀在 `assets/css/styles.css` 的 `:root` 里，改一处全站生效。
+所有视觉常量都沉淀在 `frontend/assets/css/desktop-base.css` 的 `:root` 中的桌面版主题变量里。
 
 ## 颜色
 

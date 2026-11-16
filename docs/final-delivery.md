@@ -34,7 +34,7 @@ Set-Location 'D:\BIGCHUANG\-\server'
 npm test
 ```
 
-这是当前 `server/package.json` 定义的一键、无副作用核心验收入口。它使用 Node 22，调用仓库 `.venv`（若存在），并覆盖 Node 单元/集成、Python 单元、GraphRAG、安全、Curve 和语法/UTF-8 检查。详细安装、分组命令与结果解释见 `TESTING.md`。
+这是当前 `server/package.json` 定义的一键、无副作用核心验收入口。它使用 Node 22，调用仓库 `.venv`（若存在），并覆盖 Node 单元/集成、Python 单元、GraphRAG、安全、Curve 和语法/UTF-8 检查。详细安装、分组命令与结果解释见 [测试指南](testing.md)。
 
 2026-08-28 本轮实测：`npm test` 全部通过且 Git 状态未被测试改变；本地启动、健康检查、登录页 HTTP 200 和停止脚本通过。当前主机无 Docker CLI，因此 Docker 实机构建未执行，不能宣称本轮镜像构建通过。完整记录见 `reports/documentation-capability-audit-20260828.md`。
 

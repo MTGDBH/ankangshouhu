@@ -1,10 +1,11 @@
+import { renderPage } from '../../src/lib/renderPage.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const html = fs.readFileSync(new URL('../../../frontend/desktop/care.html', import.meta.url), 'utf8');
-const css = fs.readFileSync(new URL('../../../assets/css/styles.css', import.meta.url), 'utf8');
-const js = fs.readFileSync(new URL('../../../assets/js/care.js', import.meta.url), 'utf8');
-const auth = fs.readFileSync(new URL('../../../assets/js/auth.js', import.meta.url), 'utf8');
+const html = renderPage('care');
+const css = fs.readFileSync(new URL('../../../frontend/assets/css/desktop-base.css', import.meta.url), 'utf8');
+const js = fs.readFileSync(new URL('../../../frontend/assets/js/care.js', import.meta.url), 'utf8');
+const auth = fs.readFileSync(new URL('../../../frontend/assets/js/auth.js', import.meta.url), 'utf8');
 new Function(js);
 
 assert.match(js, /replace\(\/\[&<>"'\]\/g/);

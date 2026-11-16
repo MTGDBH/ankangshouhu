@@ -14,7 +14,7 @@ OUT = ROOT / "reports" / "submission-artifact-manifest-20260821.json"
 
 
 FILES = [
-    "FINAL_DELIVERY.md",
+    "docs/final-delivery.md",
     "deliverables/national_award/project_title.md",
     "deliverables/national_award/SUBMISSION_INDEX.md",
     "deliverables/national_award/elderly_health_national_award.pptx",

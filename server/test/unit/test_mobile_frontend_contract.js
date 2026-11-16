@@ -1,19 +1,20 @@
+import { renderPage } from '../../src/lib/renderPage.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read = path => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
-const mobile = read('../../../frontend/app/mobile.html');
-const family = read('../../../frontend/app/family.html');
-const login = read('../../../frontend/auth/login.html');
-const register = read('../../../frontend/auth/register.html');
-const core = read('../../../assets/js/pro-core.js');
-const authJs = read('../../../assets/js/pro-auth.js');
-const mobileJs = read('../../../assets/js/pro-mobile.js');
-const familyJs = read('../../../assets/js/pro-family.js');
-const chartJs = read('../../../assets/js/pro-charts.js');
-const chartCss = read('../../../assets/css/pro-charts.css');
-const css = read('../../../assets/css/pro-tailwind.css');
+const mobile = renderPage('mobile');
+const family = renderPage('family');
+const login = renderPage('login');
+const register = renderPage('register');
+const core = read('../../../frontend/assets/js/pro-core.js');
+const authJs = read('../../../frontend/assets/js/pro-auth.js');
+const mobileJs = read('../../../frontend/assets/js/pro-mobile.js');
+const familyJs = read('../../../frontend/assets/js/pro-family.js');
+const chartJs = read('../../../frontend/assets/js/pro-charts.js');
+const chartCss = read('../../../frontend/assets/css/pro-charts.css');
+const css = read('../../../frontend/assets/css/pro-tailwind.css');
 const server = read('../../src/index.js');
 const pages = read('../../src/routes/pages.js');
 

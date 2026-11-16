@@ -249,13 +249,14 @@ function runPython(group) {
 }
 
 function runSyntax() {
-  const listed = spawnSync('git', ['ls-files', '*.js', '*.mjs'], { cwd: repoRoot, encoding: 'utf8' });
+  const listed = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard', '*.js', '*.mjs'], { cwd: repoRoot, encoding: 'utf8' });
   if (listed.status !== 0) {
     const reason = listed.error ? listed.error.message : `exit ${listed.status}`;
     throw new Error(`git ls-files failed (${reason}); 语法检查需要可用的 git 与仓库工作区`);
   }
-  for (const file of listed.stdout.split(/\r?\n/).filter(Boolean)) {
-    run(process.execPath, ['--check', path.join(repoRoot, file)]);
+  for (const file of listed.stdout.split('\0').filter(Boolean)) {
+    const source = path.join(repoRoot, file);
+    if (fs.existsSync(source)) run(process.execPath, ['--check', source]);
   }
   runPython('syntax');
   console.log('Node syntax check: PASS');

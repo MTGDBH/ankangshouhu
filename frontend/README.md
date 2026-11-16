@@ -1,15 +1,9 @@
-# 前端版本与入口
+# 前端
 
-本目录按用户界面版本存放 HTML 源码。浏览器仍使用原来的根路径 URL，由 `server/src/routes/pages.js` 映射到这里；页面内指向 `assets/` 的资源路径无需修改。
+- [`index.html`](index.html) 是唯一的页面源文件。在文件里搜索 `data-view="mobile"`、`data-view="family"` 或其他页面名，就能找到相应界面。
+- [`assets/css/`](assets/css/) 是样式，[`assets/js/`](assets/js/) 是业务脚本。桌面公共脚本叫 `desktop-ui.js`，基础样式叫 `desktop-base.css`。
+- [`assets/screenshots/`](assets/screenshots/) 是展示页用到的界面截图。
 
-| 目录 | 页面 | 状态与用途 | 浏览器入口 |
-|---|---|---|---|
-| `app/` | `mobile.html`、`family.html` | 当前 Pro 主界面：老人移动端、家属/医生协同端 | `/mobile`、`/family` |
-| `auth/` | `login.html`、`register.html` | 当前登录与注册 | `/login.html`、`/register.html` |
-| `desktop/` | 14 个独立功能页 | 旧版桌面流程，继续提供功能和回归兼容 | `/index.html` 等同名路径 |
-| `demo/` | `showcase.html`、`dev.html` | 展示页与开发导航 | `/showcase.html`、`/dev.html` |
-| `archive/mobile-v1/` | 早期 CSS、JS 与蓝牙适配脚本 | 不再被页面引用，仅供历史对照 | 无公开入口 |
+双击 `index.html` 会看到本地入口和启动命令。从项目根目录运行 `.\scripts\Start-Local.ps1 -SkipSetup` 后，即可打开 [老人端](http://localhost:3001/mobile)、[家属端](http://localhost:3001/family) 或 [登录页](http://localhost:3001/login.html)。页面通过本机 Node 服务调用 API，修改 HTML 后重启服务可看到更新。
 
-`assets/css/pro-*.css`、`assets/js/pro-*.js` 主要供 Pro 主界面和鉴权页使用；`assets/css/styles.css`、`assets/css/pro-legacy.css`、`assets/js/api.js`、`assets/js/auth.js`、`assets/js/main.js` 主要供桌面版使用。当前在用的共享资源继续放在仓库根目录 `assets/`。
-
-新增页面时，同时更新 `server/src/routes/pages.js` 中的公开页面映射，并检查 `server/test/integration/test_static_asset_boundary.mjs`。不要把整个仓库根目录作为静态目录。
+[页面渲染代码](../server/src/lib/renderPage.js) 根据地址读取对应视图并加载公共资源。现有的 `/agent.html`、`/prediction.html` 等入口继续可用。文件名使用小写短横线，按功能命名。

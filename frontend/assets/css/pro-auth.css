@@ -1,0 +1,144 @@
+:root {
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  color: #18181b;
+  background: #f4f4f5;
+  --muted: #52525b;
+  --border: #d4d4d8;
+  --accent: #27272a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: clamp(16px, 4vw, 36px);
+}
+
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid #3f3f46;
+  outline-offset: 3px;
+}
+
+.auth-panel {
+  width: min(100%, 29rem);
+  padding: clamp(20px, 5vw, 36px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.back-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+.back-link:hover { text-decoration: underline; }
+.auth-panel h1 {
+  margin: 20px 0;
+  font-size: clamp(1.6rem, 5vw, 2rem);
+  line-height: 1.2;
+}
+
+.auth-form { display: grid; gap: 16px; }
+
+.field-label, legend {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 650;
+}
+
+.field input, .field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 9px 12px;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.password-field { position: relative; }
+.password-field input { padding-right: 4.5rem; }
+.show-password {
+  position: absolute;
+  inset: 4px 5px 4px auto;
+  padding: 0 10px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+}
+
+.two-fields, .roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roles-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.role-option:has(input:checked) {
+  border-color: var(--accent);
+  background: #f4f4f5;
+}
+.role-option input { accent-color: var(--accent); }
+
+.form-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.submit-btn {
+  min-height: 46px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+.submit-btn:hover { background: #3f3f46; }
+.submit-btn:disabled { opacity: 0.65; cursor: wait; }
+
+.error {
+  display: none;
+  padding: 10px 12px;
+  color: #9f1239;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+}
+.error.show { display: block; }
+
+.auth-switch, .demo-hint {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.auth-switch a { color: var(--accent); font-weight: 650; }
+.demo-hint { padding: 12px 0 0; border-top: 1px solid var(--border); }

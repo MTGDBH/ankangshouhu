@@ -71,23 +71,9 @@ body.app-body {
   min-height: 0;
   overflow: hidden;
   background: var(--app-bg);
+  padding-top: var(--safe-top);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
-}
-
-/* ------------------------------------------------------------ 顶部状态条 */
-/* 真机上系统本身有状态栏，这里只保留安全区留白，隐藏模拟的时间和信号图标 */
-.app-statusbar {
-  height: calc(2.75rem + var(--safe-top));
-  padding-top: var(--safe-top);
-  padding-left: calc(var(--app-gutter) + 4px);
-  padding-right: calc(var(--app-gutter) + 4px);
-}
-html.is-mobile-device .app-statusbar {
-  height: calc(0.4rem + var(--safe-top));
-}
-html.is-mobile-device .app-statusbar > * {
-  display: none;
 }
 
 /* ------------------------------------------------------------------ 顶栏 */
@@ -146,7 +132,7 @@ html.is-mobile-device .app-statusbar > * {
 
 /* ----------------------------------------------------------------- Toast */
 .app-toast {
-  top: calc(2.75rem + var(--safe-top) + 0.25rem) !important;
+  top: calc(var(--safe-top) + 0.75rem) !important;
   max-width: calc(100% - 2 * var(--app-gutter));
 }
 
@@ -210,9 +196,6 @@ html.is-mobile-device .app-statusbar > * {
 
 /* ------------------------------------------------------- 横屏 / 矮视口 */
 @media (orientation: landscape) and (max-height: 540px) {
-  .app-statusbar {
-    display: none;
-  }
   .app-header {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
@@ -238,9 +221,6 @@ html.is-mobile-device .app-statusbar > * {
     height: min(calc(100dvh - clamp(32px, 7vh, 72px)), 1020px);
     border-radius: 30px;
     box-shadow: 0 28px 80px -24px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  }
-  .app-statusbar {
-    height: calc(2.25rem + var(--safe-top));
   }
   /* 画布最宽 640px，4 列会让「141/83 mmHg」被迫折行；
      适老界面优先保证一行读完，所以保持 2 列。 */

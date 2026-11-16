@@ -1,6 +1,6 @@
 # 后端 API
 
-Node.js 22 + Express + SQLite。服务通过 `src/routes/pages.js` 托管 `frontend/` 中的 20 个 HTML 页面和 `/api`，不需要另启静态服务器。页面源码按版本分类，访问地址保持原样，详见 [`frontend/README.md`](../frontend/README.md)。
+Node.js 22 + Express + SQLite。Express 提供 `/api` 和页面路由，从 [前端入口](../frontend/index.html) 渲染对应视图。 [前端目录说明](../frontend/README.md)
 
 ## 启动
 
@@ -66,7 +66,7 @@ start-node22.bat
 npm test
 ```
 
-要求 Node `>=22 <23`。该命令运行 Node 单元/集成、Python 单元、GraphRAG、Curve、安全和语法检查，并保证测试不改写 Git 工作区。详见根目录 `TESTING.md`。
+要求 Node `>=22 <23`。该命令运行 Node 单元/集成、Python 单元、GraphRAG、Curve、安全和语法检查，并保证测试不改写 Git 工作区。详见[测试指南](../docs/testing.md)。
 
 ## 生产边界
 

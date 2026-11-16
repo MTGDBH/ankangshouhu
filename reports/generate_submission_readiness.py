@@ -18,7 +18,7 @@ def exists(rel: str) -> bool:
 def main() -> None:
     checks: list[tuple[str, bool, str]] = []
     required = [
-        ("最终交付说明", "FINAL_DELIVERY.md"),
+        ("最终交付说明", "docs/final-delivery.md"),
         ("国家奖 PPT", "deliverables/national_award/elderly_health_national_award.pptx"),
         ("项目总结书 PDF", "deliverables/national_award/latex/project_summary.pdf"),
         ("项目总结书 LaTeX 源码", "deliverables/national_award/latex/project_summary.tex"),

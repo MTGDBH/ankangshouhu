@@ -1,12 +1,9 @@
+import { renderPage } from '../../src/lib/renderPage.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, '..', '..', '..');
-const html = fs.readFileSync(path.join(root, 'frontend/desktop/monitoring.html'), 'utf8');
-const script = fs.readFileSync(path.join(root, 'assets', 'js', 'health-bulk-entry.js'), 'utf8');
+const html = renderPage('monitoring');
+const script = fs.readFileSync(new URL('../../../frontend/assets/js/health-bulk-entry.js', import.meta.url), 'utf8');
 
 assert.match(html, /id="health-description"/);
 assert.match(html, /id="bulk-voice-btn"/);

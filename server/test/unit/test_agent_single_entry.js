@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import db from '../../src/db.js';
-import { dailyTipForSubject } from '../../src/routes/api.js';
+import { dailyTipForSubject } from '../../src/routes/chat.js';
 
 const subject = db.prepare("SELECT id,name FROM users WHERE role='senior' ORDER BY id LIMIT 1").get();
 assert.ok(subject, '测试需要老人账号');

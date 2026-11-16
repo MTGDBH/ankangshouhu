@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const html = fs.readFileSync(new URL('../../../agent.html', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../../../frontend/desktop/agent.html', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../../../assets/css/styles.css', import.meta.url), 'utf8');
 const accessibilityCss = fs.readFileSync(new URL('../../../assets/css/agent-accessibility.css', import.meta.url), 'utf8');
 const apiClient = fs.readFileSync(new URL('../../../assets/js/api.js', import.meta.url), 'utf8');
-const settings = fs.readFileSync(new URL('../../../settings.html', import.meta.url), 'utf8');
-const apiRoutes = fs.readFileSync(new URL('../../src/routes/api.js', import.meta.url), 'utf8');
+const settings = fs.readFileSync(new URL('../../../frontend/desktop/settings.html', import.meta.url), 'utf8');
+const apiRoutes = fs.readFileSync(new URL('../../src/routes/chat.js', import.meta.url), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script, 'agent inline script is required');
 new Function(script);

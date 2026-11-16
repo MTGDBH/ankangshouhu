@@ -1,11 +1,13 @@
 # 后端 API
 
-Node.js 22 + Express + SQLite。服务同时托管仓库根目录的 15 个 HTML 页面和 `/api`，不需要另启静态服务器。
+Node.js 22 + Express + SQLite。服务通过 `src/routes/pages.js` 托管 `frontend/` 中的 20 个 HTML 页面和 `/api`，不需要另启静态服务器。页面源码按版本分类，访问地址保持原样，详见 [`frontend/README.md`](../frontend/README.md)。
 
 ## 启动
 
+从仓库根目录运行：
+
 ```powershell
-Set-Location 'D:\BIGCHUANG\-\server'
+Set-Location .\server
 npm ci
 npm start
 ```
@@ -43,6 +45,8 @@ start-node22.bat
 | `/api/ops` | 按角色控制的运行指标、审计和依赖状态 |
 
 完整路由以 `src/index.js` 和 `src/routes/` 为准，API 速查见仓库根目录 `README.md`。
+
+路由按职责拆分：`pages.js` 只负责公开页面及资源，`assessments.js`、`todos.js`、`devices.js` 分别处理评估、待办和设备，`chat.js` 处理对话与智能体记忆，其余模块在同名路由文件中。业务 API 都在 `src/index.js` 的鉴权守卫之后挂载。验证脚本放在 `test/`，不放在 `src/`。
 
 ## 权限边界
 

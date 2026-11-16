@@ -17,5 +17,5 @@ def test_git_and_docker_context_exclude_private_artifacts():
     assert not forbidden, f'private/cache files tracked: {forbidden}'
 
     dockerignore = (ROOT / '.dockerignore').read_text(encoding='utf-8')
-    for required in ('**/.env', '**/*.db', '**/__pycache__', 'private-artifacts'):
+    for required in ('**/.env', '**/*.db', '**/__pycache__', 'private-artifacts', 'ml/data', 'ml/models', 'ml/disease_risk/datasets/*_incidence_w1w2.csv'):
         assert required in dockerignore

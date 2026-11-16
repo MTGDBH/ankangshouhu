@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..', '..');
-const html = fs.readFileSync(path.join(root, 'monitoring.html'), 'utf8');
+const html = fs.readFileSync(path.join(root, 'frontend/desktop/monitoring.html'), 'utf8');
 const script = fs.readFileSync(path.join(root, 'assets', 'js', 'health-bulk-entry.js'), 'utf8');
 
 assert.match(html, /id="health-description"/);

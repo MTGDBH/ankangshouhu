@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { queryKnowledgeGraph } from './ai/tools/knowledgeGraph.js';
+import { queryKnowledgeGraph } from '../../src/ai/tools/knowledgeGraph.js';
 
 const question = '营养 肌力 活动 跌倒 认知 情绪 多重用药';
 const elderly = await queryKnowledgeGraph(question, null, {}, {

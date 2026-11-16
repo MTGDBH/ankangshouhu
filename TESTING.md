@@ -17,8 +17,10 @@
 
 ## 首次安装测试依赖
 
+以下命令从仓库根目录运行：
+
 ```powershell
-Set-Location 'D:\BIGCHUANG\-\server'
+Set-Location .\server
 npm ci
 
 Set-Location ..
@@ -31,7 +33,7 @@ python -m venv .venv
 ## 一键核心验收
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-\server'
+Set-Location .\server
 npm test
 ```
 
@@ -145,7 +147,6 @@ $curveReport = Join-Path $env:TEMP 'evicare-curve\report.md'
 ## 启动冒烟检查
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-'
 .\scripts\Start-Local.ps1 -SkipSetup
 Invoke-RestMethod http://localhost:3001/api/health
 Invoke-WebRequest http://localhost:3001/login.html -UseBasicParsing | Select-Object StatusCode
@@ -157,7 +158,6 @@ Invoke-WebRequest http://localhost:3001/login.html -UseBasicParsing | Select-Obj
 ## Docker 验收
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-'
 docker build -t evicare-local .
 docker run --rm -p 3001:3001 -e LOGIN_RATE_STORE=sqlite evicare-local
 ```
@@ -166,7 +166,7 @@ docker run --rm -p 3001:3001 -e LOGIN_RATE_STORE=sqlite evicare-local
 
 ## CI
 
-`.github/workflows` 当前只运行 Node 22 + Python 3.13，不再宣称 Node 20 矩阵。CI 依次执行所有分组测试；Docker job 依赖测试 job，通过后构建镜像并检查镜像内不包含 `.env`、SQLite 数据库或 `.pyc`，非 PR 事件再推送 GHCR。
+`.github/workflows` 当前只运行 Node 22 + Python 3.13，不再宣称 Node 20 矩阵。CI 先检查已跟踪文件中是否混入研究派生 CSV、私有数据、环境密钥或本机数据库，再执行所有分组测试；Docker job 依赖测试 job，通过后构建镜像并检查镜像内不包含这些 CSV、`.env`、SQLite 数据库或 `.pyc`，非 PR 事件再推送 GHCR。
 
 ## 结果解释
 

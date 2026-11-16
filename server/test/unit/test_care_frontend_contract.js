@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const html = fs.readFileSync(new URL('../../../care.html', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../../../frontend/desktop/care.html', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../../../assets/css/styles.css', import.meta.url), 'utf8');
 const js = fs.readFileSync(new URL('../../../assets/js/care.js', import.meta.url), 'utf8');
 const auth = fs.readFileSync(new URL('../../../assets/js/auth.js', import.meta.url), 'utf8');

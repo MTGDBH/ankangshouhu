@@ -35,6 +35,9 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-test.txt
 
+      - name: Check tracked data and secrets
+        run: python scripts/check_repository_hygiene.py
+
       - name: Install Node dependencies
         working-directory: server
         run: npm ci
@@ -82,7 +85,7 @@ jobs:
       - name: Build and inspect local image
         run: |
           docker build -t evicare-security-check .
-          docker run --rm --entrypoint sh evicare-security-check -c 'found="$(find /app -type f \( -name ".env" -o -name "*.db" -o -name "*.sqlite" -o -name "*.sqlite3" -o -name "*.pyc" \) -print -quit)"; test -z "$found"'
+          docker run --rm --entrypoint sh evicare-security-check -c 'found="$(find /app -type f \( -name ".env" -o -name "*.db" -o -name "*.sqlite" -o -name "*.sqlite3" -o -name "*.pyc" -o -name "*_incidence_w1w2.csv" \) -print -quit)"; test -z "$found"'
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'

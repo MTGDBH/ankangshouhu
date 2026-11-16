@@ -4,6 +4,8 @@
 
 > 当前定位：工程原型与研究演示系统，不是医疗器械，不输出诊断、处方或个体用药调整。演示账号和部分评测使用合成数据；AI 证据预审核不等同于医生审核。
 
+**仓库导航**：前端版本见 [`frontend/`](frontend/README.md)，共享资源在 `assets/`；API 在 [`server/`](server/README.md)，曲线与疾病风险代码在 `ml/`，证据检索在 [`elderly-health-rag/`](elderly-health-rag/README.md)。运行与测试分别见下文“快速开始”和 [`TESTING.md`](TESTING.md)；研究报告与提交材料在 `reports/`、`deliverables/`。
+
 ## 当前能力与证据等级
 
 | 能力 | 状态 | 实现与边界 |
@@ -22,13 +24,14 @@
 | 复测随访闭环 | 已完成 | 支持建议、确认、执行、到期、候选测量匹配、结果回填、取消/拒绝等状态 |
 | Docker 与本地部署 | 已完成 | Windows 安装/启动/停止脚本；单容器 Dockerfile；Node 服务同时托管前端和 API |
 
-## 19 个根目录 HTML 页面
+## 前端版本与页面
 
-页面总数按仓库根目录 `*.html` 实际文件统计为 **19**：新增 1 个统一移动端应用，同时保留 14 个桌面功能页、2 个鉴权页和 2 个展示/开发页。
+`frontend/` 共 **20** 个 HTML 页面：2 个 Pro 主界面、14 个桌面功能页、2 个鉴权页和 2 个展示/开发页。旧的根路径 URL 继续可用，源码归类与资源边界见 [`frontend/README.md`](frontend/README.md)。
 
 | 类型 | 页面 | 用途 |
 |---|---|---|
 | 移动端 | `mobile.html` / `/mobile` | 新版手机应用：登录、健康摘要、测量、趋势、计划、评估、提醒、智能管家、知识、照护与账户设置 |
+| 家属/医生端 | `family.html` / `/family` | 新版家人协同守护中心 |
 | 鉴权 | `login.html` | 登录、演示账号入口 |
 | 鉴权 | `register.html` | 创建老人或家属账号并建立会话 |
 | 功能 | `index.html` | 健康概览、待办、预警和快捷入口 |
@@ -71,8 +74,11 @@
 
 要求：PowerShell、可用的 Python 3.14 x64，以及可联网取得 Node 22.16.0（安装脚本通过 `npx` 使用固定 Node 版本）。
 
+先克隆仓库并进入根目录；后续命令均以仓库根目录为起点：
+
 ```powershell
-Set-Location 'D:\BIGCHUANG\-'
+git clone https://github.com/MTGDBH/ankangshouhu.git
+Set-Location .\ankangshouhu
 .\scripts\Install-Local.ps1
 .\scripts\Start-Local.ps1 -SkipSetup
 ```
@@ -88,7 +94,6 @@ Set-Location 'D:\BIGCHUANG\-'
 移动端朗读优先使用本机 Kokoro 中文语音模型，朗读文字只在本机生成音频，不发送到在线语音服务。首次使用需要额外安装 Python 3.12 或 3.13，并下载约 218 MB 的模型文件：
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-'
 .\scripts\Install-Local-Voice.ps1
 .\scripts\Stop-Local.ps1
 .\scripts\Start-Local.ps1 -SkipSetup
@@ -103,7 +108,6 @@ Set-Location 'D:\BIGCHUANG\-'
 首次使用安装约 239 MB 的本机识别模型：
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-'
 .\scripts\Install-Local-ASR.ps1
 .\scripts\Stop-Local.ps1
 .\scripts\Start-Local.ps1 -SkipSetup
@@ -118,17 +122,16 @@ Set-Location 'D:\BIGCHUANG\-'
 要求 Node `>=22 <23`。
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-\server'
+Set-Location .\server
 npm ci
 npm start
 ```
 
-Node 服务已同时托管根目录静态页面，不需要另开 Python 静态服务器。移动端访问 `http://localhost:3001/mobile`，桌面端仍可访问 `http://localhost:3001/login.html`。
+Node 服务已同时托管 `frontend/` 中的页面，不需要另开 Python 静态服务器。移动端访问 `http://localhost:3001/mobile`，桌面端仍可访问 `http://localhost:3001/login.html`。
 
 ### Docker
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-'
 docker build -t evicare-local .
 docker run --rm -p 3001:3001 -e LOGIN_RATE_STORE=sqlite evicare-local
 ```
@@ -140,7 +143,7 @@ docker run --rm -p 3001:3001 -e LOGIN_RATE_STORE=sqlite evicare-local
 首次执行先安装测试依赖：
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-\server'
+Set-Location .\server
 npm ci
 Set-Location ..
 python -m venv .venv
@@ -150,7 +153,7 @@ python -m venv .venv
 核心无副作用验收：
 
 ```powershell
-Set-Location 'D:\BIGCHUANG\-\server'
+Set-Location .\server
 npm test
 ```
 
@@ -183,13 +186,13 @@ npm test
 
 ```text
 .
-├── *.html                         # 19 个根目录页面
+├── frontend/                      # Pro 主界面、鉴权、桌面版、展示页（20 个 HTML）
 ├── assets/                        # 共享 CSS、API/鉴权/批量录入脚本
 ├── server/
 │   ├── src/auth.js                # 注册、登录、登出、会话中间件
 │   ├── src/services/authService.js# bcrypt、锁定、会话过期
 │   ├── src/db.js                  # SQLite schema 与兼容迁移
-│   ├── src/routes/                # 健康、预测、GraphRAG、行动、授权等路由
+│   ├── src/routes/                # 页面、评估、待办、设备、对话及其他业务路由
 │   ├── test/unit/                 # Node 单元测试（进程内断言）
 │   ├── test/integration/          # 集成测试（临时服务 + 隔离数据库）
 │   ├── test/evaluate/             # 离线评测脚本
@@ -205,6 +208,8 @@ npm test
 ├── FINAL_DELIVERY.md
 └── TESTING.md
 ```
+
+研究队列的受访者级派生 CSV 仅留在授权研究者本机。公开仓库保留构建脚本、哈希清单和汇总报告；离线训练与评测需要先在本机准备对应数据，详见 [`ml/DATA_CLASSIFICATION.md`](ml/DATA_CLASSIFICATION.md)。
 
 ## 演示账号
 

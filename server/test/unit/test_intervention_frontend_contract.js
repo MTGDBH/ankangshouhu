@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const html = fs.readFileSync(new URL('../../../intervention.html', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../../../frontend/desktop/intervention.html', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../../../assets/css/styles.css', import.meta.url), 'utf8');
 const js = fs.readFileSync(new URL('../../../assets/js/intervention.js', import.meta.url), 'utf8');
 const auth = fs.readFileSync(new URL('../../../assets/js/auth.js', import.meta.url), 'utf8');
@@ -77,6 +77,6 @@ assert.ok((html.match(/<button\b/g) || []).length >= 4);
 assert.match(html, /aria-live="polite"/);
 assert.match(html, /aria-busy="true"/);
 assert.match(auth, /intervention\.html/);
-assert.match(fs.readFileSync(new URL('../../../agent.html', import.meta.url), 'utf8'), /id="agent-intervention-link"/);
+assert.match(fs.readFileSync(new URL('../../../frontend/desktop/agent.html', import.meta.url), 'utf8'), /id="agent-intervention-link"/);
 
 console.log('intervention frontend contract: PASS');

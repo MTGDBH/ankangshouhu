@@ -3,8 +3,6 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import crypto from 'node:crypto';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import db from './db.js';
 import authRouter, { sessionMiddleware, requireAuth } from './auth.js';
 import { getLLMStatus } from './ai/agent.js';
@@ -14,10 +12,24 @@ import opsRouter from './routes/ops.js';
 import { pythonRuntimeHealth } from './services/pythonRuntime.js';
 import { requestLimits } from './middleware/requestLimits.js';
 import { cleanupPrivacyRetention } from './services/privacyService.js';
+import pagesRouter from './routes/pages.js';
+import healthRouter from './routes/health.js';
+import assessmentsRouter from './routes/assessments.js';
+import todosRouter from './routes/todos.js';
+import devicesRouter from './routes/devices.js';
+import chatRouter from './routes/chat.js';
+import profileRouter from './routes/profile.js';
+import knowledgeRouter from './routes/knowledge.js';
+import alertsRouter from './routes/alerts.js';
+import trendRouter from './routes/trend.js';
+import settingsRouter from './routes/settings.js';
+import predictionRouter from './routes/prediction.js';
+import actionsRouter from './routes/actions.js';
+import careRouter from './routes/care.js';
+import weatherRouter from './routes/weather.js';
+import privacyRouter from './routes/privacy.js';
+import voiceRouter from './routes/voice.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
@@ -77,56 +89,18 @@ app.get('/api/health/dependencies', async (_req, res) => {
 app.use('/api/auth', authRouter);
 
 // ===== 静态前端（Sealos / 单容器部署）=====
-app.get('/login', (_req, res) => res.redirect('/login.html'));
-app.get('/mobile', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'mobile.html')));
-app.get('/family', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'family.html')));
-app.get('/', (req, res) => res.redirect(req.user?.role === 'caregiver' || req.user?.role === 'doctor' ? '/family' : '/mobile'));
-
-// 只公开前端资源：根目录 *.html、assets/、截图/。
-// ROOT_DIR 是仓库根，直接 express.static(ROOT_DIR) 会让整个项目可通过 HTTP 读取，
-// 包括 server/data/*.db（健康数据）、server/src/** 源码和 private-artifacts/ 模型包。
-const PUBLIC_STATIC_DIRS = new Set(['assets', '截图']);
-app.use((req, res, next) => {
-  // 业务 API 路由注册在本守卫之后，这里必须放行，否则会被全部挡成 404。
-  if (req.path === '/api' || req.path.startsWith('/api/')) return next();
-  let segments;
-  try {
-    segments = decodeURIComponent(req.path).split('/').filter(Boolean);
-  } catch {
-    return res.status(400).type('text/plain').send('Bad Request');
-  }
-  if (segments.some(segment => segment === '..' || segment.includes('\\'))) {
-    return res.status(404).type('text/plain').send('Not Found');
-  }
-  const isPublicPage = segments.length === 1 && /\.html$/i.test(segments[0]);
-  if (isPublicPage || PUBLIC_STATIC_DIRS.has(segments[0])) return next();
-  return res.status(404).type('text/plain').send('Not Found');
-});
-
-app.use(express.static(ROOT_DIR));
+app.use(pagesRouter);
 
 // ===== 鉴权守卫 =====
 app.use('/api', requireAuth);
 app.use('/api', auditMutations);
 
 // ===== 业务路由（鉴权后）=====
-// 这些在后续任务中逐个挂载
-import healthRouter from './routes/health.js';
-import apiRouter from './routes/api.js';
-import profileRouter from './routes/profile.js';
-import knowledgeRouter from './routes/knowledge.js';
-import alertsRouter from './routes/alerts.js';
-import trendRouter from './routes/trend.js';
-import settingsRouter from './routes/settings.js';
-import predictionRouter from './routes/prediction.js';
-import actionsRouter from './routes/actions.js';
-import careRouter from './routes/care.js';
-import weatherRouter from './routes/weather.js';
-import privacyRouter from './routes/privacy.js';
-import voiceRouter from './routes/voice.js';
-
 app.use('/api/health', healthRouter);
-app.use('/api', apiRouter);
+app.use('/api', assessmentsRouter);
+app.use('/api', todosRouter);
+app.use('/api', devicesRouter);
+app.use('/api', chatRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/knowledge', knowledgeRouter);
 app.use('/api/alerts', alertsRouter);

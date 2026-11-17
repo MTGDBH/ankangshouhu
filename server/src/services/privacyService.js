@@ -55,7 +55,8 @@ export function privacyOverview(userId) {
       + count('SELECT COUNT(*) count FROM health_intakes WHERE subject_user_id=?', userId),
     devices: count('SELECT COUNT(*) count FROM devices WHERE user_id=?', userId),
     conversations: count('SELECT COUNT(*) count FROM chat_messages WHERE subject_user_id=? OR (subject_user_id IS NULL AND user_id=?)', userId, userId)
-      + count('SELECT COUNT(*) count FROM agent_memories WHERE subject_user_id=?', userId),
+      + count('SELECT COUNT(*) count FROM agent_memories WHERE subject_user_id=?', userId)
+      + count('SELECT COUNT(*) count FROM temporal_memory_revisions WHERE subject_user_id=?', userId),
     predictions: count('SELECT COUNT(*) count FROM prediction_inputs WHERE user_id=?', userId)
       + count("SELECT COUNT(*) count FROM chat_messages WHERE subject_user_id=? AND prediction_snapshot IS NOT NULL AND prediction_snapshot<>''", userId),
     actions: count('SELECT COUNT(*) count FROM todos WHERE user_id=?', userId)
@@ -117,6 +118,9 @@ export function buildPersonalExport(userId) {
       messages: conversations,
       conversations: selectOwn('agent_conversations', 'id,title,summary,status,created_at,updated_at', 'subject_user_id=?', userId),
       memories: selectOwn('agent_memories', 'id,category,memory_key,content,status,valid_until,confirmed_at,created_at,updated_at', 'subject_user_id=?', userId),
+      temporal_memory_revisions: selectOwn('temporal_memory_revisions',
+        'id,kind,metric,event_at,valid_from,valid_until,quality_status,source_refs,supersedes_id,created_at', 'subject_user_id=?', userId)
+        .map(({ source_refs, ...row }) => ({ ...row, sources: parseJSON(source_refs, []).map(({ kind, id }) => ({ kind, id })) })),
       feedback: selectOwn('agent_message_feedback', 'id,message_id,rating,reason,created_at,updated_at', 'subject_user_id=?', userId),
     },
     predictions: {

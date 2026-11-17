@@ -1,12 +1,14 @@
 import { renderPage } from '../../src/lib/renderPage.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 const html = renderPage('prediction');
 const css = fs.readFileSync(new URL('../../../frontend/assets/css/desktop-base.css', import.meta.url), 'utf8');
+const discovery = fs.readFileSync(new URL('../../../frontend/assets/js/health-discovery.js', import.meta.url), 'utf8');
 const script = html.match(/<script>\s*([\s\S]*?)<\/script>\s*<\/body>/)?.[1];
 assert.ok(script, 'inline prediction script is required');
 new Function(script);
-for (const text of ['健康发现','指标趋势','完善档案','现在怎么样','下一步','常见疾病风险筛查','模型未通过个人概率准入','一次一题']) assert.match(html, new RegExp(text));
+for (const text of ['健康发现','指标趋势','完善档案','现在怎么样','下一步','常见疾病风险筛查','模型未通过个人概率准入','一次一题']) assert.match(html + discovery, new RegExp(text));
 for (const text of ['静息呼吸频率','BMI','脉压','同龄同性别人群参考','医学健康管理参考']) assert.match(html, new RegExp(text));
 for (const endpoint of ['/api/prediction/discovery/overview','/api/prediction/intake/schema','/api/prediction/intakes']) assert.ok(html.includes(endpoint));
 assert.match(html, /subject_user_id/);
@@ -20,4 +22,13 @@ assert.match(css, /\.peer-median/);
 assert.match(html, /function niceScale/);
 assert.match(html, /series\.map/);
 assert.doesNotMatch(html, /固定功能区|异常风险概率|心电/);
+const context = { window:{} };
+vm.runInNewContext(discovery, context);
+const riskCards = context.window.HealthDiscovery.cards({
+  hypertension:{ status:'limited', risk_percent:45.6, risk_level:'low', gate_result:{ passed:false } },
+  diabetes:{ error:'no_data' },
+});
+assert.match(riskCards, /未达准入/);
+assert.match(riskCards, /资料不足/);
+assert.doesNotMatch(riskCards, /45\.6%|相对较低|资料完整度 0%/);
 console.log('health discovery frontend static acceptance: PASS');

@@ -8,6 +8,7 @@ export const CARE_SCOPE_DEFINITIONS = Object.freeze({
   view_interventions: '查看改善计划',
   view_adherence: '查看最近执行情况',
   record_intake: '协助录入健康问卷',
+  record_measurements: '协助录入健康测量',
   remind_execution: '提醒执行计划',
   record_adherence: '协助记录计划执行',
   view_trends: '查看完整健康趋势',
@@ -20,7 +21,7 @@ export const CARE_SCOPE_DEFINITIONS = Object.freeze({
 export const CARE_ROLE_SCOPES = Object.freeze({
   caregiver: Object.freeze([
     'view_summary', 'view_alerts', 'view_retest', 'view_interventions', 'view_adherence',
-    'record_intake', 'remind_execution', 'record_adherence', 'manage_followups', 'use_agent',
+    'record_intake', 'record_measurements', 'remind_execution', 'record_adherence', 'manage_followups', 'use_agent',
   ]),
   doctor: Object.freeze([
     'view_summary', 'view_alerts', 'view_retest', 'view_interventions', 'view_adherence',
@@ -34,7 +35,7 @@ function parseJSON(value, fallback = []) {
 }
 
 export function defaultScopesForRole(role) {
-  return [...(CARE_ROLE_SCOPES[role] || [])];
+  return (CARE_ROLE_SCOPES[role] || []).filter(scope => scope !== 'record_measurements');
 }
 
 export function sanitizeCareScopes(role, rawScopes, { legacyFallback = false } = {}) {

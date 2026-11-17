@@ -530,6 +530,24 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_agent_memories_subject_status
     ON agent_memories(subject_user_id, status, updated_at DESC);
 
+  CREATE TABLE IF NOT EXISTS temporal_memory_revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    memory_key TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK(kind IN ('profile','event','trend','feedback','conflict')),
+    metric TEXT,
+    event_at TEXT NOT NULL,
+    valid_from TEXT NOT NULL,
+    valid_until TEXT,
+    quality_status TEXT NOT NULL,
+    source_refs TEXT NOT NULL,
+    source_fingerprint TEXT NOT NULL,
+    supersedes_id INTEGER REFERENCES temporal_memory_revisions(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_temporal_revisions_key
+    ON temporal_memory_revisions(subject_user_id,memory_key,id DESC);
+
   CREATE TABLE IF NOT EXISTS agent_message_feedback (
     id INTEGER PRIMARY KEY,
     message_id INTEGER NOT NULL REFERENCES chat_messages(id) ON DELETE CASCADE,
@@ -738,6 +756,21 @@ addColumnIfMissing('metrics', 'device_id', 'INTEGER');
 addColumnIfMissing('metrics', 'measurement_condition', 'TEXT');
 addColumnIfMissing('metrics', 'data_quality', 'TEXT');
 addColumnIfMissing('metrics', 'measurement_context', 'TEXT');
+addColumnIfMissing('metrics', 'actor_user_id', 'INTEGER REFERENCES users(id) ON DELETE SET NULL');
+addColumnIfMissing('metrics', 'revision', 'INTEGER NOT NULL DEFAULT 1');
+addColumnIfMissing('metrics', 'updated_at', 'TEXT');
+db.exec(`
+  CREATE TABLE IF NOT EXISTS metric_id_sequence (singleton INTEGER PRIMARY KEY CHECK(singleton=1), last_id INTEGER NOT NULL);
+  INSERT OR IGNORE INTO metric_id_sequence SELECT 1, COALESCE(MAX(id), 0) FROM metrics;
+  CREATE TRIGGER IF NOT EXISTS metrics_track_id AFTER INSERT ON metrics
+  BEGIN
+    UPDATE metric_id_sequence SET last_id = MAX(last_id, NEW.id) WHERE singleton=1;
+  END;
+`);
+addColumnIfMissing('alerts', 'source_ref', 'TEXT');
+addColumnIfMissing('alerts', 'rule_version', 'TEXT');
+addColumnIfMissing('alerts', 'rule_key', 'TEXT');
+addColumnIfMissing('alerts', 'evidence_metric_ids', 'TEXT');
 addColumnIfMissing('metric_defs', 'prediction_mode', "TEXT NOT NULL DEFAULT 'not_supported'");
 // 设备同步状态扩展
 addColumnIfMissing('devices', 'battery_level', 'INTEGER');

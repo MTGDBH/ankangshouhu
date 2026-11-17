@@ -313,7 +313,7 @@ async function postJSON(url, headers, body, signal = null) {
   });
   if (!res.ok) {
     await res.text();
-    throw new Error(`LLM API HTTP ${res.status}`);
+    throw Object.assign(new Error(`LLM API HTTP ${res.status}`), { code: `LLM_HTTP_${res.status}` });
   }
   return res.json();
 }

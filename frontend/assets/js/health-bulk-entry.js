@@ -49,7 +49,7 @@
     summary.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => {
       records.splice(Number(button.dataset.remove), 1);
       renderPreview();
-      setStatus('已取消填充该项目，其余数据仍在下方今日数据中。');
+      setStatus('已取消填充该项目，其余数据仍在下方测量指标中。');
     }));
     window.refreshTodayCards?.();
   }
@@ -71,7 +71,7 @@
       warnings = result.warnings || [];
       renderPreview();
       if (records.length) {
-        setStatus(`已将${records.length}项数据填入下方“今日数据”，请核对后确认保存。`, 'success');
+        setStatus(`已将${records.length}项数据填入下方“测量指标”，请核对后确认保存。`, 'success');
         document.querySelector('.entry-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
         setStatus('暂时没有识别出完整数据，请按提示补充。', 'error');
@@ -83,7 +83,7 @@
       setStatus(error.message || '识别失败，请稍后再试。', 'error');
     } finally {
       button.disabled = false;
-      button.textContent = '识别并填入今日数据';
+      button.textContent = '识别并填入测量指标';
     }
   }
 
@@ -131,7 +131,7 @@
       voiceUsed = false;
     }
     if (saved) {
-      setStatus(`已保存${saved}项健康数据，下面的今日数据卡片已更新。`, failed.length ? 'warning' : 'success');
+      setStatus(`已保存${saved}项健康数据，下面的测量指标卡片已更新。`, failed.length ? 'warning' : 'success');
       toast(`已保存 ${saved} 项健康数据`, 'success');
       if (typeof window.loadAll === 'function') await window.loadAll();
     } else {

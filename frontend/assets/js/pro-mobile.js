@@ -4,20 +4,6 @@
   const VoiceSummary = window.ProVoiceSummary;
   const $ = id => document.getElementById(id);
   const panes = ['overview','butler','risk','trends','care','profile','account','knowledge'];
-  const DISEASE_NAMES = { hypertension: '高血压', diabetes: '糖尿病', heart_disease: '冠心病', stroke: '脑卒中' };
-  const GATE_LABELS = {
-    participant_disjoint: '受试者不重叠', auc: 'AUC 达标', auc_ci: 'AUC 置信区间',
-    brier_skill: 'Brier 技能分', calibration_slope: '校准斜率', calibration_ece: '校准误差',
-    subgroup_fairness: '亚组公平性', artifact_binding: '产物绑定',
-  };
-  const RISK_STATUS = {
-    existing_diagnosis: ['已确诊 · 进入管理', 'is-manage'],
-    limited: ['证据有限', 'is-limited'],
-    available: ['可评估', 'is-ok'],
-    ok: ['可评估', 'is-ok'],
-    insufficient_data: ['资料不足', 'is-limited'],
-    unavailable: ['暂不可用', 'is-limited'],
-  };
   const KNOWLEDGE_PROMPTS = ['老年人高血压饮食注意', '跌倒风险如何预防', '多重用药要注意什么', '认知下降早期信号'];
   const FOLLOWUP_STATUS = { scheduled: '待复测', pending: '待复测', pending_result_confirmation: '待确认结果', completed: '已完成', cancelled: '已取消', overdue: '已逾期' };
   const METRIC_NAMES = { bp: '血压', glucose: '血糖', hr: '心率', weight: '体重', sleep: '睡眠', steps: '步数', spo2: '血氧', waist: '腰围', grip: '握力' };
@@ -26,6 +12,7 @@
   let user = null, data = null, currentTab = panes.includes(requestedTab) ? requestedTab : 'overview';
   let mobileConversationId = null;
   let mobileHistoryVersion = 0;
+  let mobileRecords = null;
   const voiceChoices = new Set(['zf_001', 'zf_002', 'zm_009']);
   let voiceAudio = null, voiceRequest = null, voiceUrl = null;
   let trendVoicePoints = null, activeAuthorizationCount = null;
@@ -283,76 +270,25 @@
       });
     } catch (error) { area.textContent = error.message; }
   }
-  /* ------------------------------------------------------------------
-     慢病风险评估：直接消费 /api/prediction/discovery/overview
-     重点不是给一个概率数字，而是把「模型是否通过验证门槛」讲清楚。
-     ------------------------------------------------------------------ */
-  function riskItem(key, v) {
-    const name = DISEASE_NAMES[key] || key;
-    const [label, badge] = RISK_STATUS[v.status] || [v.status || '未知', 'is-limited'];
-    const level = ({ low: '低', medium: '中', high: '高' })[v.risk_level] || null;
-    const missing = (v.missing_features || []).filter(Boolean);
-    const gate = v.gate_result || null;
-    const checks = (gate && gate.checks) || {};
-    const passed = Object.values(checks).filter(Boolean).length;
-    const total = Object.keys(checks).length;
-    const m = (gate && gate.metrics) || {};
-    const metricsLine = [
-      gate && gate.evaluated_model ? `评估模型 ${gate.evaluated_model}` : '',
-      gate && gate.deployed_model ? `上线模型 ${gate.deployed_model}` : '',
-      m.roc_auc != null ? `AUC ${Number(m.roc_auc).toFixed(3)}` : '',
-      m.brier != null ? `Brier ${Number(m.brier).toFixed(3)}` : '',
-    ].filter(Boolean).join(' · ');
-    const gateHtml = gate ? `<details class="risk-gate"><summary>证据门禁 ${passed}/${total} 项通过</summary>
-        <ul class="gate-grid">${Object.entries(checks).map(([k, ok]) => `<li class="${ok ? 'is-ok' : 'is-no'}"><span>${ok ? '✓' : '✕'}</span>${P.esc(GATE_LABELS[k] || k)}</li>`).join('')}</ul>
-        ${gate.reason_code ? `<p class="gate-note">未放行原因：${P.esc(gate.reason_code)}</p>` : ''}
-        ${metricsLine ? `<p class="gate-metrics">${P.esc(metricsLine)}</p>` : ''}
-        ${gate.evaluation_run_id ? `<p class="gate-note">评估批次 ${P.esc(gate.evaluation_run_id)}</p>` : ''}
-      </details>` : '';
-    const desc = v.disclaimer || (v.existing_diagnosis ? '已确诊疾病不再计算新发风险，转入日常管理。' : '');
-    return `<div class="risk-item">
-      <div class="risk-item-head"><span class="risk-name">${P.esc(name)}</span><span class="risk-badge ${badge}">${P.esc(label)}</span></div>
-      ${desc ? `<p class="risk-desc">${P.esc(desc)}</p>` : ''}
-      <div class="risk-meta">
-        ${level ? `<span>风险等级 <b>${level}</b></span>` : ''}
-        ${v.horizon_years ? `<span>窗口 <b>${v.horizon_years} 年</b></span>` : ''}
-        <span>${missing.length ? `缺失 <b>${P.esc(missing.join('、'))}</b>` : '特征 <b>完整</b>'}</span>
-      </div>
-      ${gateHtml}
-    </div>`;
-  }
   async function renderRisk() {
     const box = $('tab-risk');
     if (!box || riskLoading) return;
     riskLoading = true;
-    box.innerHTML = P.notice('正在筛查', '正在读取四类慢病风险与证据门禁…');
+    box.innerHTML = '<div class="health-panel" role="status">正在读取筛查和健康发现…</div>';
     try {
-      const d = await P.get('/api/prediction/discovery/overview');
-      if (!box.isConnected) return;
-      const s = d.summary || {};
-      const tone = s.severity === 'critical' ? 'is-critical' : s.severity === 'warning' ? 'is-warning' : 'is-stable';
-      const kicker = ({ critical: '需要立即处理', warning: '建议留意', stable: '状态平稳' })[s.severity] || '筛查结果';
-      const cards = ['hypertension', 'diabetes', 'heart_disease', 'stroke']
-        .filter(k => d.diseases && d.diseases[k]).map(k => riskItem(k, d.diseases[k]));
-      const seenEvents = new Set();
-      const events = (d.events || []).filter(ev => {
-        const key = ev.event_key || ev.title || '';
-        if (seenEvents.has(key)) return false;
-        seenEvents.add(key);
-        return true;
-      }).slice(0, 3);
-      box.innerHTML = `<div class="risk-hero ${tone}">
-          <span class="risk-hero-kicker">${kicker}</span>
-          <h3>${P.esc(s.current || '暂无结论')}</h3>
-          ${s.change ? `<p>${P.esc(s.change)}</p>` : ''}
-          ${s.action ? `<div class="risk-hero-action">建议：${P.esc(s.action)}</div>` : ''}
-        </div>`
-        + `<div class="risk-grid">${cards.join('')}</div>`
-        + (events.length ? P.card('需要关注的发现', events.map(ev => `<div class="rounded-xl bg-white/70 p-3"><strong>${P.esc(ev.title)}</strong><p class="text-sm text-zinc-600 mt-1">${P.esc(ev.message || '')}</p><p class="text-xs text-zinc-400 mt-1">${P.esc(ev.action || '')}</p></div>`).join('<div class="h-2"></div>')) : '')
-        + `<p class="risk-disclaimer">${P.esc(d.disclaimer || '风险筛查用于提示和复测，不是诊断。')}</p>`;
-    } catch (error) {
-      if (box.isConnected) box.innerHTML = P.notice('风险筛查暂时不可用', error.message) + `<div>${P.btn('重新评估', 'risk')}</div>`;
-    } finally { riskLoading = false; }
+      const result = await P.get('/api/prediction/discovery/overview');
+      const tone = result.summary?.severity === 'critical' ? ' is-critical' : '';
+      box.innerHTML = '<header class="health-page-header"><div><h1>健康发现</h1><p>查看待处理事项、筛查状态和下一步。</p></div></header>' +
+        '<div class="health-discovery-status' + tone + '">' + HealthDiscovery.summary(result) + '</div>' +
+        '<section class="health-panel"><h2>需要处理的发现</h2>' + HealthDiscovery.events(result.events, Boolean(result.data?.metric_count)) + '</section>' +
+        '<section class="health-panel"><h2>常见疾病风险筛查</h2><div class="health-disease-grid">' + HealthDiscovery.cards(result.diseases) +
+        '</div><p class="health-meta">' + P.esc(result.disclaimer || '筛查用于健康管理参考。') + '</p></section>' +
+        '<a class="health-link" href="/prediction.html?desktop=1&tab=intake&from=mobile">完善健康档案</a>';
+    } catch {
+      box.innerHTML = '<div class="health-panel" role="status"><p>健康发现暂时无法读取。</p>' + P.btn('重试', 'risk') + '</div>';
+    } finally {
+      riskLoading = false;
+    }
   }
 
   /* ------------------------------------------------------------------
@@ -420,6 +356,12 @@
      ------------------------------------------------------------------ */
   function actionCard(p) {
     const type = p.action_type || 'create_todo';
+    if (type === 'n_of_1_intervention' && p.intervention_payload?.draft === true) {
+      const payload = P.esc(encodeURIComponent(JSON.stringify(p.intervention_payload)));
+      return `<div class="act-card" data-act-draft="${payload}"><strong>${P.esc(p.title)}</strong>
+        <p>${P.esc(p.desc || '')}</p><div class="act-controls"><button type="button" data-act="confirm">保存并编辑草案</button>
+        <button type="button" data-act="dismiss">暂不保存</button></div><p class="act-status" role="status">保存后可编辑，再由本人确认。</p></div>`;
+    }
     const when = new Date(Date.now() + 3 * 864e5);
     const pad = n => String(n).padStart(2, '0');
     const local = `${when.getFullYear()}-${pad(when.getMonth() + 1)}-${pad(when.getDate())}T08:00`;
@@ -436,7 +378,10 @@
     let html = '';
     const conf = result.confidence;
     const source = result.llm?.call_status === 'success' ? '大模型整理' :
+      result.llm?.call_status === 'fallback' ? '模型暂不可用，使用本地结果' :
       result.llm?.call_status === 'mock' || result.source === 'mock' ? '本地演示' :
+      result.source === 'quality_policy' ? '数据质量规则' :
+      result.presentation?.temporal_memory ? '时序记忆与原始记录' :
       result.source === 'safety_rule' ? '安全规则' : '本地工具或知识';
     const items = (result.evidence?.items || []).slice(0, 3).map(it => {
       const time = it.measured_at ? HealthOverview.date(it.measured_at) : '时间未标注';
@@ -448,9 +393,10 @@
       `<li>${P.esc(tool.label || toolNames[tool.name] || '健康工具')} · ${tool.status === 'success' ? '已完成' : '未完成或暂不可用'}</li>`).join('');
     html += `<details class="ans-basis"><summary>查看回答依据</summary><p>回答来源：${source}</p>
       ${conf?.reasoning ? `<p>${P.esc(conf.reasoning)}</p>` : ''}
-      ${items ? `<ul>${items}</ul>` : '<p>本次没有可展示的个人健康数据依据。</p>'}
+      ${items ? `<ul>${items}</ul>` : result.presentation?.temporal_memory?.evidence?.length ? '<p>个人依据见下方“查看历史记忆来源”。</p>' : '<p>本次没有可展示的个人健康数据依据。</p>'}
       ${toolTrace ? `<h4>工具记录</h4><ul>${toolTrace}</ul>` : ''}
       <p>依据充分程度不代表患病概率，也不能替代医生诊断。</p></details>`;
+    html += HealthOverview.researchQuality(result.presentation) + HealthOverview.temporalSources(result.presentation);
     const g = result.graph_evidence_snapshot;
     if (g && (g.results || []).length) {
       const top = g.results.slice(0, 3).map(r => `<li>${P.esc(r.section || r.source_id || '证据片段')}</li>`).join('');
@@ -468,6 +414,19 @@
       card.classList.add('is-cancelled');
       card.querySelector('.act-controls')?.remove();
       if (status) status.textContent = '已跳过，没有创建任何记录。';
+      return;
+    }
+    if (card.dataset.actDraft) {
+      card.dataset.busy = '1';
+      btn.disabled = true;
+      try {
+        await P.post('/api/actions/interventions', JSON.parse(decodeURIComponent(card.dataset.actDraft)));
+        location.assign('/intervention.html');
+      } catch (error) {
+        status.textContent = error.message || '草案暂时无法保存。';
+        card.dataset.busy = '0';
+        btn.disabled = false;
+      }
       return;
     }
     const type = card.dataset.actType || 'create_todo';
@@ -551,7 +510,7 @@
       if (selected) node.setAttribute('aria-current', 'page');
       else node.removeAttribute('aria-current');
     });
-    if ($('mainHeaderTitle')) $('mainHeaderTitle').textContent = ({overview:'健康概览',butler:'智能管家',risk:'风险评估',trends:'档案与趋势',care:'亲情守护',profile:'个人中心',account:'账号与隐私',knowledge:'知识证据'})[tab];
+    if ($('mainHeaderTitle')) $('mainHeaderTitle').textContent = ({overview:'健康概览',butler:'智能管家',risk:'健康发现',trends:'健康监测',care:'亲情守护',profile:'个人中心',account:'账号与隐私',knowledge:'知识证据'})[tab];
     if (tab === 'account') loadAccountPrivacy();
     if (tab === 'risk') renderRisk();
     if (tab === 'knowledge') renderKnowledge(knowledgeQuery || '');
@@ -720,8 +679,26 @@
     renderMobileAgentContext();
     $('pro-mic-button').addEventListener('click', toggleMic);
     checkMicAvailability();
-    $('tab-trends').innerHTML = '<div id="pro-trends" class="space-y-4"><p class="text-sm text-zinc-500">正在读取测量记录…</p></div>';
-    $('tab-care').innerHTML = P.card('提醒与家人授权',`<p class="text-xs text-zinc-500 mb-3">提醒来自服务端。授权码只交给指定家属或医生。</p><div class="space-y-2">${alerts.length?alerts.map(a=>`<div class="rounded-xl bg-white/70 p-3"><strong>${P.esc(a.title)}</strong><p class="text-sm text-zinc-600">${P.esc(a.message)}</p><p class="text-xs text-zinc-400">${P.esc(P.date(a.created_at))}</p></div>`).join(''):'<p class="text-sm text-zinc-500">暂无提醒</p>'}</div><div class="mt-4 flex gap-2 flex-wrap">${user.role==='senior'?P.btn('生成家属授权码','invite'):''}${P.btn('刷新提醒','refresh',true)}</div><p id="pro-invite-code" class="text-sm mt-3 font-bold"></p>`) + P.card('复测随访','<div id="pro-followups" class="space-y-2"><p class="text-sm text-zinc-500">正在读取…</p></div>');
+    if (!mobileRecords) {
+      const tab = $('tab-trends');
+      tab.classList.add('health-mobile-measurements');
+      tab.innerHTML = '<header class="health-page-header"><div><h1>健康监测</h1><p>查看实测历史、来源和测量条件。</p></div></header>' +
+        '<div id="mobile-record-workspace">' + HealthRecords.workspaceMarkup() + '</div>' +
+        '<a class="health-link" href="/prediction.html?desktop=1&tab=trend&from=mobile">查看统计趋势与预测依据</a>';
+      mobileRecords = HealthRecords.connect($('mobile-record-workspace'), {
+        api: P, initialType: new URLSearchParams(location.search).get('type') || 'bp',
+        async onSaved(row) {
+          await readOverview(['summary', 'metrics', 'alerts']);
+          renderOverview();
+          renderMobileAgentContext();
+          loadTrends();
+          toast(row.deleted ? '测量已删除' : row.duplicate ? '这次测量已记录' : '测量已保存');
+        },
+      });
+    }
+    mobileRecords.refresh();
+    $('tab-risk').classList.add('health-mobile-measurements');
+    $('tab-care').innerHTML = P.card('提醒与家人授权',`<p class="text-xs text-zinc-500 mb-3">提醒来自服务端。授权码只交给指定家属或医生。</p><div class="space-y-2">${alerts.length?alerts.map(a=>`<div class="rounded-xl bg-white/70 p-3"><strong>${P.esc(a.title)}</strong><p class="text-sm text-zinc-600">${P.esc(a.message)}</p><p class="text-xs text-zinc-400">${P.esc(P.date(a.created_at))}</p></div>`).join(''):'<p class="text-sm text-zinc-500">暂无提醒</p>'}</div><div class="mt-4 flex gap-2 flex-wrap"><a class="health-button health-button-secondary" href="/intervention.html">改善计划</a><a class="health-button health-button-secondary" href="/care.html">管理照护授权</a>${user.role==='senior'?P.btn('生成家属授权码','invite'):''}${P.btn('刷新提醒','refresh',true)}</div><p id="pro-invite-code" class="text-sm mt-3 font-bold"></p>`) + P.card('复测随访','<div id="pro-followups" class="space-y-2"><p class="text-sm text-zinc-500">正在读取…</p></div>');
     $('tab-profile').innerHTML = P.card('个人资料',line('姓名',user.name)+line('角色',user.role==='senior'?'老人':user.role==='caregiver'?'家属':user.role==='doctor'?'医生':user.role)+line('年龄',user.age||'未填写')+`<div class="mt-4 flex gap-2 flex-wrap">${P.btn('切换字号','font')}${P.btn('退出登录','logout',true)}</div>`);
     $('tab-profile').innerHTML += P.card('本机朗读音色', `<p class="text-xs text-zinc-500 mb-3">自然语音在本机生成，朗读文字不会发送给在线语音服务。</p><label class="block text-sm font-bold">选择音色<select id="pro-local-voice" class="mt-2 w-full rounded-xl border border-zinc-200 bg-white p-3"><option value="zf_001">女声 1</option><option value="zf_002">女声 2</option><option value="zm_009">男声</option></select></label><div class="mt-3">${P.btn('试听音色','voice-preview')}</div>`);
     if ($('pro-local-voice')) $('pro-local-voice').value = voiceChoices.has(localStorage.getItem('pro-local-voice')) ? localStorage.getItem('pro-local-voice') : 'zf_001';
@@ -786,23 +763,17 @@
     });
   }
   async function loadTrends() {
-    const box = $('pro-trends');
-    if (!box) return;
-    trendVoicePoints = null;
-    const types = [['bp', '血压', 'mmHg'], ['glucose', '血糖', 'mmol/L'], ['hr', '心率', 'bpm'], ['steps', '步数', '步'], ['sleep', '睡眠', '小时']];
-    const results = await Promise.allSettled(types.map(([type]) => P.get(`/api/trend/${type}?days=90`)));
-    if (!box.isConnected) return;
-    trendVoicePoints = Object.fromEntries(types.map(([type], index) => [type, results[index].status === 'fulfilled' ? results[index].value.points || [] : []]));
-    const charts = results.map((result, index) => {
-      const [type, title, unit] = types[index];
-      if (result.status !== 'fulfilled') return P.notice(`${title}读取失败`, result.reason?.message || '请稍后重试');
-      return window.ProCharts.line({ title, points: result.value.points || [], unit, secondary: type === 'bp' });
-    });
-    box.innerHTML = '<p class="text-xs text-zinc-500 leading-relaxed">曲线根据最近 90 天的已保存测量绘制；没有记录的指标会明确标出。</p>' + charts.join('');
+    const types = ['bp', 'glucose', 'hr', 'steps', 'sleep'];
+    const results = await Promise.allSettled(types.map(type => P.get('/api/trend/' + type + '?days=90')));
+    trendVoicePoints = Object.fromEntries(types.map((type, index) => [
+      type, results[index].status === 'fulfilled' ? results[index].value.points || [] : [],
+    ]));
     const preview = $('pro-overview-chart');
     if (preview?.isConnected) {
-      const first = results.find(result => result.status === 'fulfilled' && result.value.points?.length);
-      preview.innerHTML = first ? window.ProCharts.line({ title: first.value.meta?.name || '健康趋势', points: first.value.points, unit: first.value.meta?.unit || '', secondary: first.value.type === 'bp' }) : P.notice('趋势预览', '保存一次健康测量后，趋势图会在这里出现。');
+      const pressure = results[0];
+      preview.innerHTML = pressure.status === 'rejected'
+        ? P.notice('血压趋势暂时无法读取', '可在健康监测中重新读取。')
+        : window.ProCharts.line({ title:'血压实测趋势', points:pressure.value.points || [], unit:pressure.value.meta?.unit || 'mmHg', secondary:true });
     }
   }
   const overviewEndpoints = {
@@ -861,7 +832,7 @@
     if (promptBtn) renderKnowledge(promptBtn.dataset.knowledgePrompt || '');
   });
   document.addEventListener('change', e => { if (e.target.id === 'pro-local-voice' && voiceChoices.has(e.target.value)) localStorage.setItem('pro-local-voice', e.target.value); });
-  document.addEventListener('click',async e=>{const action=e.target.closest('[data-pro-action]')?.dataset.proAction; if(!action)return; try {if(action==='measure'){const high=prompt('收缩压 mmHg（留空跳过）',''); const low=high?prompt('舒张压 mmHg',''):null; const glucose=prompt('血糖 mmol/L（留空跳过）',''); if(!high&&!glucose)return; if(high){if(!low)throw Error('请填写舒张压'); await P.post('/api/health/metrics',{type:'bp',value:Number(high),value2:Number(low),unit:'mmHg',source:'manual',measurement_condition:'unknown'});} if(glucose)await P.post('/api/health/metrics',{type:'glucose',value:Number(glucose),unit:'mmol/L',source:'manual',measurement_condition:'unknown'}); await load(); toast('测量已保存');} else if(action==='invite'){const result=await P.post('/api/care/invitations',{member_role:'caregiver'}); $('pro-invite-code').textContent=`家属授权码：${result.code}（7 天内使用）`; } else if(action.startsWith('todo:')){await P.patch('/api/todos/'+action.split(':')[1],{completed:true});await load();switchTab('overview');} else if(action==='refresh')await load(); else if(action==='logout')await window.handleLogout(); else if(action==='font')window.cycleFontSize(); else if(action==='voice-preview')readText('您好，我是小康。祝您今天心情愉快。'); else if(action==='account-export')await exportAccountData(); else if(action==='account-delete-start')await startAccountDeletion(); else if(action.startsWith('account-revoke:')) { if (confirm('撤回后，对方将无法继续查看您的健康数据。确定撤回吗？')) { await P.post(`/api/care/relationships/${Number(action.split(':')[1])}/revoke`,{reason:'用户从账号与隐私页面撤回'}); await loadAccountPrivacy(); } } else if(panes.includes(action))switchTab(action);}catch(error){showError(error);} });
+  document.addEventListener('click',async e=>{const action=e.target.closest('[data-pro-action]')?.dataset.proAction; if(!action)return; try {if(action==='measure'){await mobileRecords?.open(undefined, e.target.closest('[data-pro-action]'));} else if(action==='invite'){const result=await P.post('/api/care/invitations',{member_role:'caregiver'}); $('pro-invite-code').textContent=`家属授权码：${result.code}（7 天内使用）`; } else if(action.startsWith('todo:')){await P.patch('/api/todos/'+action.split(':')[1],{completed:true});await load();switchTab('overview');} else if(action==='refresh')await load(); else if(action==='logout')await window.handleLogout(); else if(action==='font')window.cycleFontSize(); else if(action==='voice-preview')readText('您好，我是小康。祝您今天心情愉快。'); else if(action==='account-export')await exportAccountData(); else if(action==='account-delete-start')await startAccountDeletion(); else if(action.startsWith('account-revoke:')) { if (confirm('撤回后，对方将无法继续查看您的健康数据。确定撤回吗？')) { await P.post(`/api/care/relationships/${Number(action.split(':')[1])}/revoke`,{reason:'用户从账号与隐私页面撤回'}); await loadAccountPrivacy(); } } else if(panes.includes(action))switchTab(action);}catch(error){showError(error);} });
   applyFontMode(document.documentElement.dataset.font || 'large');
   panes.forEach(id=>{$('tab-'+id).innerHTML=P.notice('正在连接健康服务','请稍候…');});
   load();

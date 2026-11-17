@@ -22,9 +22,10 @@ export function resolveGoal(message, intent = {}, prior = {}) {
 }
 
 export function taskStateFor(response, goal) {
-  const waiting = (response.presentation?.mode === 'clarification') || goal.clear === false;
+  const research = response.presentation?.research_v2?.decision;
+  const waiting = (response.presentation?.mode === 'clarification') || research === 'ask' || goal.clear === false;
   const confirmation = (response.plan || []).some(item => item.requires_confirmation);
-  const failed = (response.tool_trace || []).some(item => item.status === 'error');
+  const failed = ['measure','limit','escalate'].includes(research) || (response.tool_trace || []).some(item => item.status === 'error');
   const status = waiting ? 'waiting_user' : confirmation ? 'waiting_confirmation' : failed ? 'needs_followup' : 'completed';
   return {
     goal: goal.goal,

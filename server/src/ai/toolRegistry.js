@@ -10,6 +10,21 @@ const string = (maxLength = 500, extra = {}) => ({ type: 'string', maxLength, ..
 const nullableString = (maxLength = 100) => ({ anyOf: [string(maxLength), { type: 'null' }] });
 
 export const AGENT_TOOL_REGISTRY = Object.freeze({
+  temporal_memory: entry('时序记忆', '核对明确时间范围中的已授权记忆及来源', objectSchema({
+    mode: string(16, { enum: ['profile','events','trend','feedback','adjustment','draft'] }),
+    metric: { anyOf: [string(12, { enum: ['bp','glucose','hr','spo2','sleep','weight','steps'] }), { type: 'null' }] },
+    windows: { type: 'array', maxItems: 4, items: { type: 'array', minItems: 2, maxItems: 2, items: string(32) } },
+  }, ['mode', 'metric', 'windows']), 'memory:read', 5000, 0, { cache_policy: 'none', evidence_policy: 'temporal_revision_and_source_fingerprint' }),
+  check_data_quality: entry('数据质量核对', '返回已授权指标的质量特征和缺陷', objectSchema({
+    metric: string(12, { enum: ['bp','glucose','hr','spo2','sleep','weight','steps'] }),
+  }, ['metric']), 'health:read', 3000, 0),
+  research_metric_history: entry('研究实测记录', '按核准范围读取可用实测点', objectSchema({
+    metric: string(12, { enum: ['bp','glucose','hr','spo2','sleep','weight','steps'] }),
+    days: { type: 'integer', minimum: 7, maximum: 365 },
+  }, ['metric','days']), 'health:read', 3000, 0),
+  schedule_followup: entry('复测预览', '仅构建待本人或授权协作者确认的复测预览', objectSchema({
+    metric: string(12, { enum: ['bp','glucose','hr','spo2','sleep','weight','steps'] }),
+  }, ['metric']), 'followup:preview', 3000, 0, { requires_confirmation: true, cache_policy: 'none' }),
   health_summary: entry('健康摘要', '读取最新测量、数据完整性和健康摘要', objectSchema(), 'health:read', 3000, 1),
   health_trend: entry('指标趋势与短期预测', '分析历史趋势；符合条件时返回明确标注的不确定性短期预测', objectSchema({
     metrics: { type: 'array', minItems: 1, maxItems: 6, uniqueItems: true, items: string(32, { enum: ['systo','diasto','glucose','pulse','weight','sleep'] }) },

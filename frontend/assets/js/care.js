@@ -4,6 +4,7 @@
   const ROLE_LABEL = { senior: '老人本人', caregiver: '家属', doctor: '医生' };
   const STATUS_LABEL = { active: '✓ 授权有效', revoked: '⊘ 已撤回', expired: '⌛ 已到期' };
   const METRIC_LABEL = { bp: '血压', glucose: '血糖', hr: '心率', spo2: '血氧', weight: '体重', sleep: '睡眠', steps: '步数' };
+  const EXECUTION_SOURCE = { self_report: '本人记录', caregiver_report: '家属代录', device: '设备记录', system: '系统记录', imported: '导入记录' };
   const state = { user: null, definitions: {}, roleScopes: {}, relationships: [], subjects: [], pending: null, entrySubject: null };
 
   const $ = selector => document.querySelector(selector);
@@ -31,7 +32,7 @@
 
   function renderInviteScopes() {
     const role = $('#invite-role').value;
-    $('#invite-scopes').innerHTML = scopeOptions(role, state.roleScopes[role] || []);
+    $('#invite-scopes').innerHTML = scopeOptions(role, (state.roleScopes[role] || []).filter(scope => scope !== 'record_measurements'));
   }
 
   function authorizationSummary(auth) {
@@ -85,14 +86,15 @@
         ${allowed(card, 'view_retest') ? `<div><span>逾期复测</span><strong>${retests?.length ? `⌛ ${retests.length} 项待完成` : '✓ 暂无逾期复测'}</strong></div>` : ''}
         ${allowed(card, 'view_summary') ? `<div><span>数据缺失</span><strong>${card.data_missing?.length ? `○ ${card.data_missing.map(x => METRIC_LABEL[x] || x).join('、')}` : '✓ 常用指标较完整'}</strong></div>` : ''}
         ${allowed(card, 'view_interventions') ? `<div><span>活跃改善计划</span><strong>${plans?.length ? `行 ${plans.length} 项进行中` : '○ 暂无活跃计划'}</strong></div>` : ''}
-        ${allowed(card, 'view_adherence') ? `<div><span>最近执行情况</span><strong>${execution?.length ? `${execution[0].performed ? '✓ 已执行' : '○ 未执行'} · ${dateText(execution[0].performed_at)}` : '○ 尚无执行记录'}</strong></div>` : ''}
+        ${allowed(card, 'view_adherence') ? `<div><span>最近执行情况</span><strong>${execution?.length ? `${execution[0].performed ? '✓ 已执行' : '○ 未执行'} · ${dateText(execution[0].performed_at)} · ${EXECUTION_SOURCE[execution[0].data_source] || '来源未标注'}` : '○ 尚无执行记录'}</strong></div>` : ''}
       </div>
       <details class="care-scope-details"><summary>查看授权摘要</summary>${authorizationSummary(card.authorization)}<ul>${card.authorization.scope_labels.map(label => `<li>✓ ${escapeHTML(label)}</li>`).join('')}</ul></details>
       <div class="care-card-actions">
         ${allowed(card, 'record_intake') ? `<button class="btn btn-primary" type="button" data-care-action="intake" data-subject="${senior.id}">协助录入</button>` : ''}
+        ${allowed(card, 'view_interventions') ? `<a class="btn btn-secondary" href="intervention.html?subject_user_id=${senior.id}">查看改善计划</a>` : ''}
         ${allowed(card, 'remind_execution') ? `<button class="btn btn-secondary" type="button" data-care-action="remind" data-subject="${senior.id}">提醒执行</button>` : ''}
         ${allowed(card, 'view_retest') ? `<button class="btn btn-secondary" type="button" data-care-action="retests" data-subject="${senior.id}">查看复测状态</button>` : ''}
-        ${allowed(card, 'view_trends') ? `<a class="btn btn-secondary" href="monitoring.html?subject_user_id=${senior.id}">查看完整趋势</a>` : ''}
+        ${allowed(card, 'view_trends') ? `<a class="btn btn-secondary" href="prediction.html?tab=trend&amp;desktop=1&amp;subject_user_id=${senior.id}">查看完整趋势</a>` : ''}
         ${allowed(card, 'view_clinical_evidence') ? `<button class="btn btn-secondary" type="button" data-care-action="evidence" data-subject="${senior.id}">证据与模型限制</button>` : ''}
         ${allowed(card, 'review_graphrag') ? `<button class="btn btn-secondary" type="button" data-care-action="graph" data-subject="${senior.id}">审核高风险关系</button>` : ''}
         ${allowed(card, 'review_interventions') ? `<button class="btn btn-secondary" type="button" data-care-action="plan-review" data-subject="${senior.id}">干预审核意见</button>` : ''}
@@ -102,9 +104,19 @@
   }
 
   function renderSubjects() {
+    const select = $('#care-subject');
+    const previous = Number(select.value);
+    select.replaceChildren(...state.subjects.map(card => new Option(card.senior.name, card.senior.id)));
+    if (findSubject(previous)) select.value = previous;
+    $('#care-subject-picker').hidden = !state.subjects.length;
     $('#subjects-count').textContent = `${state.subjects.length} 位`;
-    $('#subjects-list').innerHTML = state.subjects.length
-      ? state.subjects.map(subjectCard).join('')
+    renderSelectedSubject();
+  }
+
+  function renderSelectedSubject() {
+    const selected = findSubject($('#care-subject').value);
+    $('#subjects-list').innerHTML = selected
+      ? subjectCard(selected)
       : emptyState('暂无有效照护授权', '请使用老人提供的一次性授权码；已撤回或到期的对象不会显示。');
   }
 
@@ -114,7 +126,7 @@
       state.user = window.__CURRENT_USER__ || await Auth.getMe();
       const capabilities = await API.get('/api/care/capabilities');
       state.definitions = capabilities.definitions || {};
-      state.roleScopes.caregiver = Object.keys(state.definitions).filter(scope => ['view_summary','view_alerts','view_retest','manage_followups','view_interventions','view_adherence','record_intake','remind_execution','record_adherence','use_agent'].includes(scope));
+      state.roleScopes.caregiver = Object.keys(state.definitions).filter(scope => ['view_summary','view_alerts','view_retest','manage_followups','view_interventions','view_adherence','record_intake','record_measurements','remind_execution','record_adherence','use_agent'].includes(scope));
       state.roleScopes.doctor = Object.keys(state.definitions).filter(scope => ['view_summary','view_alerts','view_retest','view_interventions','view_adherence','view_trends','view_clinical_evidence','review_graphrag','review_interventions','use_agent'].includes(scope));
       const owner = !state.user.role || state.user.role === 'senior';
       $('#owner-console').hidden = !owner;
@@ -130,7 +142,7 @@
         renderSubjects();
       }
       setLive(`已按“${ROLE_LABEL[state.user.role || 'senior']}”权限完成核验。`);
-    } catch (error) { showError(error); }
+    } catch (error) { $('#member-console').hidden = true; showError(error); }
   }
 
   function confirmAction({ title, message, label, action }) {
@@ -229,7 +241,14 @@
     if (action === 'logs') return openLogs(id);
     if (action === 'edit') return openEdit(id);
     if (action === 'revoke') return confirmAction({ title: '确认撤回授权', message: '撤回后，该协作者的旧登录会话在下一次相关请求时立即失去查看、代录和审核能力。操作会永久留痕。', label: '我确认立即撤回此授权', action: async () => { await API.post(`/api/care/relationships/${id}/revoke`, { reason: '老人本人在照护协同驾驶舱撤回' }); await load(); setLive('授权已撤回，相关能力已立即失效。'); } });
-    if (action === 'intake') { state.entrySubject = subjectId; $('#care-entry-form').reset(); $('#entry-submit').disabled = true; return $('#care-entry-dialog').showModal(); }
+    if (action === 'intake') {
+      state.entrySubject = subjectId;
+      $('#care-entry-title').textContent = `协助录入 · ${card.senior.name}`;
+      $('#entry-error').hidden = true;
+      $('#care-entry-form').reset();
+      $('#entry-submit').disabled = true;
+      return $('#care-entry-dialog').showModal();
+    }
     if (action === 'remind') return confirmAction({ title: '确认发送执行提醒', message: `将向${card.senior.name}发送一条温和提醒。此操作不会替老人打卡或确认干预计划。`, label: '我确认只发送提醒，不代替执行', action: async () => { await API.post(`/api/care/seniors/${subjectId}/reminders`, { message: '请记得按计划完成今天的健康任务，如有不适请先暂停。' }); setLive('提醒已发送并写入操作日志。'); } });
     if (action === 'retests') return openRetests(card);
     if (action === 'evidence') return openEvidence(card);
@@ -240,6 +259,7 @@
   document.addEventListener('auth:ready', load, { once: true });
   $('#care-refresh').addEventListener('click', load);
   $('#care-retry').addEventListener('click', load);
+  $('#care-subject').addEventListener('change', renderSelectedSubject);
   $('#invite-role').addEventListener('change', renderInviteScopes);
   $('#invite-confirm').addEventListener('change', event => { $('#invite-form button[type="submit"]').disabled = !event.target.checked; });
   $('#invite-form').addEventListener('submit', createInvitation);
@@ -251,7 +271,26 @@
   $('[data-detail-close]').addEventListener('click', () => $('#care-detail-dialog').close());
   $('[data-entry-cancel]').addEventListener('click', () => $('#care-entry-dialog').close());
   $('#entry-confirm').addEventListener('change', event => { $('#entry-submit').disabled = !event.target.checked; });
-  $('#care-entry-form').addEventListener('submit', async event => { event.preventDefault(); try { await API.post('/api/prediction/intakes', { subject_user_id: state.entrySubject, answers: { self_rated_health: Number($('#entry-health').value), fall_recent: Number($('#entry-fall').value) } }); $('#care-entry-dialog').close(); await load(); setLive('代录已完成，并明确标记了实际操作人。'); } catch (error) { showError(error); } });
+  $('#care-entry-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = $('#entry-submit');
+    if (button.disabled || !$('#entry-confirm').checked) return;
+    button.disabled = true;
+    $('#entry-error').hidden = true;
+    try {
+      const result = await API.post('/api/prediction/intakes', { subject_user_id: state.entrySubject, answers: {
+        self_rated_health: Number($('#entry-health').value), fall_recent: Number($('#entry-fall').value),
+      } });
+      $('#care-entry-dialog').close();
+      const source = result.respondent_role === 'caregiver' ? '家属代填' : '协助录入';
+      setLive(`问卷已保存 · 来源 ${source} · 记录编号 ${result.intake_id}`);
+    } catch (error) {
+      $('#entry-error').textContent = error.message;
+      $('#entry-error').hidden = false;
+    } finally {
+      button.disabled = !$('#entry-confirm').checked;
+    }
+  });
   $('#care-detail-content').addEventListener('submit', async event => {
     event.preventDefault();
     try {

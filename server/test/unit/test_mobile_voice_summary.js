@@ -10,8 +10,8 @@ const context = { window: {} };
 vm.runInNewContext(script, context);
 const { summarize, summarizeFamily } = context.window.ProVoiceSummary;
 
-assert.match(mobile, /pro-voice-summary\.js"><\/script>\s*<script src="assets\/js\/pro-mobile\.js"/);
-assert.match(family, /pro-voice-summary\.js"><\/script>\s*<script src="assets\/js\/pro-family\.js"/);
+assert.match(mobile, /pro-voice-summary\.js"><\/script>[\s\S]*<script src="\/assets\/js\/pro-mobile\.js"/);
+assert.match(family, /pro-voice-summary\.js"><\/script>[\s\S]*<script src="\/assets\/js\/pro-family\.js"/);
 assert.match(family, /id="familyVoiceActionBtn"/);
 const state = {
   summary: { summary: '最近测量资料已更新。' },

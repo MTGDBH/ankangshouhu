@@ -10,6 +10,7 @@ import { recordLLM, recordSafetyRule } from '../services/opsMetrics.js';
 import { interventionRepository } from '../repositories/interventionRepository.js';
 import { cancelAgentRun, registerAgentRun } from '../services/agentRunCancellation.js';
 import { getLLMConfig } from '../services/llmConfigService.js';
+import { getTemporalSource, temporalEnabled } from '../ai/temporalStore.js';
 
 const router = express.Router();
 
@@ -262,6 +263,17 @@ router.get('/agent/memories', (req, res) => {
   res.json({ subject: { id: resolved.subject.id, name: resolved.subject.name }, items });
 });
 
+router.get('/agent/temporal-memory/:id', (req, res) => {
+  if (!temporalEnabled()) return res.status(404).json({ error: '时序记忆不可用' });
+  const resolved = resolveAgentRequestSubject(req, req.query.subject_user_id);
+  if (resolved.error) return res.status(resolved.error).json({ error: resolved.message });
+  const id = Number(req.params.id);
+  const memory = Number.isSafeInteger(id) && id > 0 ? getTemporalSource(req.user, resolved.subject, id) : null;
+  if (!memory) return res.status(404).json({ error: '该记忆来源不可用' });
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.json(memory);
+});
+
 router.post('/agent/memories/:id/confirm', (req, res) => {
   const memory = db.prepare('SELECT * FROM agent_memories WHERE id=?').get(Number(req.params.id));
   if (!memory) return res.status(404).json({ error: '记忆候选不存在' });
@@ -336,16 +348,18 @@ router.post('/chat/messages/:id/regenerate', async (req, res) => {
 router.get('/agent/inbox', (req, res) => {
   const resolved = resolveAgentRequestSubject(req, req.query.subject_user_id);
   if (resolved.error) return res.status(resolved.error).json({ error: resolved.message });
-  const allItems = listFollowups(resolved.subject.id, { activeOnly: false, limit: 50 });
+  const allItems = resolved.access.scopes.includes('view_retest')
+    ? listFollowups(resolved.subject.id, { activeOnly: false, limit: 50 }) : [];
   const items = allItems.filter(row => ['scheduled','due','overdue','pending_result_confirmation'].includes(row.status));
   const actions = db.prepare(`SELECT id,action_type,payload,status,created_at FROM action_requests
     WHERE actor_user_id=? AND subject_user_id=? AND status='pending_confirmation' ORDER BY id DESC LIMIT 20`).all(req.user.id, resolved.subject.id)
     .map(row => ({ ...row, payload: parseJSON(row.payload, {}) }));
-  const interventions = interventionRepository.listForSubject(resolved.subject.id, { limit: 30 });
+  const canViewPlans = resolved.access.scopes.includes('view_interventions');
+  const interventions = canViewPlans ? interventionRepository.listForSubject(resolved.subject.id, { limit: 30 }) : [];
   const activeInterventions = interventions.filter(row => ['active','evaluating'].includes(row.status));
-  const recentEvaluations = db.prepare(`SELECT e.evaluation_id,e.target_metric,e.evidence_level,e.reason_code,e.created_at,i.intervention_id,i.title
+  const recentEvaluations = canViewPlans ? db.prepare(`SELECT e.evaluation_id,e.target_metric,e.evidence_level,e.reason_code,e.created_at,i.intervention_id,i.title
     FROM intervention_evaluations e JOIN interventions i ON i.id=e.intervention_db_id
-    WHERE e.subject_user_id=? ORDER BY e.created_at DESC,e.id DESC LIMIT 5`).all(resolved.subject.id);
+    WHERE e.subject_user_id=? ORDER BY e.created_at DESC,e.id DESC LIMIT 5`).all(resolved.subject.id) : [];
   res.json({ subject: { id: resolved.subject.id, name: resolved.subject.name },
     due: items.filter(row => row.status === 'due'), overdue: items.filter(row => row.status === 'overdue'),
     pending_result_confirmation: items.filter(row => row.status === 'pending_result_confirmation'),

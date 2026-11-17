@@ -59,7 +59,8 @@
     }).join('');
     const latest = safe.at(-1);
     const valueLabel = secondary && latest.value2 != null && latest.value2 !== '' && Number.isFinite(Number(latest.value2)) ? `${number(Number(latest.value))}/${number(Number(latest.value2))}` : number(Number(latest.value));
-    return `<section class="pro-chart" data-pro-chart="line">${heading}<div class="pro-chart-figure"><svg viewBox="0 0 600 205" role="img" aria-label="${esc(title)}最近 ${safe.length} 次测量趋势">${grid}${curves}<text x="${left}" y="198" class="pro-chart-axis">${esc(date(safe[0].recorded_at))}</text><text x="${width - right}" y="198" text-anchor="end" class="pro-chart-axis">${esc(date(latest.recorded_at))}</text></svg></div><div class="pro-chart-footer"><span>最新 <strong>${esc(valueLabel)} ${esc(unit)}</strong></span><span>${esc(date(latest.recorded_at))}</span></div>${secondary ? '<p class="pro-chart-legend"><i></i>收缩压 <i class="secondary"></i>舒张压</p>' : ''}${note ? `<p class="pro-chart-note">${esc(note)}</p>` : ''}</section>`;
+    const summary = title + "，共 " + safe.length + " 次实测记录，最新 " + valueLabel + " " + unit + "，日期 " + date(latest.recorded_at) + "。";
+    return `<section class="pro-chart" data-pro-chart="line">${heading}<div class="pro-chart-figure"><svg viewBox="0 0 600 205" role="img" aria-label="${esc(title)}最近 ${safe.length} 次测量趋势" data-summary="${esc(summary)}">${grid}${curves}<text x="${left}" y="198" class="pro-chart-axis">${esc(date(safe[0].recorded_at))}</text><text x="${width - right}" y="198" text-anchor="end" class="pro-chart-axis">${esc(date(latest.recorded_at))}</text></svg></div><div class="pro-chart-footer"><span>最新 <strong>${esc(valueLabel)} ${esc(unit)}</strong></span><span>${esc(date(latest.recorded_at))}</span></div>${secondary ? '<p class="pro-chart-legend"><i></i>收缩压 <i class="secondary"></i>舒张压</p>' : ''}${note ? `<p class="pro-chart-note">${esc(note)}</p>` : ''}</section>`;
   }
 
   function bars({ title, counts = [], total = 0 }) {

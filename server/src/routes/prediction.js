@@ -448,7 +448,7 @@ async function runPopulationPrediction(userId, user, type) {
 }
 
 function populationDataSignature(userId, user, type, bundleVersion) {
-  const metric = db.prepare('SELECT MAX(recorded_at) AS updated_at FROM metrics WHERE user_id = ?').get(userId)?.updated_at || 'none';
+  const metric = db.prepare('SELECT COUNT(*) AS n, MAX(id) AS id, MAX(updated_at) AS at, SUM(revision) AS revision FROM metrics WHERE user_id=?').get(userId);
   const assessment = db.prepare('SELECT MAX(created_at) AS updated_at FROM assessments WHERE user_id = ?').get(userId)?.updated_at || 'none';
   const predictionInput = db.prepare('SELECT MAX(recorded_at) AS updated_at FROM prediction_inputs WHERE user_id = ?').get(userId)?.updated_at || 'none';
   const profile = [
@@ -456,7 +456,7 @@ function populationDataSignature(userId, user, type, bundleVersion) {
     user.exercise_level, user.self_rated_health, user.chronic_diabetes, user.chronic_heart,
     user.chronic_stroke, user.dyslipidemia, user.lung_disease, user.chronic_kidney,
   ];
-  return `${userId}|${type}|${bundleVersion || 'none'}|${metric}|${assessment}|${predictionInput}|${JSON.stringify(profile)}`;
+  return `${userId}|${type}|${bundleVersion || 'none'}|${JSON.stringify(metric)}|${assessment}|${predictionInput}|${JSON.stringify(profile)}`;
 }
 
 async function cachedPopulationPrediction(userId, user, type) {

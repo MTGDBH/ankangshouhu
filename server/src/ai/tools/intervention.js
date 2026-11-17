@@ -39,9 +39,10 @@ function localEvidence(metric) {
   return null;
 }
 
-function latestMetric(subjectId, metric) {
+function latestMetric(subjectId, metric, measurementId = null) {
   return db.prepare(`SELECT id,type,value,value2,unit,recorded_at,measurement_condition,data_quality
-    FROM metrics WHERE user_id=? AND type=? ORDER BY recorded_at DESC,id DESC LIMIT 1`).get(subjectId, metric);
+    FROM metrics WHERE user_id=? AND type=? AND (? IS NULL OR id=?) ORDER BY recorded_at DESC,id DESC LIMIT 1`)
+    .get(subjectId, metric, measurementId, measurementId);
 }
 
 function accessRole(ctx) {
@@ -60,16 +61,18 @@ export async function proposeIntervention(ctx, args = {}) {
   const message = String(args.message || ctx.message || '');
   if (accessRole(ctx) !== 'self') return failure('INTERVENTION_PROPOSAL_FORBIDDEN', '只有老人本人可以确认并创建个体干预；家属可协助查看和记录执行情况');
   if (URGENT.test(message)) return failure('EMERGENCY_INTERRUPTED', '检测到急症信号，普通干预流程已中止');
-  if (!/(我想|请|帮我|建议|制定|试试|开始|干预|方案)/.test(message)) return failure('INTENT_NOT_EXPLICIT', '用户尚未明确请求个体干预');
+  if (!/(我想|请|帮我|建议|制定|试试|开始|干预|方案|生成.{0,12}计划草案)/.test(message)) return failure('INTENT_NOT_EXPLICIT', '用户尚未明确请求个体干预');
   if (FORBIDDEN.test(message)) return failure('MEDICATION_OR_MEDICAL_BOUNDARY', '干预不能包含药物剂量调整、停换药或替代就医');
   const metric = metricFromMessage(message);
   if (!metric) return failure('TARGET_METRIC_REQUIRED', '请先明确要观察的目标指标和复测方式');
-  const latest = latestMetric(ctx.subject.id, metric.type);
+  const latest = latestMetric(ctx.subject.id, metric.type, args.temporalBaseline?.measurementId);
   if (!latest) return failure('BASELINE_MEASUREMENT_REQUIRED', `缺少可追溯的${metric.label}测量，暂不能提出个体干预`);
   const evidence = localEvidence(metric);
   if (!evidence) return failure('TRACEABLE_EVIDENCE_REQUIRED', '当前没有通过审核且可追溯的证据来源，暂不能提出干预');
   const kind = interventionKind(message);
-  const durationMatch = message.match(/(\d{1,2})\s*天/);
+  const durationMatch = args.temporalBaseline
+    ? message.match(/(?:执行|持续|为期)\s*(\d{1,2})\s*天/)
+    : message.match(/(\d{1,2})\s*天/);
   const duration = Math.max(7, Math.min(28, Number(durationMatch?.[1] || 14)));
   const now = nowIso();
   const interventionEnd = plusDays(now, duration);

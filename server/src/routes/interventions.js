@@ -99,7 +99,38 @@ router.get('/:interventionId', (req, res) => {
   const intervention = interventionRepository.findByPublicId(req.params.interventionId, { includeLogs: true });
   const access = accessForIntervention(req, intervention, 'view');
   if (access.error) return failure(res, access.error, access.reasonCode, access.message);
+  if (access.accessRole !== 'self' && !access.relationship.scopes.includes('view_adherence')) intervention.execution_logs = [];
   return res.json({ intervention, access: { role: access.accessRole, can_manage: access.canManage, can_record: access.canRecord } });
+});
+
+router.patch('/:interventionId', (req, res) => {
+  const intervention = interventionRepository.findByPublicId(req.params.interventionId);
+  const access = accessForIntervention(req, intervention, 'manage');
+  if (access.error) return failure(res, access.error, access.reasonCode, access.message);
+  if (!['proposed', 'pending_confirmation'].includes(intervention.status)) {
+    return failure(res, 409, INTERVENTION_REASON_CODES.INVALID_TRANSITION, '只能编辑未激活的计划。');
+  }
+  const body = req.body || {};
+  const revision = Number(body.revision);
+  if (!Number.isSafeInteger(revision) || revision < 1) return failure(res, 400, INTERVENTION_REASON_CODES.INVALID_INPUT, '请先读取计划版本。');
+  const fields = ['title', 'protocol', 'target_metrics', 'adherence_target', 'followup_id',
+    'baseline_start', 'baseline_end', 'intervention_start', 'intervention_end', 'outcome_start', 'outcome_end'];
+  const changes = Object.fromEntries(fields.filter(field => Object.hasOwn(body, field)).map(field => [field, body[field]]));
+  if (!Object.keys(changes).length) return failure(res, 400, INTERVENTION_REASON_CODES.INVALID_INPUT, '请提供要修改的计划内容。');
+  if (changes.protocol && typeof changes.protocol === 'object' && !Array.isArray(changes.protocol)) {
+    changes.protocol = { ...intervention.protocol, ...changes.protocol };
+  }
+  const parsed = validateInterventionInput({ ...intervention, ...changes });
+  if (!parsed.ok) return failure(res, 400, parsed.reason_code, parsed.message);
+  const data = parsed.value;
+  const unknown = data.target_metrics.some(type => !db.prepare('SELECT type FROM metric_defs WHERE type=?').get(type));
+  if (unknown) return failure(res, 400, INTERVENTION_REASON_CODES.INVALID_METRIC, '目标指标未登记。');
+  const link = resolveInterventionFollowup(access.subject.id, data.target_metrics, data.followup_id, data.outcome_start, data.outcome_end);
+  if (link.error) return failure(res, 400, INTERVENTION_REASON_CODES.INVALID_INPUT, '复测安排不属于当前老人或目标指标。');
+  data.followup_id = link.followup?.id ?? null;
+  const updated = interventionRepository.updateDraft(intervention.intervention_id, revision, data);
+  if (!updated) return failure(res, 409, INTERVENTION_REASON_CODES.INVALID_TRANSITION, '计划已更新，请重新读取再修改。');
+  res.json({ intervention: updated, message: '草案已更新，请重新提交并确认。' });
 });
 
 router.get('/:interventionId/evaluations', (req, res) => {
@@ -141,21 +172,29 @@ router.post('/:interventionId/submit', (req, res) => {
   return res.json({ intervention: result.intervention, requires_confirmation: true, confirmation: issueInterventionConfirmation(result.intervention), idempotent_replay: result.idempotentReplay });
 });
 
+const confirmIntervention = db.transaction((id, actorUserId, token) => {
+  const intervention = interventionRepository.findByPublicId(id);
+  if (intervention.status === 'proposed') return { code: INTERVENTION_REASON_CODES.NOT_SUBMITTED, message: '草案必须先提交为待确认状态' };
+  if (intervention.status !== 'active' && !canTransitionIntervention(intervention.status, 'active')) return { invalid: intervention };
+  if (intervention.status === 'pending_confirmation') {
+    const action = db.prepare('SELECT * FROM action_requests WHERE id=?').get(intervention.action_request_id);
+    let payload;
+    try { payload = JSON.parse(action?.payload || '{}'); } catch { payload = {}; }
+    const confirmation = verifyOneTimeConfirmation(action, token, payload);
+    if (!confirmation.ok) return { code: INTERVENTION_REASON_CODES.CONFIRMATION_REQUIRED,
+      message: '确认已失效，请重新打开确认卡', confirmationError: confirmation.code };
+    db.prepare('UPDATE action_requests SET confirmation_consumed_at=? WHERE id=?').run(new Date().toISOString(), action.id);
+  }
+  return interventionRepository.transition(id, ['pending_confirmation'], 'active', { actorUserId });
+});
+
 router.post('/:interventionId/confirm', (req, res) => {
   const intervention = interventionRepository.findByPublicId(req.params.interventionId);
   const access = accessForIntervention(req, intervention, 'manage');
   if (access.error) return failure(res, access.error, access.reasonCode, access.message);
-  if (intervention.status === 'proposed') return failure(res, 409, INTERVENTION_REASON_CODES.NOT_SUBMITTED, '草案必须先提交为待确认状态');
-  if (intervention.status !== 'active' && !canTransitionIntervention(intervention.status, 'active')) return invalidTransition(res, intervention, 'active');
-  if (intervention.status === 'pending_confirmation') {
-    const action = db.prepare('SELECT * FROM action_requests WHERE id=?').get(intervention.action_request_id);
-    let payload; try { payload = JSON.parse(action?.payload || '{}'); } catch { payload = {}; }
-    const confirmation = verifyOneTimeConfirmation(action, req.body?.confirmation_token, payload);
-    if (!confirmation.ok) return failure(res, 409, INTERVENTION_REASON_CODES.CONFIRMATION_REQUIRED, '确认已失效，请重新打开确认卡', { confirmation_error: confirmation.code });
-    const consumed = db.prepare('UPDATE action_requests SET confirmation_consumed_at=? WHERE id=? AND confirmation_consumed_at IS NULL').run(new Date().toISOString(), action.id);
-    if (consumed.changes !== 1) return failure(res, 409, INTERVENTION_REASON_CODES.CONFIRMATION_REQUIRED, '确认已被使用，请重新打开确认卡');
-  }
-  const result = interventionRepository.transition(intervention.intervention_id, ['pending_confirmation'], 'active', { actorUserId: req.user.id });
+  const result = confirmIntervention.immediate(intervention.intervention_id, req.user.id, req.body?.confirmation_token);
+  if (result.invalid) return invalidTransition(res, result.invalid, 'active');
+  if (result.code) return failure(res, 409, result.code, result.message, { confirmation_error: result.confirmationError });
   return res.json({ intervention: result.intervention, idempotent_replay: result.idempotentReplay, message: '干预已由本人确认并激活' });
 });
 

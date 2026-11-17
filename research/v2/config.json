@@ -1,0 +1,13 @@
+{
+  "experiment_version": "evicare-research-v2.1",
+  "prompt_version": "structured-health-zh.v2.2",
+  "sampling_seed": 20261117,
+  "temperature": 0,
+  "route_budget": 120,
+  "answer_budget": 150,
+  "tool_budget": 2,
+  "timeout_ms": 45000,
+  "arms": ["A", "B", "C", "D", "E"],
+  "locked_real_test_variants": [2, 3],
+  "max_records": 10
+}

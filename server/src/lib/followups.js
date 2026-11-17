@@ -120,6 +120,33 @@ export function matchMeasurementToFollowup(userId, metricRow) {
   return hydrate(db.prepare('SELECT * FROM followups WHERE id=?').get(followup.id));
 }
 
+export function reconcileFollowupsForMeasurement(userId, metricId, deleted = false) {
+  const rows = db.prepare(`SELECT * FROM followups WHERE user_id=? AND status<>'cancelled'
+    AND (baseline_metric_id=? OR candidate_metric_id=? OR result_metric_id=?)`).all(userId, metricId, metricId, metricId);
+  const metric = id => id && !(deleted && id === metricId)
+    ? db.prepare('SELECT * FROM metrics WHERE id=? AND user_id=?').get(id, userId) : null;
+  for (const row of rows) {
+    const baseline = metric(row.baseline_metric_id);
+    const resultId = row.result_metric_id || row.candidate_metric_id;
+    const result = metric(resultId);
+    const wasComplete = row.status === 'completed';
+    const hadResult = wasComplete || row.status === 'pending_result_confirmation';
+    const boundary = baseline?.recorded_at || String(row.created_at).replace(' ', 'T');
+    const eligible = result && result.recorded_at && Date.parse(result.recorded_at) >= Date.parse(boundary);
+    const reconfirm = hadResult && (!eligible || resultId === metricId);
+    const status = reconfirm ? (eligible ? 'pending_result_confirmation' : 'scheduled') : row.status;
+    const comparison = eligible ? buildFollowupComparison({ ...row, baseline_metric_id: baseline?.id }, baseline, result) : null;
+    db.prepare(`UPDATE followups SET baseline_metric_id=?,candidate_metric_id=?,result_metric_id=?,status=?,comparison=?,
+      confirmed_by=?,completed_at=?,updated_at=? WHERE id=?`).run(
+      baseline?.id || null, eligible ? (reconfirm ? result.id : row.candidate_metric_id) : null,
+      reconfirm ? null : row.result_metric_id, status, comparison ? JSON.stringify(comparison) : null,
+      reconfirm ? null : row.confirmed_by, reconfirm ? null : row.completed_at, nowIso(), row.id,
+    );
+    if (wasComplete && reconfirm && row.todo_id) db.prepare('UPDATE todos SET completed=0,completed_at=NULL WHERE id=? AND user_id=?').run(row.todo_id, userId);
+  }
+  refreshFollowupStates(userId);
+}
+
 export function rescheduleFollowup(id, userId, actorId, dueAt) {
   const due = normalizeDueAt(dueAt);
   const changed = db.prepare(`UPDATE followups SET due_at=?,suggested_due_at=?,status='scheduled',updated_at=? WHERE id=? AND user_id=? AND status IN ('scheduled','due','overdue')`).run(due, due, nowIso(), id, userId);

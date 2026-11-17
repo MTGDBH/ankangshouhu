@@ -3,6 +3,8 @@ import db from '../db.js';
 import { routeIntent } from './intentRouter.js';
 import { buildHealthContext } from './contextBuilder.js';
 import { composeGroundedResponse } from './agent.js';
+import { prepareResearchTurn, researchToolPlan, researchMetricHistory, researchReply, researchPresentation } from './researchRuntime.js';
+import { getLLMConfig } from '../services/llmConfigService.js';
 import { analyzeSelectedHealthTrends } from './tools/healthTrend.js';
 import { riskPredict } from './tools/riskPredict.js';
 import { predictDisease } from '../lib/diseasePredictor.js';
@@ -35,6 +37,7 @@ const MEMORY_CATEGORIES = new Set(['communication', 'schedule', 'diet', 'activit
 const TOOL_LABELS = {
   health_trend: '健康趋势', htn_risk: '高血压风险筛查', disease_risk: '疾病风险筛查',
   behavior: '睡眠与活动', device: '设备状态', health_summary: '健康摘要', alerts: '待处理预警', knowledge: '知识依据', followup_status: '复测随访',
+  check_data_quality: '数据质量核对', research_metric_history: '研究实测记录', schedule_followup: '复测预览',
   propose_intervention: '个体干预提议', list_active_interventions: '活动干预', record_adherence: '执行记录',
   evaluate_intervention: '个体效果评价', explain_intervention_result: '效果结果解释',
 };
@@ -135,7 +138,8 @@ export function classifyAgentIntent(message) {
     /(我想|请|帮我|建议|制定|试试|开始).{0,18}(干预|方案|改善|控制|观察).{0,18}(血压|血糖|心率|体重|睡眠)|(?:血压|血糖|心率|体重|睡眠).{0,18}(干预|方案|改善|控制|观察)/.test(message);
   const interventionHit = proposeInterventionHit || listInterventionsHit || adherenceHit || evaluateInterventionHit || explainInterventionHit;
   return {
-    ...routed, trendHit: dailyTipHit || knowledgeOnlyRelation ? false : trendHit, riskHit: dailyTipHit ? false : riskHit, diseaseRiskHit: dailyTipHit ? false : diseaseRiskHit, graphRelationHit, followupHit,
+    ...routed, trendHit: trendHit && !dailyTipHit && !knowledgeOnlyRelation && (!routed.behavior || detectedMetrics.length > 0),
+    riskHit: dailyTipHit ? false : riskHit, diseaseRiskHit: dailyTipHit ? false : diseaseRiskHit, graphRelationHit, followupHit,
     dailyPlanHit, dailyTipHit,
     behaviorHit: dailyPlanHit || (routed.behavior && !/关系|相关|影响/.test(message)),
     deviceHit: routed.device, alertsHit: dailyPlanHit || routed.alerts, healthSummaryHit: dailyPlanHit || routed.healthSummary,
@@ -176,12 +180,27 @@ export function planAgentTools(intent, message, { limit = true } = {}) {
 }
 
 const REGISTRY = {
-  health_trend: { python: true, retry: 0, timeout_ms: 20000, validate: x => x?.success === true && Array.isArray(x.metrics), run: (ctx, args) => analyzeSelectedHealthTrends(ctx.subject.id, args.metrics, args.days) },
+  check_data_quality: { retry: 0, timeout_ms: 3000, validate: x => x.success && x.quality?.version,
+    run: ctx => ({ success: Boolean(ctx.research?.quality), quality: ctx.research?.quality }) },
+  research_metric_history: { retry: 0, timeout_ms: 3000, validate: x => x.success && x.latest,
+    run: (ctx, args) => researchMetricHistory({ ...ctx.research, subjectId: ctx.subject.id }, args, ctx.research.task === 'summary') },
+  schedule_followup: { retry: 0, timeout_ms: 3000, validate: x => x.success && x.preview?.requires_confirmation,
+    run: (_ctx, args) => ({ success: true, preview: { icon: '测', color: 'orange', action_type: 'schedule_recheck',
+      metric_type: args.metric, title: metricName(args.metric) + '复测', desc: '选择时间并确认后保存', requires_confirmation: true } }) },
+  health_trend: { python: true, retry: 0, timeout_ms: 20000, validate: x => x?.success === true && Array.isArray(x.metrics),
+    run: (ctx, args) => analyzeSelectedHealthTrends(ctx.subject.id, args.metrics, args.days,
+      ctx.research ? new Set(ctx.research.quality?.evidence_ids) : null) },
   htn_risk: { python: true, retry: 0, timeout_ms: 20000, validate: x => x?.success === true && Number.isFinite(Number(x.dataCount)), run: ctx => riskPredict(ctx.subject.id, ctx.subject) },
   disease_risk: { python: true, retry: 0, timeout_ms: 20000, validate: x => x?.success === true && typeof x.disease === 'string' && typeof x.status === 'string', run: (ctx, args) => predictDisease(ctx.subject.id, ctx.subject, args.disease) },
   behavior: { retry: 1, timeout_ms: 3000, validate: x => x?.success === true && x.behavior && typeof x.behavior === 'object', run: ctx => analyzeBehavior(ctx.subject.id, ctx.subject) },
   device: { retry: 1, timeout_ms: 3000, validate: x => x?.success === true && Array.isArray(x.devices) && Array.isArray(x.recent_device_metrics), run: ctx => getDeviceStatus(ctx.subject.id) },
-  health_summary: { retry: 1, timeout_ms: 3000, validate: x => x?.success === true && Array.isArray(x.latest) && Number.isFinite(Number(x.data_points)), run: ctx => getHealthSummary(ctx.subject) },
+  health_summary: { retry: 1, timeout_ms: 3000, validate: x => x?.success === true && Array.isArray(x.latest) && Number.isFinite(Number(x.data_points)),
+    run: ctx => {
+      const summary = getHealthSummary(ctx.subject);
+      if (ctx.actor.id === ctx.subject.id) return summary;
+      const access = canActFor(ctx.subject.id, ctx.actor.id, 'view_alerts', { resource: 'agent-summary-alerts' });
+      return { ...summary, alerts: access.allowed ? summary.alerts : [], todos: [], profile: { age: summary.profile.age } };
+    } },
   alerts: { retry: 1, timeout_ms: 3000, validate: x => x?.success === true && Array.isArray(x.alerts) && Number.isFinite(Number(x.pending)), run: ctx => getAlertStatus(ctx.subject.id) },
   knowledge: { retry: 1, timeout_ms: 5000, validate: x => Array.isArray(x?.results) && Array.isArray(x?.citations) && typeof x?.index_version === 'string', run: (ctx, args) => queryKnowledgeGraph(args.question, args.disease, ctx.liveContext, { audience: ctx.audience, topK: 6, maxHops: 2, includeTrace: true }) },
   followup_status: { retry: 1, timeout_ms: 3000, validate: x => x?.success === true && Array.isArray(x.items) && Number.isFinite(Number(x.total)), run: ctx => getFollowupStatus(ctx.subject.id) },
@@ -315,7 +334,7 @@ async function executeOne(runId, callIndex, item, ctx, dataVersion, signal = nul
 }
 
 function subjectDataVersion(subjectId) {
-  const metric = db.prepare('SELECT COUNT(*) AS n,MAX(recorded_at) AS at FROM metrics WHERE user_id = ?').get(subjectId);
+  const metric = db.prepare('SELECT COUNT(*) AS n, MAX(id) AS id, MAX(updated_at) AS at, SUM(revision) AS revision FROM metrics WHERE user_id = ?').get(subjectId);
   const alert = db.prepare('SELECT COUNT(*) AS n,MAX(created_at) AS at FROM alerts WHERE user_id = ?').get(subjectId);
   const followup = db.prepare('SELECT COUNT(*) AS n,MAX(updated_at) AS at FROM followups WHERE user_id=?').get(subjectId);
   const intervention = db.prepare('SELECT COUNT(*) AS n,MAX(updated_at) AS at FROM interventions WHERE subject_user_id=?').get(subjectId);
@@ -329,7 +348,7 @@ function relevantTypes(message, intent) {
   if (/血糖|糖尿病/.test(message)) map.push('glucose');
   if (/心率|脉搏/.test(message)) map.push('hr');
   if (/睡眠/.test(message)) map.push('sleep');
-  if (/步数|活动/.test(message)) map.push('steps');
+  if (/步数|活动|走得少|走了多少步/.test(message)) map.push('steps');
   if (/体重|BMI/.test(message)) map.push('weight');
   if (intent.healthSummaryHit) return null;
   return [...new Set(map)];
@@ -529,6 +548,17 @@ function deterministicReply(message, toolResults, intent) {
   }
   const alerts = ok.find(item => item.name === 'alerts')?.result;
   if (alerts && intent.alertsHit) return { content: alerts.pending ? `目前有 ${alerts.pending} 条待处理提醒${alerts.critical ? `，其中 ${alerts.critical} 条为严重提醒` : ''}。请优先查看严重项目。` : '目前没有待处理提醒。请继续按计划记录健康数据。', plan: [], confidence: { type: 'data', score: 90, sources: ['站内预警'], reasoning: '读取当前老人待处理预警' } };
+  const behavior = ok.find(item => item.name === 'behavior')?.result.behavior;
+  if (intent.behaviorHit && !intent.dailyPlanHit && behavior) {
+    const requested = relevantTypes(message, intent) || [];
+    const items = (requested.length ? requested : ['steps', 'sleep'])
+      .filter(type => behavior[type]?.data_points > 0)
+      .map(type => [type, behavior[type]]);
+    if (!items.length) return { content: '暂时没有这个项目的测量记录，请先补充记录。', plan: [], confidence: { type: 'common_sense' } };
+    const content = items.map(([type, value]) => '最近的' + metricName(type) + '记录为 ' + value.latest + (type === 'steps' ? ' 步' : ' 小时')).join('，');
+    return { content: content + '。可结合多天记录查看个人变化。', plan: [],
+      confidence: { type: 'data', score: 78, sources: ['睡眠与活动工具'], reasoning: '引用当前老人的真实记录' } };
+  }
   const summary = ok.find(item => item.name === 'health_summary')?.result;
   if (intent.dailyPlanHit && summary) {
     const alerts = ok.find(item => item.name === 'alerts')?.result;
@@ -593,6 +623,7 @@ export async function runAgentV2({ actor, subject, conversation, message, client
   const attack = emergency ? { blocked: false, flags: [] } : inspectUntrustedInput(message, 'user');
   let liveContext = null;
   let contextPlan;
+  let research = null;
   if (emergency || attack.blocked) {
     contextPlan = {
       memories: [], summary: {}, recent: [],
@@ -600,22 +631,39 @@ export async function runAgentV2({ actor, subject, conversation, message, client
     };
   } else {
     onProgress?.('context', '正在读取健康记录…');
-    const fullContext = needsLiveHealthContext(message, intent) ? buildHealthContext(subject, 90) : null;
+    const delegated = actor.id !== subject.id;
+    const scope = delegated ? canActFor(subject.id, actor.id, 'use_agent', { resource: 'agent-live-context' }) : null;
+    const canReadSummary = !delegated || (scope.allowed && scope.scopes.includes('view_summary'));
+    research = prepareResearchTurn({ actor, subject, scopes: scope?.scopes, question: message, intent });
+    const needsContext = canReadSummary && (!research || research.decision === 'answer' && ['trend','screen','plan'].includes(research.task));
+    const fullContext = needsContext && needsLiveHealthContext(message, intent) ? buildHealthContext(subject, 90) : null;
+    if (fullContext && delegated) {
+      if (!scope.scopes.includes('view_alerts')) fullContext.alerts = [];
+      if (!scope.scopes.includes('view_trends')) {
+        fullContext.series_by_type = {};
+        fullContext.profile = { age: fullContext.profile?.age };
+      }
+      fullContext.todos = [];
+    }
     liveContext = minimalLiveContext(fullContext, message, intent);
     contextPlan = buildContextPlan(conversation, subject, message, intent, liveContext, actor);
+    if (research) contextPlan.manifest.research_v2 = {
+      version: research.version, decision: research.decision, reason: research.reason,
+      task: research.task, metric: research.metric, labels: research.quality?.issues || [], selected_tools: research.tools,
+    };
     contextPlan.recent = contextPlan.recent.filter(row => Number(row.id) !== Number(userMessageId));
     contextPlan.manifest.recent_messages = contextPlan.recent.length;
   }
   db.prepare('UPDATE agent_runs SET context_manifest=? WHERE id=?').run(JSON.stringify(contextPlan.manifest), runId);
   let toolResults = [];
   if (!emergency && !attack.blocked) {
-    const toolPlan = planAgentTools(intent, message);
-    const ctx = { actor, subject, message, audience: actor.role === 'doctor' ? 'doctor' : actor.id === subject.id ? 'elderly' : 'caregiver', liveContext: liveContext || {} };
+    const toolPlan = researchToolPlan(research, intent, message, planAgentTools(intent, message));
+    const ctx = { actor, subject, message, audience: actor.role === 'doctor' ? 'doctor' : actor.id === subject.id ? 'elderly' : 'caregiver', liveContext: liveContext || {}, research };
     const version = subjectDataVersion(subject.id);
     toolResults = await Promise.all(toolPlan.map((item, index) => executeOne(runId, index, item, ctx, version, signal)));
     throwIfAgentCancelled(signal);
     const noSuccess = toolResults.length > 0 && !toolResults.some(item => item.status === 'success');
-    if (noSuccess && toolPlan.length < MAX_TOOL_CALLS && !toolPlan.some(item => item.name === 'health_summary')) {
+    if (!research && noSuccess && toolPlan.length < MAX_TOOL_CALLS && !toolPlan.some(item => item.name === 'health_summary')) {
       contextPlan.manifest.replan_count = 1;
       contextPlan.manifest.replan_reason = 'all_primary_tools_failed';
       toolResults.push(await executeOne(runId, toolPlan.length, { name: 'health_summary', args: {} }, ctx, version, signal));
@@ -623,11 +671,18 @@ export async function runAgentV2({ actor, subject, conversation, message, client
   }
   fitToolResultsIntoContext(contextPlan, toolResults);
   db.prepare('UPDATE agent_runs SET context_manifest=? WHERE id=?').run(JSON.stringify(contextPlan.manifest), runId);
-  let response = emergency || (attack.blocked ? securityRefusal() : null);
+  const researchLabel = research?.metric ? metricName(research.metric) : '健康';
+  let response = emergency || (attack.blocked ? securityRefusal() : researchReply(research, toolResults, researchLabel));
   let curveGraphLink = null;
+  let modelFallback = null;
   if (!response) {
     onProgress?.('analysis', '正在分析趋势和风险…');
-    if (intent.interventionHit) response = deterministicReply(message, toolResults, intent);
+    if (research && !toolResults.some(item => item.status === 'success')) {
+      research.decision = 'limit';
+      research.reason = 'tool_failed';
+      Object.assign(contextPlan.manifest.research_v2, { decision: research.decision, reason: research.reason });
+      response = researchReply(research, toolResults, researchLabel);
+    } else if (intent.interventionHit || research?.task === 'plan') response = deterministicReply(message, toolResults, intent);
     else try {
         response = await composeGroundedResponse({
           messages: contextPlan.recent.map(row => ({ role: row.role, content: row.content })), userMessage: message,
@@ -635,9 +690,18 @@ export async function runAgentV2({ actor, subject, conversation, message, client
           toolResults, memories: contextPlan.memories.map(row => ({ category: row.category, content: row.content })), conversationSummary: contextPlan.summary,
           signal,
         });
-        if (response && (toolResults.length || liveContext) && !groundedNumbersMatch(response.content, toolResults, liveContext)) response = null;
+        if (response && (toolResults.length || liveContext) && !groundedNumbersMatch(response.content, toolResults, liveContext)) {
+          modelFallback = { ...response.__llm, call_status: 'fallback', fallback_reason: 'EVIDENCE_MISMATCH' };
+          response = null;
+        }
       } catch (error) {
         if (signal?.aborted || error?.code === 'AGENT_CANCELLED') throw error;
+        const config = getLLMConfig();
+        if (config) modelFallback = {
+          provider: config.provider, model: config.model, call_status: 'fallback',
+          fallback_reason: /^LLM_HTTP_\d{3}$/.test(error.code || '') ? error.code
+            : error.name === 'TimeoutError' ? 'LLM_TIMEOUT' : 'LLM_OUTPUT_UNAVAILABLE',
+        };
         response = null;
       }
     response ||= deterministicReply(message, toolResults, intent);
@@ -668,7 +732,7 @@ export async function runAgentV2({ actor, subject, conversation, message, client
   }
   throwIfAgentCancelled(signal);
   onProgress?.('verification', '正在核对数据、日期与知识依据…');
-  const previews = intent.interventionHit ? [] : actionPreview(message);
+  const previews = research ? response.plan.filter(item => item.requires_confirmation) : intent.interventionHit ? [] : actionPreview(message);
   if (previews.length && !curveGraphLink) response.plan = previews;
   response.plan = (response.plan || []).slice(0, 2);
   response.content = normalizeOutputPhrases(response.content);
@@ -691,8 +755,9 @@ export async function runAgentV2({ actor, subject, conversation, message, client
     contextPlan.manifest.verification_errors = verification.errors;
     presentation = buildAgentPresentation({ response, toolResults, liveContext, intent, subject, actor, message });
   }
-  const memoryCandidate = emergency || attack.blocked ? null : createMemoryCandidate(subject.id, actor.id, userMessageId, message);
-  const trace = toolResults.map(item => ({ name: item.name, label: item.label, status: item.status, latency_ms: item.latency_ms, freshness: item.manifest?.freshness || null, error_code: item.error_code || null }));
+  if (research) presentation = researchPresentation(research, presentation, response);
+  const memoryCandidate = emergency || attack.blocked || research && research.decision !== 'answer' ? null : createMemoryCandidate(subject.id, actor.id, userMessageId, message);
+  const trace = toolResults.map(item => ({ name: item.name, label: item.label, status: item.status, latency_ms: item.latency_ms, freshness: item.manifest?.freshness || null, error_code: item.error_code || null, selection_reason: research?.reason || null }));
   const knowledgeEvidence = activeKnowledge;
   const mergedEvidence = knowledgeEvidence ? {
     ...knowledgeEvidence,
@@ -709,6 +774,7 @@ export async function runAgentV2({ actor, subject, conversation, message, client
   } : mergedEvidence;
   response = {
     ...response,
+    ...(modelFallback ? { __llm: modelFallback, source: response.source || 'tool_fallback' } : {}),
     evidence: evidenceWithSnapshots,
     run_id: runId,
     conversation_id: conversation.id,
@@ -718,6 +784,7 @@ export async function runAgentV2({ actor, subject, conversation, message, client
     presentation,
     context_manifest: contextPlan.manifest,
   };
-  db.prepare('UPDATE agent_runs SET status=?,latency_ms=?,completed_at=? WHERE id=?').run('completed', Date.now() - started, nowIso(), runId);
+  db.prepare('UPDATE agent_runs SET status=?,latency_ms=?,completed_at=?,context_manifest=? WHERE id=?')
+    .run('completed', Date.now() - started, nowIso(), JSON.stringify(contextPlan.manifest), runId);
   return response;
 }

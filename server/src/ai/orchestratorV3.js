@@ -1,6 +1,10 @@
 import db from '../db.js';
 import { classifyAgentIntent, emergencyReply, planAgentTools, runAgentV2 } from './orchestratorV2.js';
 import { resolveGoal, taskStateFor } from './goalResolver.js';
+import { inspectUntrustedInput } from './attackGuard.js';
+import { temporalRequest } from './temporalPolicy.js';
+import { runTemporalTurn } from './temporalRuntime.js';
+import { temporalEnabled } from './temporalStore.js';
 
 function parseJSON(value, fallback = {}) { try { return JSON.parse(value || '') || fallback; } catch { return fallback; } }
 function nowIso() { return new Date().toISOString(); }
@@ -62,6 +66,10 @@ export async function runAgentV3(args) {
   const goal = resolveGoal(message, turn.intent, parseJSON(conversation.dialogue_state, {}));
   const runInsert = () => db.prepare(`INSERT INTO agent_runs (conversation_id,actor_user_id,subject_user_id,client_request_id,intent) VALUES (?,?,?,?,?)`)
     .run(conversation.id, actor.id, subject.id, clientRequestId || null, JSON.stringify(turn.intent));
+  const temporal = temporalEnabled() ? temporalRequest(message, started) : null;
+  if (temporal && (emergencyReply(message) || inspectUntrustedInput(message, 'user').blocked)) {
+    return runAgentV2({ ...args, intentOverride: turn.intent });
+  }
   const other = differentNamedSubject(message, subject);
   if (other) {
     const runId = Number(runInsert().lastInsertRowid);
@@ -76,6 +84,7 @@ export async function runAgentV3(args) {
       { label: '有头晕或不适', value: `${message}，同时有头晕或其他不适` },
     ], '先确认一个关键问题：现在是否有胸痛、明显呼吸困难、意识异常、说话不清、单侧无力或其他明显不适？', 'symptom_check_required');
   }
+  if (temporal) return runTemporalTurn(args, temporal, Number(runInsert().lastInsertRowid), started);
   if (turn.intent.trendHit && !turn.intent.trendMetrics.length) {
     const runId = Number(runInsert().lastInsertRowid);
     return clarification(runId, conversation, ['血压', '血糖', '心率', '体重'].map(label => ({ label, value: `看看我最近90天的${label}趋势` })), '您想看哪一项健康趋势？', 'metric_missing');

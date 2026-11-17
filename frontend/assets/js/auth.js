@@ -47,7 +47,8 @@
     const avColor = user.avatar_color || '#0F766E';
     const navLink = n => `<a href="${n.href}" class="app-nav-link${n.key === activeKey ? ' is-active' : ''}"${n.key === activeKey ? ' aria-current="page"' : ''}><span aria-hidden="true">${n.icon}</span><strong>${n.label}</strong></a>`;
     const mobileLink = n => `<a href="${n.href}" class="app-mobile-tab${n.key === mobileKey ? ' is-active' : ''}"${n.key === mobileKey ? ' aria-current="page"' : ''}><span aria-hidden="true">${n.icon}</span><strong>${n.label}</strong></a>`;
-    const mobileTitle = MOBILE_NAV_ITEMS.find(item => item.key === mobileKey)?.label || '首页';
+    const pageTitles = { 'assessment.html': '健康评估', 'intervention.html': '改善计划', 'care.html': '照护协同' };
+    const mobileTitle = pageTitles[location.pathname.split('/').pop()] || MOBILE_NAV_ITEMS.find(item => item.key === mobileKey)?.label || '首页';
     const skipLink = document.querySelector('.skip-link') ? '' : '<a class="skip-link" href="#main-content">跳到主要内容</a>';
 
     slot.outerHTML = `
@@ -120,7 +121,7 @@
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-controls', 'mobile-invite-panel');
     invitePanel.id = invitePanel.id || 'mobile-invite-panel';
-    owner.append(toggle);
+    owner.insertBefore(toggle, invitePanel);
   }
 
   function makeMobileCollapsible(card, title, open = false) {

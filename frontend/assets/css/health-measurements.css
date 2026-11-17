@@ -1,0 +1,302 @@
+.health-measurement-page { background: var(--health-page); color: var(--health-ink); }
+.health-measurement-page .health-measurement-main {
+  width: 100%;
+  max-width: 1270px;
+  margin-inline: auto;
+  padding: clamp(14px, 2.8vw, 34px);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.health-measurement-main > * + *, .health-measurement-main [data-pane] > * + * { margin-top: var(--health-gap); }
+.health-measurement-page [hidden], .health-record-dialog [hidden] { display: none !important; }
+.health-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  color: var(--health-ink);
+}
+.health-page-header h1 {
+  margin: 0 0 4px;
+  font-size: clamp(1.55rem, 2.5vw, 2.25rem);
+  font-weight: 750;
+  line-height: 1.2;
+}
+.health-page-header p { margin: 0; color: var(--health-muted); }
+.health-mobile-measurements { color: var(--health-ink); }
+.health-mobile-measurements .health-page-header { margin-bottom: 12px; }
+.health-mobile-measurements h2, .health-measurement-page .health-panel h2 { font-size: 1.2rem; font-weight: 750; margin: 0; }
+.health-mobile-measurements .health-panel > h2 { margin-bottom: 10px; }
+
+.health-measurement-main :focus-visible,
+.health-record-dialog :focus-visible,
+.health-mobile-measurements :focus-visible {
+  outline: 2px solid var(--health-focus) !important;
+  outline-offset: 3px;
+}
+.health-form-grid, .health-history-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px 14px;
+}
+.health-form-grid label, .health-history-controls label {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  color: var(--health-ink);
+  font-weight: 650;
+}
+.health-form-grid :is(input,select), .health-history-controls select,
+.health-record-dialog .input, .health-discovery-page .measurement-form :is(select,input:not([type=checkbox])) {
+  min-height: 46px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--health-line);
+  color: var(--health-ink);
+  background: var(--health-surface);
+  font: inherit;
+}
+.health-record-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(540px, calc(100% - 24px));
+  max-height: min(90dvh, 720px);
+  padding: clamp(14px, 3vw, 26px);
+  border: 1px solid var(--health-line);
+  border-radius: var(--health-radius);
+  background: var(--health-surface);
+  color: var(--health-ink);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow: auto;
+}
+.health-record-dialog::backdrop { background: rgba(24,20,23,.45); }
+.health-record-dialog h2 { font-size: 1.25rem; font-weight: 750; margin: 0; }
+.health-record-dialog .health-meta { margin: 12px 0 4px; }
+.health-record-dialog :is(.custom-metric-icon-btn,.custom-metric-color-btn) { min-width: 44px; min-height: 44px; }
+.health-record-dialog .custom-metric-form { margin-top: 12px; }
+.health-record-status { margin: 8px 0; color: var(--health-muted); }
+.health-record-status:empty { display: none; }
+
+.health-history-panel { display: grid; gap: 10px 18px; }
+.health-history-panel .health-panel-heading { margin-bottom: 0; }
+.health-history-panel .health-record-status { margin-block: 0; }
+.health-history-charts { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.health-history-charts:empty { display: none; }
+.health-history-charts .pro-chart {
+  padding: 10px 12px;
+  border-color: var(--health-line);
+  background: var(--health-surface);
+  color: var(--health-ink);
+  box-shadow: none;
+}
+.health-history-charts .pro-chart-figure svg { max-height: 230px; }
+.health-history-charts .pro-chart-count { color: var(--health-accent-text); background: var(--health-accent-soft); }
+.health-history-list {
+  min-width: 0;
+  border: 1px solid var(--health-line);
+  border-radius: 10px;
+  padding: 0 12px;
+}
+.health-history-list summary, .health-disease-card summary, .health-discovery-page .model-evidence summary {
+  min-height: 44px;
+  align-content: center;
+  color: var(--health-accent-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+.health-history-list ul, .health-device-list ul, .health-discovery-events { list-style: none; padding: 0; margin: 0; }
+.health-history-list ul { max-height: 22rem; overflow: auto; }
+.health-history-list li, .health-device-list li {
+  min-width: 0;
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 8px;
+  padding: 9px 0;
+  border-top: 1px solid var(--health-line);
+}
+.health-history-list small { display: block; color: var(--health-muted); overflow-wrap: anywhere; }
+.health-history-actions { display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: flex-end; }
+.health-history-actions button { min-height: 44px; }
+@media (max-width: 560px) {
+  .health-history-actions { grid-column: 1 / -1; }
+}
+.health-record-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit,minmax(min(145px,100%),1fr)) !important;
+  gap: 9px;
+}
+.health-record-card {
+  min-height: 108px;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--health-line);
+  border-radius: 10px;
+  color: var(--health-ink);
+  background: var(--health-surface);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+button.health-record-card { cursor: pointer; }
+button.health-record-card:hover { border-color: var(--health-primary); background: var(--health-accent-soft); }
+.health-record-card > small { color: var(--health-muted); }
+.health-record-card.entry-card-draft { border: 2px dashed var(--health-primary); }
+.health-record-card .health-status { justify-self: start; }
+.health-record-value { font-size: 1.2rem; font-weight: 750; }
+.health-record-value small { font-size: .8rem; font-weight: 550; }
+.health-device-list { margin-top: 8px; }
+.health-device-list li span { color: var(--health-muted); }
+.health-monitoring-page .bulk-health-entry {
+  background: var(--health-surface) !important;
+  border: 1px solid var(--health-line) !important;
+  border-radius: var(--health-radius) !important;
+}
+.health-monitoring-page .bulk-health-entry :is(button,textarea) { min-height: 44px; }
+.health-monitoring-page .bulk-health-entry textarea { background: var(--health-surface); color: var(--health-ink); }
+
+.health-assessment-page .assess-row {
+  display: grid;
+  grid-template-columns: minmax(0,1.4fr) minmax(0,1fr);
+  gap: var(--health-gap);
+  align-items: start;
+}
+.health-assessment-page :is(.total-card,.life-card,.improve-card,.disease-risk-panel,.score-detail-dialog,.function-assess-dialog) {
+  color: var(--health-ink) !important;
+  background: var(--health-surface) !important;
+  border-color: var(--health-line) !important;
+  border-radius: var(--health-radius);
+}
+.health-assessment-page :is(.total-card,.life-card,.improve-card) {
+  display: block !important;
+  min-width: 0;
+  box-shadow: none;
+  padding: clamp(12px, 2vw, 22px);
+}
+.health-assessment-page .disease-risk-panel { display: block !important; }
+.health-assessment-page .health-measurement-main .disease-risk-panel { margin-top: var(--health-gap); }
+.health-assessment-page .ring-row { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; }
+.health-assessment-page .ring-side { flex: 1 1 210px; min-width: 0; }
+.health-assessment-page .ring-svg { width: clamp(115px, 17vw, 175px); height: auto; }
+.health-assessment-page .ring-svg svg { width: 100%; height: auto; }
+.health-assessment-page .ring-svg circle:first-of-type { stroke: var(--health-raised); }
+.health-assessment-page #ring-progress { stroke: var(--health-primary); }
+.health-assessment-page #ring-num { fill: var(--health-accent-text); }
+.health-assessment-page .health-score-dimension {
+  display: grid;
+  grid-template-columns: minmax(5.2em,1fr) minmax(0,1.1fr) max-content;
+  align-items: center;
+  gap: 8px;
+  padding-block: 7px;
+  border-bottom: 1px solid var(--health-line);
+}
+.health-score-dimension progress { accent-color: var(--health-primary); width: 100%; height: 12px; }
+.health-score-dimension > span { color: var(--health-muted); }
+.health-assessment-page .score-detail-trigger { min-height: 48px; }
+.health-assessment-page :is(.score-detail-trigger,.ring-side-comp) { color: var(--health-accent-text); }
+.health-assessment-page .score-detail-trigger { background: var(--health-accent-soft); border-color: var(--health-line); }
+.health-assessment-page :is(#btn-assess,.function-options label>span,.score-dialog-close,.function-assess-actions button) { min-height: 44px; min-width: 44px; }
+.health-assessment-page :is(#btn-assess,.function-assess-actions .btn-primary) { background: var(--health-primary) !important; color: #fff !important; }
+.health-assessment-page .life-row :is(.life-desc,.life-score-wrap small) { font-size: .9rem; }
+.health-assessment-page .health-suggestion { display: block; background: var(--health-raised); color: var(--health-ink); border: 1px solid var(--health-line); }
+.health-assessment-page .health-suggestion p { margin: 5px 0 0; }
+
+.health-discovery-status, .health-disease-grid { display: grid; gap: 10px; }
+.health-discovery-status { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.health-disease-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.health-discovery-status > article {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--health-line);
+  border-radius: 10px;
+  background: var(--health-surface);
+}
+.health-discovery-status.is-critical > article:first-child { border-inline-start: 4px solid var(--health-primary); }
+.health-discovery-status > article > span { color: var(--health-muted); font-size: .9rem; }
+.health-discovery-status p { margin: 0; }
+.health-disease-card.disease-discovery-card {
+  display: block;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--health-line);
+  border-radius: 10px;
+  background: var(--health-raised);
+  color: var(--health-ink);
+}
+.health-disease-card .health-panel-heading { margin-bottom: 4px; }
+.health-disease-card h3 { font-size: 1.05rem; font-weight: 750; }
+.health-disease-card p { margin: 5px 0; }
+.health-disease-card .health-risk-next { border-top: 1px solid var(--health-line); padding-top: 7px; }
+.health-disease-card details { border-top: 1px solid var(--health-line); padding: 0; }
+.health-disease-card details ul { padding-left: 1.2em; }
+.health-discovery-events li { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 10px; align-items: start; padding-block: 7px; }
+.health-discovery-events li + li { border-top: 1px solid var(--health-line); }
+.health-discovery-events p { margin: 3px 0; color: var(--health-muted); }
+
+.health-discovery-page .discovery-tabs { margin-block: var(--health-gap); gap: 8px; }
+.health-discovery-page .discovery-tabs button, .health-discovery-page .metric-choice button {
+  min-height: 44px !important;
+  color: var(--health-ink);
+  border: 1px solid var(--health-line);
+  background: var(--health-surface);
+}
+.health-discovery-page .discovery-tabs button.active,
+.health-discovery-page .metric-choice button.active { border-color: var(--health-primary); color: var(--health-accent-text); background: var(--health-accent-soft); }
+.health-discovery-page .metric-choice { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px 16px; margin-bottom: 14px; }
+.health-discovery-page .metric-choice-group { min-width: 0; }
+.health-discovery-page .metric-choice-group > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.health-discovery-page .metric-choice small { color: var(--health-muted); }
+.health-discovery-page .curve-summary {
+  display: grid !important;
+  grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  gap: 8px;
+  width: 100%;
+}
+.health-discovery-page .curve-summary article {
+  display: grid !important;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid var(--health-line);
+  border-radius: 9px;
+  background: var(--health-raised);
+}
+.health-discovery-page .curve-summary :is(strong,p), .health-discovery-page .axis-label, .health-discovery-page .curve-legend { color: var(--health-ink); }
+.health-discovery-page .curve-summary p { margin: 4px 0 0; font-size: .9rem; }
+.health-discovery-page .curve-summary strong { font-size: 1.02rem; overflow-wrap: anywhere; }
+.health-discovery-page .curve-svg-wrap { min-width: 0; background: var(--health-surface); border-radius: 9px; border-color: var(--health-line); }
+.health-discovery-page .curve-svg-wrap svg { display: block; width: 100%; height: auto; max-height: 385px; }
+.health-discovery-page .curve-legend .solid { width: 20px; border-top: 2px solid var(--health-accent-text); }
+.health-discovery-page .curve-layer-controls label { min-height: 44px; display: inline-flex; align-items: center; }
+.health-discovery-page :is(.measurement-panel,.intake-shell,.model-evidence) { background: var(--health-surface); color: var(--health-ink); border-color: var(--health-line); }
+.health-discovery-page :is(#close-measurement,.intake-actions button,.intake-module-nav button,.answer-options button) { min-height: 44px; }
+
+@media (min-width: 901px) {
+  .health-monitoring-page .health-history-panel { grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); }
+  .health-monitoring-page .health-history-panel > :is(header,.health-history-controls,.health-record-status) { grid-column: 1/-1; }
+  .health-monitoring-page .health-history-controls { max-width: 540px; }
+}
+@media (max-width: 900px) {
+  .health-measurement-page .health-measurement-main { padding-bottom: 90px; }
+  .health-assessment-page .assess-row { grid-template-columns: minmax(0,1fr); }
+  .health-assessment-page .ring-svg { width: 128px; }
+  .health-discovery-page .curve-summary { grid-template-columns: minmax(0,1fr) !important; }
+}
+@media (max-width: 540px) {
+  .health-record-dialog .health-form-grid { grid-template-columns: minmax(0,1fr); }
+  .health-discovery-status, .health-disease-grid,
+  .health-discovery-page .metric-choice { grid-template-columns: minmax(0,1fr); }
+  .health-discovery-page .discovery-tabs { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .health-discovery-page .discovery-tabs button { padding: 5px 3px; font-size: .95rem; }
+}

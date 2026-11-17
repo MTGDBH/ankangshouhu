@@ -1,0 +1,13 @@
+{
+  "dataset_version": "evicare-synthetic-v2.1",
+  "counts": {
+    "train": 63,
+    "validation": 42,
+    "test": 84
+  },
+  "digest": "e967261ea041f273370c6bbf8d99f669f833d8d1cb041ee1461d2159c6dc9ecf",
+  "near_duplicate_metric": "normalized character-trigram Jaccard",
+  "threshold": 0.8,
+  "max_cross_split_similarity": 0.1538,
+  "violations": []
+}

@@ -13,7 +13,11 @@
 
   // 手机端统一进入新版应用；desktop=1 用于访问详细功能页，并在站内导航中保持。
   const mobileAppPath = location.pathname === '/mobile' || /mobile\.html$/.test(location.pathname);
-  const forceDesktop = new URLSearchParams(location.search).get('desktop') === '1';
+  const urlParameters = new URLSearchParams(location.search);
+  const pageName = location.pathname.split('/').pop() || 'index.html';
+  const forceDesktop = urlParameters.get('desktop') === '1';
+  const responsiveDetail = ['assessment.html', 'intervention.html', 'care.html'].includes(pageName) ||
+    (pageName === 'prediction.html' && urlParameters.get('tab') === 'intake');
   if (forceDesktop) {
     document.addEventListener('click', event => {
       const link = event.target.closest?.('a[href]');
@@ -24,15 +28,19 @@
       link.href = url.href;
     }, true);
   }
-  if (!mobileAppPath && !forceDesktop && window.matchMedia?.('(max-width: 900px)').matches) {
-    const page = location.pathname.split('/').pop() || 'index.html';
+  if (!mobileAppPath && !forceDesktop && !responsiveDetail && window.matchMedia?.('(max-width: 900px)').matches) {
     const viewByPage = {
       'index.html':'overview', 'monitoring.html':'trends', 'metric.html':'trends',
-      'prediction.html':'trends', 'alerts.html':'care', 'assessment.html':'trends', 'intervention.html':'meds',
-      'agent.html':'butler', 'knowledge.html':'butler', 'confidence.html':'butler', 'care.html':'care',
+      'prediction.html':urlParameters.get('tab') === 'discover' ? 'risk' : 'trends',
+      'alerts.html':'care',
+      'agent.html':'butler', 'knowledge.html':'butler', 'confidence.html':'butler',
       'profile.html':'profile', 'privacy.html':'profile', 'settings.html':'profile',
     };
-    location.replace(`/mobile?view=${encodeURIComponent(viewByPage[page] || 'home')}`);
+    const mobileParameters = new URLSearchParams({ view:viewByPage[pageName] || 'overview' });
+    if (mobileParameters.get('view') === 'trends' && urlParameters.has('type')) {
+      mobileParameters.set('type', urlParameters.get('type'));
+    }
+    location.replace('/mobile?' + mobileParameters);
     return;
   }
 

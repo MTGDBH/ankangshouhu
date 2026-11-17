@@ -8,7 +8,7 @@
   const severity = {
     critical: [3, '紧急'], warning: [2, '需关注'], info: [1, '提醒'],
   };
-  const sources = { manual: '手工记录', device: '设备同步', synthetic: '演示数据', caregiver: '家属代填' };
+  const sources = { manual: '手工记录', device: '设备同步', synthetic: '演示数据', caregiver: '家属代填', caregiver_report: '家属代录' };
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
   const date = value => {
     const time = Date.parse(value);
@@ -92,5 +92,56 @@
     ${mobile ? '<div id="pro-overview-chart"></div>' : ''}`;
   }
 
-  window.HealthOverview = { render, date, sources };
+  function researchQuality(presentation) {
+    const data = presentation?.research_v2?.quality;
+    if (data == null || !Number.isFinite(data.score)) return '';
+    const reasons = (data.reasons || []).map(reason => `<li>${escape(reason)}</li>`).join('');
+    return `<details class="agent-quality-note"><summary>数据质量依据 · ${escape(data.score)} / 100</summary>
+      ${reasons ? `<ul>${reasons}</ul>` : '<p>本次检查未发现所列的数据缺陷。</p>'}
+      <p>分数表示记录对本次任务的支持程度。</p></details>`;
+  }
+
+  const temporalLabels = { profile: '档案偏好', event: '健康事件', trend: '趋势摘要', feedback: '计划反馈', conflict: '冲突记录' };
+
+  function temporalSources(presentation) {
+    const memory = presentation?.temporal_memory;
+    if (!Number.isSafeInteger(memory?.subject_id) || !memory.evidence?.length) return '';
+    const links = memory.evidence.filter(item => Number.isSafeInteger(item.id)).map(item =>
+      `<li><button type="button" class="health-link" data-temporal-source="${item.id}" data-temporal-subject="${memory.subject_id}">${escape(temporalLabels[item.kind] || '来源')} · ${escape(item.source_count)} 条</button><div class="health-meta" aria-live="polite"></div></li>`).join('');
+    return `<details class="agent-quality-note"><summary>查看历史记忆来源</summary><ul>${links}</ul></details>`;
+  }
+
+  function sourceLine(row) {
+    if (row.kind === 'measurement') return date(row.recorded_at) + ' · ' + (sources[row.source] || '来源未标注') +
+      ' · ' + row.value + (row.value2 == null ? '' : '/' + row.value2) + ' ' + (row.unit || '');
+    if (row.kind === 'feedback') return date(row.performed_at) + ' · ' + (row.performed ? '已完成' : '未完成');
+    if (row.kind === 'profile') return date(row.confirmed_at) + ' · 本人已确认的档案记忆';
+    return date(row.confirmed_at) + ' · 本人确认的观察计划';
+  }
+
+  document.addEventListener('click', async event => {
+    const button = event.target.closest('[data-temporal-source]');
+    if (!button || button.disabled) return;
+    const result = button.nextElementSibling;
+    button.disabled = true;
+    result.textContent = '正在核对来源…';
+    try {
+      const id = Number(button.dataset.temporalSource);
+      const subject = Number(button.dataset.temporalSubject);
+      const api = window.API || window.Pro;
+      const memory = await api.get(`/api/agent/temporal-memory/${id}?subject_user_id=${subject}`);
+      if (memory.status !== 'verified') {
+        result.textContent = '原记录已更新、撤回或过期，请重新查询。';
+        return;
+      }
+      const lines = memory.sources.slice(0, 8).map(row => `<li>${escape(sourceLine(row))}</li>`).join('');
+      result.innerHTML = `<ul>${lines}</ul>${memory.sources.length > 8 ? '<p>此处展示前 8 条原始来源。完整记录可在健康记录中查看。</p>' : ''}`;
+    } catch {
+      result.textContent = '无法核对来源，请重试或核对查看权限。';
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  window.HealthOverview = { render, date, sources, researchQuality, temporalSources };
 })();

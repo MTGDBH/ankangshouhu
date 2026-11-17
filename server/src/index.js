@@ -35,6 +35,7 @@ const PORT = parseInt(process.env.PORT || '3001', 10);
 app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
 
 async function ensureSeedData() {
+  if (process.env.DEMO_SEED === '0') return;
   const userCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
   if (userCount > 0) return;
 

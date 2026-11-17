@@ -1,0 +1,148 @@
+.health-family-page, .care-page, .intervention-page {
+  background: var(--health-page);
+  color: var(--health-ink);
+}
+.health-family-page {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.health-family-page [hidden], .care-page [hidden], .intervention-page [hidden] { display: none !important; }
+.family-top { background: var(--health-surface); border-bottom: 1px solid var(--health-line); }
+.family-top-inner, .family-main { width: min(100%, 1220px); margin-inline: auto; padding-inline: clamp(14px, 3vw, 32px); }
+.family-top-inner { min-height: 64px; display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding-block: 8px; }
+.family-brand { color: var(--health-accent-text); font-size: 19px; font-weight: 800; }
+.family-skip { position: absolute; top: 8px; left: 8px; z-index: 10; padding: 12px; background: var(--health-surface); transform: translateY(-150%); }
+.family-skip:focus { transform: none; }
+.family-main { padding-block: 24px 48px; }
+.family-main > *, #family-content > *, .family-dialog form > * { margin-bottom: 16px; }
+.family-main h2, .family-dialog h2 { margin: 0 0 6px; font-size: 1.2rem; font-weight: 750; }
+.family-main h3 { font-size: 1.06rem; font-weight: 700; margin: 0 0 6px; }
+.family-actions, .plan-jump { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.plan-jump a, .family-actions :is(a,button) { min-height: 44px; }
+.family-toolbar, .family-subject-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; }
+.family-subject-head > .family-actions, #family-intake-receipt { flex-basis: 100%; }
+.family-subject-head ul { list-style: disc; margin: 8px 0 0 22px; }
+.family-toolbar > label { min-width: min(100%, 245px); }
+.family-dialog label, .family-toolbar label, .care-subject-picker { display: grid; gap: 5px; font-weight: 650; }
+.family-toolbar select, .family-dialog :is(select,input,textarea), .family-chat input, .care-main select#care-subject {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 7px 10px;
+  border: 1px solid var(--health-line);
+  border-radius: 8px;
+  color: var(--health-ink);
+  background: var(--health-surface);
+}
+.family-dialog .family-check { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.family-dialog .family-check input { width: 20px; min-height: 20px; accent-color: var(--health-primary); }
+.family-dialog label + label { margin-top: 10px; }
+.family-view-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+.family-view-nav button {
+  min-height: 44px;
+  padding-inline: 12px;
+  background: var(--health-surface);
+  border: 1px solid var(--health-line);
+  border-radius: 9px;
+  color: var(--health-ink);
+  font-weight: 650;
+}
+.family-view-nav button[aria-current] { background: var(--health-accent-soft); border-color: var(--health-primary); color: var(--health-accent-text); }
+.family-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; align-items: start; }
+.family-grid > *, .family-metrics > * { min-width: 0; }
+.family-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.family-metrics > div, .family-list li, .family-chat-log p, .plan-followups li, #dialog-plan-summary:not(:empty) {
+  background: var(--health-surface);
+  border: 1px solid var(--health-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+}
+.family-metrics strong { display: block; font-size: 1.15rem; }
+.family-secondary, .family-main small, #family-status, .plan-followups small { color: var(--health-muted); }
+.family-list, .family-chat-log, .plan-followups ul { display: grid; gap: 8px; padding: 0; list-style: none; }
+.family-list small, .plan-followups small { display: block; }
+.family-chat-log { max-height: 44vh; overflow-y: auto; margin-bottom: 12px; }
+.family-chat { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: end; }
+.family-chat label { display: grid; gap: 5px; }
+.family-dialog { position: fixed; inset: 0; margin: auto; padding: 20px; width: min(calc(100% - 28px), 500px); max-height: calc(100dvh - 28px); border: 1px solid var(--health-line); border-radius: 14px; background: var(--health-surface); color: var(--health-ink); box-shadow: 0 16px 50px rgb(20 25 32 / 18%); overflow: auto; }
+.family-dialog::backdrop { background: rgb(20 25 32 / 52%); }
+.family-dialog-error, #family-dialog-error, #family-status.is-error { color: var(--health-accent-text); }
+.family-main summary, .care-main summary, .intervention-main summary { cursor: pointer; min-height: 44px; padding-block: 9px; }
+.health-family-page :focus-visible, .care-page :focus-visible, .intervention-page :focus-visible { outline: 2px solid var(--health-focus) !important; outline-offset: 3px; }
+.care-page .care-main, .intervention-page .intervention-main { padding-bottom: 86px !important; }
+.care-page .care-head h1, .intervention-page .intervention-head h1 { font-size: clamp(25px, 3vw, 36px) !important; color: var(--health-ink); }
+.care-page :is(.care-head .subtitle, .care-trust p, .care-help, .care-boundary, .care-card p, .care-dialog p),
+.intervention-page :is(.intervention-head .subtitle, .intervention-notice p, .intervention-section header p, .intervention-card p, .intervention-dialog p) {
+  font-size: 16px !important;
+  line-height: 1.55;
+  color: var(--health-muted) !important;
+}
+.care-page :is(.care-panel-head h2,.care-section-head h2), .intervention-page .intervention-section h2 { font-size: 20px !important; color: var(--health-ink); }
+.care-page :is(.care-card,.care-panel,.care-section), .intervention-page :is(.intervention-section,.intervention-card) {
+  background: var(--health-surface) !important;
+  border: 1px solid var(--health-line) !important;
+  border-radius: var(--health-radius) !important;
+  box-shadow: none !important;
+}
+.care-page .care-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+.care-page .care-subject-grid { grid-template-columns: 1fr !important; }
+.care-subject-picker { max-width: 390px; margin-bottom: 14px; }
+.care-page .care-scope-option small { display: none; }
+.care-page .care-scope-option { min-height: 44px; }
+.care-page .care-scope-option:has(input:checked), .care-page .care-trust, .intervention-page .intervention-notice {
+  border-color: var(--health-line) !important;
+  background: var(--health-accent-soft) !important;
+}
+.care-page .care-trust strong, .intervention-page .intervention-notice strong { font-size: 17px !important; }
+.care-page .care-avatar, .care-page .care-trust > span { background: var(--health-primary) !important; color: white; }
+.care-page :is(.care-main,.care-dialog) .btn, .intervention-page :is(.intervention-main,.intervention-dialog) .btn {
+  min-height: 44px !important;
+  font-size: 15px !important;
+}
+.care-page .btn-primary, .intervention-page .btn-primary { background: var(--health-primary) !important; color: #fff !important; }
+.care-page :is(input:not([type=checkbox]),select,textarea), .intervention-dialog :is(input:not([type=checkbox]),textarea) { min-height: 44px; font-size: 16px; }
+.intervention-page .intervention-live:not([hidden]) { display: block !important; background: var(--health-surface); color: var(--health-muted); }
+.intervention-page .intervention-agent-link { display: inline-flex; }
+.intervention-page .intervention-section h2 { scroll-margin-top: 82px; }
+.intervention-page .intervention-section { min-width: 0; }
+.intervention-page .plan-details dt, .intervention-page .plan-details dd, .intervention-page .today-meta { font-size: 16px; }
+.plan-followups:not(:empty) { margin-top: 16px; }
+.plan-followups h3 { margin-bottom: 6px; }
+.plan-followups .family-actions { margin-top: 8px; }
+.plan-followup-error { color: var(--health-accent-text); }
+@media (max-width: 720px) {
+  .family-grid, .care-page .care-grid { grid-template-columns: 1fr !important; }
+  .family-toolbar label { width: 100%; }
+  .family-main { padding-top: 16px; }
+}
+@media (max-width: 360px) { .family-metrics { grid-template-columns: 1fr; } }
+
+.plan-jump { grid-column: 1 / -1; }
+.intervention-page .intervention-notice { display: flex !important; }
+.intervention-page .intervention-notice-icon { background: var(--health-primary); color: #fff; }
+.intervention-page :is(.plan-card-head h3,.intervention-empty strong), .care-page .care-card h3 { font-size: 18px; }
+.intervention-page .intervention-empty p, .care-page .care-empty p { font-size: 16px; }
+.family-main .health-panel > .health-button { margin: 8px 8px 0 0; }
+.care-page .mobile-care-invite-toggle { min-height: 56px; margin-bottom: 12px; }
+.care-page :is(.care-step,.care-count), .care-page .care-auth-summary > div {
+  color: var(--health-ink) !important;
+  background: var(--health-raised) !important;
+}
+.care-page .care-auth-summary dt, .care-page .care-help, .intervention-page .today-meta { color: var(--health-muted); }
+.care-page :is(.app-mobile-brand,.app-mobile-tab.is-active) span,
+.intervention-page :is(.app-mobile-brand,.app-mobile-tab.is-active) span { background: var(--health-accent-soft) !important; color: var(--health-accent-text) !important; }
+@media (max-width: 900px) {
+  .intervention-page .intervention-section { order: 0; }
+  .intervention-page .intervention-section[aria-labelledby="retest-title"] { order: 0; }
+  .intervention-page .intervention-section:is([aria-labelledby="completed-title"],[aria-labelledby="paused-title"]) { display: block; }
+  .care-page .mobile-owner-console > .mobile-care-invite-toggle { order: -2; }
+  .care-page .mobile-owner-console > .care-panel { order: -1; }
+  .care-page .mobile-care-invite-toggle > span { background: var(--health-accent-soft); color: var(--health-accent-text); }
+  .care-page .care-head { padding-right: 54px; }
+  .care-page #care-refresh { width: 44px !important; min-width: 44px !important; }
+  .care-page #care-refresh::before { color: var(--health-accent-text); }
+}

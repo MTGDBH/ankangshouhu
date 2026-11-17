@@ -1,6 +1,7 @@
 // 指标保存后的趋势提醒：只做结构化规则判断，不在后台保存时调用大模型。
 import db from '../db.js';
 import { analyzeHealthTrend } from '../ai/tools/healthTrend.js';
+export const TREND_ALERT_RULE_VERSION = 'health-trend-alert.2026-11.v1';
 
 const DB_TO_TREND = {
   bp: ['systo', 'diasto'],
@@ -60,7 +61,7 @@ function alreadyAlerted(userId, metric, title) {
   return db.prepare(`
     SELECT id FROM alerts
     WHERE user_id = ? AND metric_type = ? AND title = ?
-      AND created_at >= datetime('now', '-1 day')
+      AND status <> 'resolved' AND created_at >= datetime('now', '-1 day')
     LIMIT 1
   `).get(userId, metric, title);
 }
@@ -71,9 +72,14 @@ function alreadyAlerted(userId, metric, title) {
 export async function triggerTrendAlerts(userId, dbType) {
   const metrics = DB_TO_TREND[dbType] || [];
   if (!metrics.length) return [];
+  const windowStart = new Date(Date.now() - 90 * 86400000).toISOString();
+  const loadEvidence = () => db.prepare(`SELECT id, revision FROM metrics
+    WHERE user_id=? AND type=? AND recorded_at>=? ORDER BY id`).all(userId, dbType, windowStart);
+  const evidence = loadEvidence();
   const results = await Promise.all(metrics.map(metric =>
     analyzeHealthTrend(userId, { metric, days: 90 })
   ));
+  if (JSON.stringify(evidence) !== JSON.stringify(loadEvidence())) return [];
   const created = [];
   for (const result of results) {
     if (!result?.success || result.status !== 'ok') continue;
@@ -82,9 +88,10 @@ export async function triggerTrendAlerts(userId, dbType) {
     const alert = buildAlert(result, rule);
     if (alreadyAlerted(userId, result.metric, alert.title)) continue;
     const inserted = db.prepare(`
-      INSERT INTO alerts (user_id, metric_type, severity, title, message, status)
-      VALUES (?, ?, ?, ?, ?, 'pending')
-    `).run(userId, result.metric, 'warning', alert.title, alert.message);
+      INSERT INTO alerts (user_id,metric_type,severity,title,message,status,source_ref,rule_version,rule_key,evidence_metric_ids)
+      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+    `).run(userId, result.metric, 'warning', alert.title, alert.message, 'trend:' + dbType, TREND_ALERT_RULE_VERSION, rule,
+      JSON.stringify(evidence.map(row => row.id)));
     created.push({ id: Number(inserted.lastInsertRowid), metric: result.metric, rule });
   }
   return created;

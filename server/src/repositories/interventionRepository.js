@@ -25,6 +25,17 @@ function hydrate(row, { includeLogs = false } = {}) {
 
 function publicId(prefix) { return `${prefix}_${crypto.randomUUID()}`; }
 
+function confirmationPayload(interventionId, input) {
+  return JSON.stringify({
+    intervention_id: interventionId, title: input.title, intervention_type: input.intervention_type,
+    protocol: input.protocol, target_metrics: input.target_metrics, adherence_target: input.adherence_target,
+    baseline_start: input.baseline_start, baseline_end: input.baseline_end,
+    intervention_start: input.intervention_start, intervention_end: input.intervention_end,
+    outcome_start: input.outcome_start, outcome_end: input.outcome_end,
+    followup_id: input.followup_id,
+  });
+}
+
 export const interventionRepository = {
   findByPublicId(interventionId, options = {}) {
     return hydrate(db.prepare('SELECT * FROM interventions WHERE intervention_id=?').get(interventionId), options);
@@ -58,7 +69,7 @@ export const interventionRepository = {
       const action = db.prepare(`INSERT INTO action_requests
         (user_id,actor_user_id,subject_user_id,action_type,payload,status,idempotency_key)
         VALUES (?,?,?,?,?,?,?)`).run(subjectUserId, actorUserId, subjectUserId, 'n_of_1_intervention',
-          JSON.stringify({ intervention_id: interventionId, title: input.title, intervention_type: input.intervention_type }),
+          confirmationPayload(interventionId, input),
           initialStatus, idempotencyKey ? `intervention:${idempotencyKey}` : null);
       const inserted = db.prepare(`INSERT INTO interventions
         (intervention_id,user_id,subject_user_id,actor_user_id,action_request_id,followup_id,intervention_type,title,protocol,target_metrics,
@@ -73,6 +84,27 @@ export const interventionRepository = {
         );
       return { intervention: hydrate(db.prepare('SELECT * FROM interventions WHERE id=?').get(inserted.lastInsertRowid)), idempotentReplay: false };
     })();
+  },
+
+  updateDraft(interventionId, revision, input) {
+    return db.transaction(() => {
+      const row = db.prepare(`UPDATE interventions SET title=?,protocol=?,target_metrics=?,baseline_start=?,baseline_end=?,
+        intervention_start=?,intervention_end=?,outcome_start=?,outcome_end=?,adherence_target=?,followup_id=?,
+        status='proposed',status_reason_code=NULL,status_message=NULL,revision=revision+1,updated_at=?
+        WHERE intervention_id=? AND revision=? AND status IN ('proposed','pending_confirmation') RETURNING *`).get(
+        input.title, JSON.stringify(input.protocol), JSON.stringify(input.target_metrics), input.baseline_start, input.baseline_end,
+        input.intervention_start, input.intervention_end, input.outcome_start, input.outcome_end, JSON.stringify(input.adherence_target),
+        input.followup_id, nowIso(), interventionId, revision,
+      );
+      if (!row) return null;
+      if (row.action_request_id) {
+        db.prepare(`UPDATE action_requests SET payload=?,status='proposed',payload_hash=NULL,confirmation_token_hash=NULL,
+          confirmation_expires_at=NULL,confirmation_consumed_at=NULL WHERE id=?`).run(
+          confirmationPayload(interventionId, input), row.action_request_id,
+        );
+      }
+      return hydrate(row);
+    }).immediate();
   },
 
   transition(interventionId, fromStatuses, toStatus, { actorUserId, reasonCode = null, message = null } = {}) {

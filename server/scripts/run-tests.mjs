@@ -63,6 +63,8 @@ const unitTests = [
   'test/unit/test_population_prediction.js',
   'test/unit/test_prediction_contract.js',
   'test/unit/test_prediction_frontend.js',
+  'test/unit/test_research_quality_policy.js',
+  'test/unit/test_temporal_policy.js',
   'test/unit/test_privacy_contract.js',
   'test/unit/test_python_runtime.js',
   'test/unit/test_safe_curve_graph_link.js',
@@ -90,6 +92,7 @@ const integrationTests = [
   'test/integration/test_privacy_center.mjs',
   'test/integration/test_quality_followup_review.mjs',
   'test/integration/test_static_asset_boundary.mjs',
+  'test/integration/test_v1_workflows.mjs',
 ];
 
 // 历史遗留：断言已与当前实现不符，Mock 与真实 DeepSeek 下均失败（已实测）。

@@ -43,11 +43,11 @@ function fetchPoints(userId, dbType, sinceIso) {
 }
 
 /** 构建单个指标的 points 数组（bmi 用体重+身高推导） */
-function buildPoints(userId, metric, days) {
+function buildPoints(userId, metric, days, evidenceIds = null) {
   const def = TREND_METRICS[metric];
   if (!def) return { ok: false, error: `不支持的指标: ${metric}` };
   const sinceIso = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
-  const rows = fetchPoints(userId, def.type, sinceIso);
+  const rows = fetchPoints(userId, def.type, sinceIso).filter(row => !evidenceIds || evidenceIds.has(row.id));
   const points = [];
   for (const r of rows) {
     let v = def.pick(r);
@@ -112,13 +112,13 @@ export async function analyzeHealthTrend(userId, opts = {}) {
 }
 
 /** 多指标一次 Python 批处理；只返回本次问题需要的指标。 */
-export async function analyzeSelectedHealthTrends(userId, metrics = [], daysInput = 90) {
+export async function analyzeSelectedHealthTrends(userId, metrics = [], daysInput = 90, evidenceIds = null) {
   const days = Math.max(7, Math.min(LOOKBACK_MAX, parseInt(daysInput || '90', 10) || 90));
   const selected = [...new Set((metrics || []).map(String))].filter(metric => TREND_METRICS[metric]);
   if (!selected.length) return { success: true, metric: 'selected', requested_days: days, analyzed: [], metrics: [] };
   const batch = [];
   for (const metric of selected) {
-    const built = buildPoints(userId, metric, days);
+    const built = buildPoints(userId, metric, days, evidenceIds);
     if (built.ok && built.points.length) batch.push({ metric, unit: built.unit, points: built.points });
   }
   if (!batch.length) return { success: true, metric: 'selected', requested_days: days, analyzed: [], metrics: [], status: 'insufficient_data' };

@@ -373,6 +373,15 @@ body.health-agent-page :is(.app-sidebar, .app-topbar) {
   overflow: auto !important;
   overscroll-behavior: contain;
 }
+.agent-welcome {
+  max-width: 40ch;
+  padding: 14px;
+  border: 1px solid var(--health-line);
+  border-radius: 10px;
+  background: var(--health-raised);
+}
+.agent-welcome h3 { margin: 0 0 4px; font-size: 1.05rem; }
+.agent-welcome p { margin: 0; }
 
 .health-agent-page.agent-page .agent-row .agent-chat-composer {
   position: static !important;
@@ -425,12 +434,15 @@ body.health-agent-page :is(.app-sidebar, .app-topbar) {
   .health-agent-page.agent-page .agent-console {
     display: grid !important;
     grid-template-columns: minmax(172px, 200px) minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr);
+    flex: none !important;
     height: clamp(570px, calc(100dvh - 165px), 1050px) !important;
     overflow: visible !important;
   }
   .health-agent-page.agent-page .agent-console>.agent-row {
     display: grid !important;
     grid-template-columns: clamp(0px, var(--agent-chat-width, 63%), calc(100% - 281px)) 6px minmax(275px,1fr) !important;
+    grid-template-rows: minmax(0,1fr);
     height: 100% !important;
     gap: 0 !important;
     overflow: visible !important;
@@ -471,3 +483,14 @@ body.health-agent-page :is(.app-sidebar, .app-topbar) {
   .health-overview-page .health-overview-main { padding-bottom: 82px; }
   .health-tasks li { gap: 8px; }
 }
+.agent-quality-note {
+  margin-top: 10px;
+  padding: 4px 12px 10px;
+  background: var(--health-raised);
+  color: var(--health-ink);
+  border: 1px solid var(--health-line);
+  border-radius: 10px;
+}
+.agent-quality-note summary { min-height: 44px; padding-block: 10px; cursor: pointer; font-weight: 650; }
+.agent-quality-note ul { padding-inline-start: 1.4em; list-style: disc; }
+.agent-quality-note p { margin-top: 5px; color: var(--health-muted); }

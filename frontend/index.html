@@ -36,6 +36,7 @@
 <link href="/assets/css/pro-responsive.css" rel="stylesheet"/>
 <link href="/assets/css/pro-insight.css" rel="stylesheet"/>
 <link href="/assets/css/health-workspace.css" rel="stylesheet"/>
+<link href="/assets/css/health-measurements.css" rel="stylesheet"/>
 <script>
   /* 首屏前恢复上次选择的字号，避免闪一下再变大 */
   try {
@@ -195,223 +196,72 @@
 </div>
 <!-- shared-scripts -->
 <script src="/assets/js/health-overview.js"></script>
+<script src="/assets/js/health-records.js"></script>
+<script src="/assets/js/health-discovery.js"></script>
 <script src="/assets/js/pro-mobile.js"></script>
 </template>
 
-<template data-view="family" data-layout="app" class="h-screen w-screen overflow-hidden flex flex-col antialiased select-none">
-<title>长寿康 Family Pro · 家人协同守护中心</title>
+<template data-view="family" data-layout="app" class="health-family-page">
+<title>家庭协同 · 长寿康 Pro</title>
 <!-- shared-styles -->
-<style>
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      background-color: #F2F2F7;
-      color: #1D1D1F;
-      -webkit-font-smoothing: antialiased;
-    }
-    
-    .glass-surface {
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(28px) saturate(180%);
-      -webkit-backdrop-filter: blur(28px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.75);
-    }
-    
-    .glass-sidebar {
-      background: rgba(248, 248, 250, 0.85);
-      backdrop-filter: blur(32px);
-      -webkit-backdrop-filter: blur(32px);
-      border-right: 1px solid rgba(215, 215, 222, 0.65);
-    }
-
-    .glass-header {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(226, 226, 232, 0.7);
-    }
-
-    /* Custom thin scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.14);
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.25);
-    }
-
-    .tab-active {
-      background: #18181B !important;
-      color: #FFFFFF !important;
-    }
-
-    .view-fade {
-      animation: fadeInView 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    @keyframes fadeInView {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
+<link rel="stylesheet" href="/assets/css/health-measurements.css">
+<link rel="stylesheet" href="/assets/css/health-care.css">
 <!-- view-content -->
-<!-- Main Application Wrapper -->
-<div class="flex-1 flex overflow-hidden">
-<!-- Left Navigation & Multi-Elderly Sidebar -->
-<aside class="w-72 lg:w-80 h-full glass-sidebar flex flex-col shrink-0 z-20">
-<!-- Brand & Status Pill -->
-<div class="p-5 pb-4 flex items-center justify-between border-b border-zinc-200/50">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-md">
-<i class="fa-solid fa-heart-pulse text-lg"></i>
-</div>
-<div>
-<div class="font-bold text-sm text-zinc-900 tracking-tight flex items-center gap-1.5">
-              长寿康 Family Pro
-
-</div>
-</div>
-</div>
-</div>
-<!-- Multiple Elderly Selection Section -->
-<div class="p-4 border-b border-zinc-200/40">
-<div class="flex items-center justify-between mb-2.5 px-1">
-<span class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">看护的长辈 (<span id="elderlyCount">3</span>)</span>
-<button class="text-xs font-semibold text-zinc-800 hover:text-black flex items-center gap-1 transition-colors" onclick="openModal('addElderlyModal')">
-<i class="fa-solid fa-plus text-[10px]"></i> 绑定新长辈
-          </button>
-</div>
-<!-- Elderly Selector List -->
-<div class="space-y-1.5" id="elderlyListContainer">
-<!-- Populated by JS -->
-</div>
-</div>
-<!-- Navigation Menu -->
-<nav class="flex-1 overflow-y-auto p-4 space-y-1">
-<div class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider px-3 py-1.5">功能视图</div>
-<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all tab-active" id="nav-overview" onclick="switchView('overview')">
-<i class="fa-solid fa-chart-pie w-4 text-center"></i>
-          今日全貌与体征
-        </button>
-<!-- Dedicated AI Care Agent Tab -->
-<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-all" id="nav-ai-agent" onclick="switchView('ai-agent')">
-<div class="relative">
-<i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-emerald-600"></i>
-<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 absolute -top-0.5 -right-0.5"></span>
-</div>
-          AI 智能守护顾问
-          <span class="ml-auto text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-bold">授权</span>
-</button>
-<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-all" id="nav-medication" onclick="switchView('medication')">
-<i class="fa-solid fa-pills w-4 text-center"></i>
-          改善计划与执行
-          <span class="ml-auto text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold" id="medBadge">计划</span>
-</button>
-<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-all" id="nav-trends" onclick="switchView('trends')">
-<i class="fa-solid fa-wave-square w-4 text-center"></i>
-          健康数据图表
-        </button>
-<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-all" id="nav-safety" onclick="switchView('safety')">
-<i class="fa-solid fa-shield-heart w-4 text-center"></i>
-          提醒与复测
-        </button>
-<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-all" id="nav-records" onclick="switchView('records')">
-<i class="fa-regular fa-folder-open w-4 text-center"></i>
-          健康记录
-        </button>
-</nav>
-<!-- Current User Profile Footer -->
-<div class="p-4 border-t border-zinc-200/50 bg-white/40 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<div class="w-9 h-9 rounded-full bg-zinc-800 text-white font-bold text-xs flex items-center justify-center">
-            敏
-          </div>
-<div>
-<div class="text-xs font-bold text-zinc-900">当前用户</div>
-<div class="text-[11px] text-zinc-400">家属账号</div>
-</div>
-</div>
-<button class="w-8 h-8 rounded-lg hover:bg-zinc-200/60 flex items-center justify-center text-zinc-500 text-xs" onclick="openModal('familySyncModal')" style="display:none" title="亲友权限配置">
-<i class="fa-solid fa-user-group"></i>
-</button>
-</div>
-</aside>
-<!-- Right Main Workspace -->
-<div class="flex-1 flex flex-col h-full overflow-hidden bg-apple-canvas">
-<!-- Top Action Bar -->
-<header class="h-16 glass-header px-8 flex items-center justify-between shrink-0 z-10">
-<!-- Selected Elderly Profile Banner -->
-<div class="flex items-center gap-4">
-<div class="flex items-center gap-3">
-<h1 class="text-xl font-bold tracking-tight text-zinc-900" id="currentElderlyTitle">正在加载…</h1>
-<span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5" id="currentStatusBadge">
-<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              指标平稳
-            </span>
-</div>
-<span class="text-zinc-300">|</span>
-<div class="text-xs text-zinc-400 flex items-center gap-2">
-<span>最后同步：<strong class="text-zinc-600 font-medium" id="lastSyncTime">刚刚</strong></span>
-<span class="inline-block w-1 h-1 rounded-full bg-zinc-300"></span>
-<span class="flex items-center gap-1 text-zinc-600" id="deviceBatteryStatus">
-近 30 天记录待加载
-            </span>
-</div>
-</div>
-<!-- Global Action Buttons -->
-<div class="flex items-center gap-3">
-<button id="familyVoiceActionBtn" type="button" class="h-9 px-3.5 rounded-xl glass-surface hover:bg-white text-xs font-semibold text-zinc-700 flex items-center gap-2 shadow-apple-sm transition-all active:scale-95" onclick="handleFamilyVoiceButtonClick()" title="本机朗读本页重点或停止" aria-pressed="false">
-<i class="fa-solid fa-volume-high text-zinc-500" aria-hidden="true"></i><span id="familyVoiceLabel">朗读重点</span>
-</button>
-<button class="h-9 px-3.5 rounded-xl glass-surface hover:bg-white text-xs font-semibold text-zinc-700 flex items-center gap-2 shadow-apple-sm transition-all active:scale-95" onclick="refreshElderlyData()">
-<i class="fa-solid fa-arrows-rotate text-zinc-400" id="refreshIcon"></i>
-            刷新同步
-          </button>
-<button class="h-9 px-3.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-semibold flex items-center gap-2 shadow-sm transition-all active:scale-95" onclick="openRemoteCallModal()">
-<i class="fa-solid fa-phone text-xs"></i>
-            发送关怀提醒
-          </button>
-<button class="w-9 h-9 rounded-xl glass-surface hover:bg-white text-zinc-700 flex items-center justify-center shadow-apple-sm transition-all" onclick="openModal('remoteSettingsModal')" style="display:none" title="长辈端远程配置">
-<i class="fa-solid fa-sliders text-xs"></i>
-</button>
-</div>
+<a class="family-skip" href="#main-content">跳到主要内容</a>
+<header class="family-top">
+  <div class="family-top-inner"><a class="family-brand" href="/family">长寿康 Pro</a><div class="family-actions"><span id="family-account"></span><button class="health-button health-button-secondary" data-pro-action="logout" type="button">退出</button></div></div>
 </header>
-<!-- Scrollable Main Content -->
-<main class="flex-1 overflow-y-auto p-8 space-y-6" id="dashboardMain">
-<!-- View 1: Overview & Vitals -->
-<div class="view-panel view-fade space-y-6" id="view-overview"></div>
-<!-- ==================== View: AI 智能守护顾问 ==================== -->
-<div class="view-panel view-fade hidden space-y-6" id="view-ai-agent"></div>
-<!-- View 2: Medication & Refill Center -->
-<div class="view-panel view-fade hidden space-y-6" id="view-medication"></div>
-<!-- View 3: Trends & Analytics -->
-<div class="view-panel view-fade hidden space-y-6" id="view-trends"></div>
-<!-- View 4: Safety & Device Management -->
-<div class="view-panel view-fade hidden space-y-6" id="view-safety"></div>
-<!-- View 5: Medical Records & Hospital Reviews -->
-<div class="view-panel view-fade hidden space-y-6" id="view-records"></div>
+<main class="family-main" id="main-content">
+  <header class="health-page-header">
+    <div><h1>家庭协同</h1><p>查看长辈的健康记录，按授权协助完成健康任务。</p></div>
+    <div class="family-actions"><a class="health-button health-button-secondary" href="/care.html">照护授权与审核</a><button class="health-button health-button-primary" type="button" data-pro-action="bind">使用授权码</button></div>
+  </header>
+  <p id="family-status" role="status">正在读取照护授权…</p>
+  <div id="family-tools" class="health-panel family-toolbar" hidden>
+    <label for="family-subject">选择长辈<select id="family-subject"></select></label>
+    <div class="family-actions">
+      <button class="health-button health-button-secondary" type="button" data-pro-action="refresh">刷新数据</button>
+      <button class="health-button health-button-secondary" type="button" id="familyVoiceActionBtn" aria-pressed="false"><span id="familyVoiceLabel">朗读重点</span></button>
+    </div>
+  </div>
+  <section id="family-empty" class="health-panel" hidden><h2>暂无有效照护授权</h2><p>请长辈在照护协同页生成一次性授权码，再由您在这里接受授权。</p></section>
+  <div id="family-content" hidden>
+    <div class="health-panel family-subject-head">
+      <div><h2 id="currentElderlyTitle"></h2><p id="currentStatusBadge"></p></div>
+      <details><summary>查看授权范围</summary><ul id="family-scopes"></ul></details>
+      <div class="family-actions" id="family-quick-actions"></div>
+      <p id="family-intake-receipt" role="status" hidden></p>
+    </div>
+    <nav class="family-view-nav" aria-label="长辈健康信息">
+      <button type="button" data-family-view="overview">健康概览</button>
+      <button type="button" data-family-view="medication">改善计划</button>
+      <button type="button" data-family-view="safety">提醒与复测</button>
+      <button type="button" data-family-view="trends">记录分布</button>
+      <button type="button" data-family-view="records">健康记录</button>
+      <button type="button" data-family-view="ai-agent">智能管家</button>
+    </nav>
+    <div id="view-overview"></div>
+    <div id="view-medication" hidden></div>
+    <div id="view-safety" hidden></div>
+    <div id="view-trends" hidden></div>
+    <div id="view-records" hidden></div>
+    <div id="view-ai-agent" hidden></div>
+  </div>
 </main>
-</div>
-</div>
-<!-- ==================== Modals Layer ==================== -->
-<!-- Modal 1: 绑定新长辈 Modal -->
-<!-- Modal 2: 帮长辈新增服药计划 Modal -->
-<!-- Modal 3: 协同备忘记录 Modal -->
-<!-- Modal 4: 远程配置长辈端手机 Modal -->
-<!-- Modal 5: 上传体检单 Modal -->
-<!-- Modal 6: 家庭权限协同 Modal -->
-<!-- Toast Notification -->
-<div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-surface bg-zinc-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-apple-modal opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2" id="toast">
-<i class="fa-solid fa-circle-check text-emerald-400"></i>
-<span id="toastMsg">已同步最新数据</span>
-</div>
+<dialog id="family-dialog" class="family-dialog" aria-labelledby="family-dialog-title">
+  <form id="family-dialog-form">
+    <h2 id="family-dialog-title"></h2>
+    <div id="family-dialog-fields"></div>
+    <p id="family-dialog-error" role="alert" hidden></p>
+    <div class="family-actions">
+      <button class="health-button health-button-secondary" type="button" data-pro-action="close">返回</button>
+      <button class="health-button health-button-primary" id="family-dialog-submit" type="submit">确认</button>
+    </div>
+  </form>
+</dialog>
 <!-- shared-scripts -->
+<script src="/assets/js/health-records.js"></script>
 <script src="/assets/js/pro-family.js"></script>
 </template>
 
@@ -517,36 +367,27 @@
 <script src="/assets/js/desktop-overview.js"></script>
 </template>
 
-<template data-view="monitoring" data-layout="desktop">
+<template data-view="monitoring" data-layout="desktop" class="health-measurement-page health-monitoring-page">
 <title>健康监测 · 长寿康 Pro</title>
-  <!-- shared-styles -->
+<!-- shared-styles -->
+<link rel="stylesheet" href="/assets/css/pro-charts.css">
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
+<link rel="stylesheet" href="/assets/css/health-measurements.css">
 <!-- view-content -->
 <div id="app-nav"></div>
-
-  <main class="main">
-    <header class="page-head">
-      <h1><span class="desktop-only">记录与趋势</span><span class="mobile-only">快速记录</span></h1>
-      <p class="subtitle"><span class="desktop-only">清晰掌握每一次变化，让健康趋势更有依据</span><span class="mobile-only">点选指标，或直接说出今天的健康数据</span></p>
+<main class="main health-measurement-main">
+  <header class="health-page-header">
+    <div><h1>健康监测</h1><p>记录测量值，按指标和时间查看历史。</p></div>
+    <a href="prediction.html?tab=discover" class="health-button health-button-secondary">查看健康发现</a>
+  </header>
+  <div id="record-workspace"></div>
+  <section class="entry-section health-panel" aria-labelledby="record-metrics-title">
+    <header class="health-panel-heading"><h2 id="record-metrics-title">测量指标</h2>
+      <button type="button" class="health-button health-button-secondary" id="btn-add-metric">添加自定义指标</button>
     </header>
-
-    <section class="desktop-record-board desktop-only" aria-label="健康记录趋势">
-      <div class="desktop-metric-tabs"><a data-metric-tab="bp" href="monitoring.html?type=bp">血压</a><a data-metric-tab="glucose" href="monitoring.html?type=glucose">血糖</a><a data-metric-tab="hr" href="monitoring.html?type=hr">心率</a><a data-metric-tab="weight" href="monitoring.html?type=weight">体重</a><a data-metric-tab="sleep" href="monitoring.html?type=sleep">睡眠</a><a class="desktop-add-record" href="#metric-grid">＋ 添加记录</a></div>
-      <div class="desktop-stat-strip">
-        <article><small>最近一次</small><strong id="record-latest">--/--</strong><span>mmHg</span></article>
-        <article><small>7 天平均</small><strong id="record-average">--/--</strong><span>mmHg</span></article>
-        <article><small>最高收缩压</small><strong id="record-high">--</strong><span>mmHg</span></article>
-        <article><small>趋势状态</small><strong class="record-status" id="record-status">数据不足</strong><span>近 7 天</span></article>
-      </div>
-      <article class="desktop-trend-card">
-        <div class="desktop-card-title"><div><strong id="desktop-trend-title">血压趋势</strong><small>最近 7 天</small></div><div class="desktop-chart-legend" id="desktop-chart-legend"><span><i class="sbp"></i>收缩压</span><span><i class="dbp"></i>舒张压</span></div></div>
-        <svg id="desktop-bp-chart" viewBox="0 0 900 220" role="img" aria-label="最近七天血压趋势"></svg>
-      </article>
-      <article class="desktop-record-table-card">
-        <div class="desktop-section-heading"><div><h2>最近记录</h2><p>按时间由近到远</p></div><a href="metric.html?type=bp">查看全部 ›</a></div>
-        <table><thead><tr id="desktop-record-head"><th>日期时间</th><th>收缩压</th><th>舒张压</th><th>状态</th><th>来源</th></tr></thead><tbody id="desktop-record-rows"><tr><td colspan="5">正在读取记录…</td></tr></tbody></table>
-      </article>
-    </section>
-
+    <p class="health-record-status" id="entry-tip" role="status">正在读取指标…</p>
+    <div class="entry-grid health-record-grid" id="metric-grid"></div>
+  </section>
     <section class="bulk-health-entry" aria-labelledby="bulk-entry-title">
       <div class="bulk-entry-head">
         <div>
@@ -562,7 +403,7 @@
         <button type="button" class="btn btn-secondary bulk-voice-btn" id="bulk-voice-btn" aria-pressed="false">
           <span aria-hidden="true">🎙</span><span id="bulk-voice-label">开始语音输入</span>
         </button>
-        <button type="button" class="btn btn-primary" id="bulk-parse-btn">识别并填入今日数据</button>
+        <button type="button" class="btn btn-primary" id="bulk-parse-btn">识别并填入测量指标</button>
         <button type="button" class="btn btn-ghost" id="bulk-clear-btn">清空</button>
       </div>
       <p class="bulk-entry-privacy" id="bulk-speech-help">语音是否可用取决于浏览器；语音转文字可能由浏览器的语音服务处理。</p>
@@ -571,7 +412,7 @@
       <div class="bulk-preview" id="bulk-preview" hidden>
         <div class="bulk-preview-head">
           <div>
-            <h3>已填入下方“今日数据”</h3>
+            <h3>已填入下方“测量指标”</h3>
             <p>带“待确认”标记的卡片是本次识别结果；点击卡片可以修改。</p>
           </div>
           <strong id="bulk-preview-count">0项</strong>
@@ -579,93 +420,38 @@
         <div class="bulk-warning-list" id="bulk-warning-list"></div>
         <div class="bulk-draft-summary" id="bulk-draft-summary"></div>
         <div class="bulk-preview-actions">
-          <button type="button" class="btn btn-primary" id="bulk-save-btn">确认并保存到今日数据</button>
+          <button type="button" class="btn btn-primary" id="bulk-save-btn">确认并保存到测量指标</button>
           <button type="button" class="btn btn-ghost" id="bulk-cancel-btn">取消本次填充</button>
         </div>
       </div>
     </section>
 
-    <section class="entry-section">
-      <div class="entry-header">
-        <span class="entry-title">今日数据</span>
-        <span class="entry-tip" id="entry-tip">--</span>
-      </div>
+  <section class="health-panel" aria-labelledby="record-device-title">
+    <header class="health-panel-heading"><h2 id="record-device-title">我的设备</h2></header>
+    <p class="health-meta">显示已关联设备和最近同步。网页配对暂未接入。</p>
+    <div id="device-list" class="health-device-list" role="status">正在读取设备…</div>
+  </section>
+</main>
 
-      <div class="entry-grid" id="metric-grid"></div>
-    </section>
-
-    <section class="monitor-bottom">
-      <div class="device-card">
-        <div class="device-header">
-          <span class="device-title">我的设备</span>
-          <button class="btn btn-ghost" id="btn-add-device" style="padding:6px 0">+ 添加</button>
-        </div>
-        <div class="device-list" id="device-list"></div>
-      </div>
-
-      <div class="pred-card pred-card-clickable" onclick="location.href='prediction.html'">
-        <div class="pred-header">
-          <span class="pred-title">AI 健康预测 <span style="font-size:12px;color:#9C8B7A;font-weight:400">› 点击查看详情</span></span>
-          <span class="pred-badge" id="pred-badge">—</span>
-        </div>
-        <div class="pred-alert">
-          <div class="pred-alert-title">未来 7 天</div>
-          <div class="pred-alert-main">综合趋势</div>
-          <div class="pred-alert-desc" id="pred-desc">—</div>
-        </div>
-        <div class="pred-chart">
-          <div class="pred-chart-label">近 7 天血压趋势（收缩压）</div>
-          <svg id="pred-svg" width="100%" height="80" viewBox="0 0 540 80"></svg>
-        </div>
-        <div class="pred-suggest">
-          <div class="pred-suggest-icon">✓</div>
-          <div class="pred-suggest-text" id="pred-suggest">—</div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- 录入浮窗 -->
-  <div class="modal-mask" id="record-modal">
-    <div class="modal">
-      <h3 id="record-title">录入数据</h3>
-      <form class="form" id="record-form">
-        <div class="form-row">
-          <label id="lbl-value">数值</label>
-          <input class="input" id="rec-value" required />
-          <span class="hint-text" id="rec-hint">—</span>
-        </div>
-        <div class="form-row" id="rec-row2" hidden>
-          <label>舒张压</label>
-          <input class="input" id="rec-value2" />
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" data-close>取消</button>
-          <button type="submit" class="btn btn-primary">保存</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- 自定义采集项浮窗 -->
-  <div class="modal-mask" id="custom-modal">
-    <div class="modal">
-      <h3>添加自定义采集项</h3>
+  <dialog class="health-record-dialog" id="custom-modal" aria-labelledby="custom-title">
+    <div>
+      <h2 id="custom-title">添加自定义采集项</h2>
+      <p class="health-meta">可保存指标定义。自定义读数录入暂未接入。</p>
       <form class="form custom-metric-form" id="custom-form">
         <div class="form-row">
-          <label>指标名称</label>
+          <label for="cm-name">指标名称</label>
           <input class="input" id="cm-name" placeholder="如：排尿次数" required />
         </div>
         <div class="form-row">
-          <label>单位</label>
+          <label for="cm-unit">单位</label>
           <input class="input" id="cm-unit" placeholder="如：次/日" />
         </div>
         <div class="form-row">
           <label>参考范围（可选）</label>
           <div style="display:flex;gap:8px;align-items:center">
-            <input class="input" id="cm-min" type="number" placeholder="下限" style="flex:1" />
+            <input class="input" id="cm-min" type="number" placeholder="下限" aria-label="参考范围下限" style="flex:1" />
             <span style="color:#9C8B7A">~</span>
-            <input class="input" id="cm-max" type="number" placeholder="上限" style="flex:1" />
+            <input class="input" id="cm-max" type="number" placeholder="上限" aria-label="参考范围上限" style="flex:1" />
           </div>
         </div>
         <div class="form-row">
@@ -682,386 +468,171 @@
         <div class="form-row">
           <label>选择颜色</label>
           <div class="custom-metric-color-row" id="cm-color-row">
-            <button type="button" class="custom-metric-color-btn selected" data-color="#F4A261" style="background:#F4A261"></button>
-            <button type="button" class="custom-metric-color-btn" data-color="#E0784E" style="background:#E0784E"></button>
-            <button type="button" class="custom-metric-color-btn" data-color="#7FB069" style="background:#7FB069"></button>
-            <button type="button" class="custom-metric-color-btn" data-color="#9C7BC9" style="background:#9C7BC9"></button>
-            <button type="button" class="custom-metric-color-btn" data-color="#3E8E8E" style="background:#3E8E8E"></button>
-            <button type="button" class="custom-metric-color-btn" data-color="#A04632" style="background:#A04632"></button>
+            <button type="button" class="custom-metric-color-btn selected" data-color="#F4A261" aria-label="浅橙" style="background:#F4A261"></button>
+            <button type="button" class="custom-metric-color-btn" data-color="#E0784E" aria-label="橙红" style="background:#E0784E"></button>
+            <button type="button" class="custom-metric-color-btn" data-color="#7FB069" aria-label="绿色" style="background:#7FB069"></button>
+            <button type="button" class="custom-metric-color-btn" data-color="#9C7BC9" aria-label="紫色" style="background:#9C7BC9"></button>
+            <button type="button" class="custom-metric-color-btn" data-color="#3E8E8E" aria-label="青色" style="background:#3E8E8E"></button>
+            <button type="button" class="custom-metric-color-btn" data-color="#A04632" aria-label="棕红" style="background:#A04632"></button>
           </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" data-close>取消</button>
-          <button type="submit" class="btn btn-primary">添加</button>
+          <button type="button" class="health-button health-button-secondary" data-close>取消</button>
+          <button type="submit" class="health-button health-button-primary">添加</button>
         </div>
       </form>
     </div>
-  </div>
+  </dialog>
 
-  <!-- shared-scripts -->
+<!-- shared-scripts -->
+<script src="/assets/js/pro-core.js"></script>
+<script src="/assets/js/pro-charts.js"></script>
+<script src="/assets/js/health-overview.js"></script>
+<script src="/assets/js/health-records.js"></script>
 <script src="/assets/js/health-bulk-entry.js"></script>
-  <script>
-    document.addEventListener('auth:ready', () => {
-      loadAll();
-      loadDesktopRecordBoard();
-    });
-    Auth.init();
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = window.Pro.esc;
+  const host = $('record-workspace');
+  host.innerHTML = HealthRecords.workspaceMarkup();
+  const records = HealthRecords.connect(host, {
+    api: API, initialType: new URLSearchParams(location.search).get('type') || 'bp',
+    getDraft: type => window.HealthBulkEntry?.getDraft(type),
+    onChanged(type) {
+      const url = new URL(location.href);
+      url.searchParams.set('type', type);
+      history.replaceState(null, '', url);
+    },
+    async onSaved(row, definition) {
+      window.HealthBulkEntry?.removeDraft(definition.type);
+      toast(row.deleted ? '测量已删除' : row.duplicate ? '这次测量已记录' : '测量已保存', 'success');
+      await loadCards();
+    },
+  });
 
-    async function loadDesktopRecordBoard() {
-      const type = new URLSearchParams(location.search).get('type') || 'bp';
-      document.querySelectorAll('[data-metric-tab]').forEach(tab => tab.classList.toggle('is-active', tab.dataset.metricTab === type));
-      try {
-        const [types, data] = await Promise.all([API.get('/api/trend/types'), API.get(`/api/trend/${encodeURIComponent(type)}?days=7`)]);
-        const meta = (types || []).find(item => item.type === type) || { name: type === 'bp' ? '血压' : type, unit: '' };
-        const points = data.points || [];
-        const latest = data.latest || points.at(-1);
-        const stats = data.stats || {};
-        document.getElementById('desktop-trend-title').textContent = `${meta.name}趋势`;
-        document.getElementById('record-latest').textContent = latest ? (type === 'bp' ? `${Math.round(latest.value)}/${Math.round(latest.value2)}` : formatDesktopMetric(latest.value, type)) : '--';
-        document.getElementById('record-average').textContent = stats.avg != null ? (type === 'bp' && stats.avg2 != null ? `${Math.round(stats.avg)}/${Math.round(stats.avg2)}` : formatDesktopMetric(stats.avg, type)) : '--';
-        document.getElementById('record-high').textContent = stats.max != null ? formatDesktopMetric(stats.max, type) : '--';
-        document.getElementById('record-status').textContent = data.comment ? '已更新' : '数据不足';
-        document.querySelector('.desktop-stat-strip article:nth-child(1) span').textContent = meta.unit || '';
-        document.querySelector('.desktop-stat-strip article:nth-child(2) span').textContent = meta.unit || '';
-        document.querySelector('.desktop-stat-strip article:nth-child(3) span').textContent = meta.unit || '';
-        const legend = document.getElementById('desktop-chart-legend');
-        legend.innerHTML = type === 'bp' ? '<span><i class="sbp"></i>收缩压</span><span><i class="dbp"></i>舒张压</span>' : `<span><i class="sbp"></i>${meta.name}</span>`;
-        const head = document.getElementById('desktop-record-head');
-        head.innerHTML = type === 'bp' ? '<th>日期时间</th><th>收缩压</th><th>舒张压</th><th>状态</th><th>来源</th>' : `<th>日期时间</th><th>${meta.name}</th><th>状态</th><th>来源</th>`;
-        const svg = document.getElementById('desktop-bp-chart');
-        svg.setAttribute('aria-label', `最近七天${meta.name}趋势`);
-        if (!points.length) { svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#a3a7b1" font-size="13">暂无记录，先添加一条数据吧</text>'; document.getElementById('desktop-record-rows').innerHTML = `<tr><td colspan="${type === 'bp' ? 5 : 4}">暂无${meta.name}记录</td></tr>`; return; }
-        const width = 900, height = 220, left = 48, right = 20, top = 20, bottom = 38;
-        const series = type === 'bp' ? ['value','value2'] : ['value'];
-        const values = points.flatMap(item => series.map(key => Number(item[key])));
-        const min = Math.floor((Math.min(...values) - 5) / 5) * 5, max = Math.ceil((Math.max(...values) + 5) / 5) * 5;
-        const x = index => left + index * ((width - left - right) / Math.max(1, points.length - 1));
-        const y = value => top + (max - value) * ((height - top - bottom) / Math.max(1, max - min));
-        const path = key => points.map((item, index) => `${index ? 'L' : 'M'}${x(index).toFixed(1)},${y(Number(item[key])).toFixed(1)}`).join(' ');
-        const grid = [0,1,2,3,4].map(i => { const gy = top + i * (height-top-bottom)/4; const label = Math.round(max - i*(max-min)/4); return `<line x1="${left}" y1="${gy}" x2="${width-right}" y2="${gy}"/><text x="8" y="${gy+4}">${label}</text>`; }).join('');
-        const labels = points.map((item,index) => `<text class="x-label" x="${x(index)}" y="${height-10}" text-anchor="middle">${new Date(item.recorded_at).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})}</text>`).join('');
-        const dots = key => points.map((item,index) => `<circle cx="${x(index)}" cy="${y(Number(item[key]))}" r="4"/>`).join('');
-        svg.innerHTML = `<g class="chart-grid">${grid}</g>${labels}${series.map((key,index) => `<path class="${index ? 'chart-dbp' : 'chart-sbp'}" d="${path(key)}"/><g class="${index ? 'chart-dbp-dots' : 'chart-sbp-dots'}">${dots(key)}</g>`).join('')}`;
-        const summaryText = `图表文字摘要：最近七天${meta.name}趋势，共${points.length}条记录；请结合图中数值和状态提示阅读。`;
-        svg.dataset.summary = summaryText;
-        const summary = svg.nextElementSibling?.classList.contains('a11y-chart-summary') ? svg.nextElementSibling : null;
-        if (summary) summary.textContent = summaryText;
-        setTimeout(() => { const later = svg.nextElementSibling?.classList.contains('a11y-chart-summary') ? svg.nextElementSibling : null; if (later) later.textContent = summaryText; }, 120);
-        document.getElementById('desktop-record-rows').innerHTML = points.slice().reverse().slice(0,4).map(item => { const status = type === 'bp' ? (Number(item.value) >= 140 || Number(item.value2) >= 90 ? '偏高' : '正常') : '已记录'; return type === 'bp' ? `<tr><td>${new Date(item.recorded_at).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</td><td><strong>${Math.round(item.value)}</strong> mmHg</td><td><strong>${Math.round(item.value2)}</strong> mmHg</td><td><span class="table-status ${status === '正常' ? 'ok' : ''}">${status}</span></td><td>手动记录</td></tr>` : `<tr><td>${new Date(item.recorded_at).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</td><td><strong>${formatDesktopMetric(item.value, type)}</strong> ${meta.unit || ''}</td><td><span class="table-status ok">已记录</span></td><td>手动记录</td></tr>`; }).join('');
-      } catch (error) { console.warn('桌面趋势加载失败', error); }
-    }
-    function formatDesktopMetric(value, type) { const n = Number(value); return ['glucose','sleep','weight','bodyfat','cholesterol','hba1c'].includes(type) ? n.toFixed(1) : Math.round(n); }
-
-    // 内置指标定义：从 /api/health/metric-defs 拉取（后端 metric_defs 表为单一数据源）
-    let METRIC_DEFS = [];
-    let latestMetrics = {};
-
-    // 格式化逻辑（渲染层，非指标定义；defs 未覆盖的 type 走通用格式）
-    const FMT = {
-      bp:      v => v ? `${v.value}/${v.value2}` : '--',
-      glucose: v => v ? v.value.toFixed(1) : '--',
-      hr:      v => v ? Math.round(v.value) : '--',
-      sleep:   v => v ? v.value.toFixed(1) + 'h' : '--',
-      spo2:    v => v ? Math.round(v.value) : '--',
-      weight:  v => v ? v.value.toFixed(1) : '--',
-      steps:   v => v ? Math.round(v.value).toLocaleString() : '--',
-      temp:    v => v ? v.value.toFixed(1) : '--',
-      resp:    v => v ? Math.round(v.value) : '--',
-      grip:    v => v ? v.value.toFixed(1) : '--',
-      bodyfat: v => v ? v.value.toFixed(1) : '--',
-      waist:   v => v ? v.value.toFixed(0) : '--',
-      uricacid: v => v ? Math.round(v.value) : '--',
-      cholesterol: v => v ? v.value.toFixed(1) : '--',
-      hba1c:   v => v ? v.value.toFixed(1) : '--',
+  let definitions = [];
+  let customDefinitions = [];
+  let latest = {};
+  let cardsLoaded = false;
+  function renderCards() {
+    const card = (definition, isCustom = false) => {
+      const draft = isCustom ? null : window.HealthBulkEntry?.getDraft(definition.type);
+      const row = draft || latest[definition.type];
+      const body = '<strong>' + esc(definition.name) + '</strong>' +
+        (draft ? '<span class="health-status">待确认</span>' : '') +
+        '<div class="health-record-value">' + (row ? esc(HealthRecords.valueText(row)) + ' <small>' + esc(row.unit || definition.unit) + '</small>' : '暂无记录') + '</div>' +
+        '<small>' + (draft ? '识别结果 · 请打开核对' : row ? esc(HealthRecords.date(row.recorded_at)) + ' · ' + esc(HealthRecords.source(row.source)) : (isCustom ? '读数录入暂未接入' : '打开后可录入')) + '</small>';
+      return isCustom ? '<article class="health-record-card">' + body + '</article>'
+        : '<button class="health-record-card ' + (draft ? 'entry-card-draft' : '') + '" type="button" data-record-type="' + esc(definition.type) + '">' + body + '</button>';
     };
-    const defaultFmt = v => v ? (v.value2 != null ? `${v.value}/${v.value2}` : String(v.value)) : '--';
+    $('entry-tip').textContent = cardsLoaded ? '展示每项指标的最近一次测量。' : '最近测量暂时无法读取。';
+    $('metric-grid').innerHTML = definitions.map(definition => card(definition)).join('') +
+      customDefinitions.map(definition => card(definition, true)).join('');
+  }
 
-    async function loadMetricDefs() {
-      try {
-        const defs = await API.get('/api/health/metric-defs');
-        METRIC_DEFS = defs.map(d => ({
-          type: d.type,
-          name: d.name,
-          unit: d.unit,
-          color: d.color,
-          bg: d.color + '22',
-          icon: d.icon,
-          fmt: FMT[d.type] || defaultFmt,
-        }));
-      } catch {
-        // 定义加载失败时页面保持空卡片可交互，不白屏
-        METRIC_DEFS = [];
-      }
+  async function loadCards() {
+    const [builtIn, raw, custom] = await Promise.allSettled([
+      records.loadDefinitions(), API.get('/api/health/metrics'), API.get('/api/prediction/metrics'),
+    ]);
+    definitions = builtIn.status === 'fulfilled' ? builtIn.value : [];
+    latest = raw.status === 'fulfilled' ? raw.value : {};
+    cardsLoaded = builtIn.status === 'fulfilled' && raw.status === 'fulfilled';
+    customDefinitions = custom.status === 'fulfilled'
+      ? custom.value.filter(item => item.custom).map(item => ({ ...item, type:item.key })) : [];
+    renderCards();
+    if (!cardsLoaded) {
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'health-link';
+      retry.textContent = '重试';
+      retry.addEventListener('click', loadCards, { once:true });
+      $('entry-tip').append(' ', retry);
     }
+  }
 
-    // 自定义指标（从后端加载后追加）
-    let customDefs = [];
-
-    async function loadCustomMetrics() {
-      try {
-        const all = await API.get('/api/prediction/metrics');
-        customDefs = all.filter(m => m.custom).map(m => ({
-          type: m.key,
-          name: m.name,
-          unit: m.unit,
-          color: m.color,
-          bg: m.color + '22',
-          icon: m.icon,
-          fmt: v => v ? v.value : '--',
-          custom: true,
-        }));
-      } catch {}
+  async function loadDevices() {
+    try {
+      const rows = await API.get('/api/devices');
+      $('device-list').innerHTML = rows.length ? '<ul>' + rows.map(row => '<li><strong>' + esc(row.name) + '</strong><span>' +
+        esc({ connected:'已连接', disconnected:'未连接', error:'同步异常' }[row.status] || '状态未标注') +
+        (row.last_sync ? ' · 最近同步 ' + esc(HealthRecords.date(row.last_sync)) : '') + '</span></li>').join('') + '</ul>' : '暂无关联设备。';
+    } catch {
+      $('device-list').textContent = '设备暂时无法读取，请刷新重试。';
     }
+  }
 
-    async function loadAll() {
-      await Promise.all([loadMetricDefs(), loadCustomMetrics()]);
-      const [metrics, devices] = await Promise.all([
-        API.get('/api/health/metrics'),
-        API.get('/api/devices'),
-      ]);
-      latestMetrics = metrics;
-      renderMetrics(metrics);
-      renderDevices(devices);
-      renderPred(metrics);
-    }
+  window.refreshTodayCards = renderCards;
+  window.loadAll = () => Promise.all([loadCards(), records.refresh(), loadDevices()]);
+  $('metric-grid').addEventListener('click', event => {
+    const button = event.target.closest('[data-record-type]');
+    if (button) records.open(button.dataset.recordType, button);
+  });
 
-    function renderMetrics(metrics) {
-      const allDefs = [...METRIC_DEFS, ...customDefs];
-      const recorded = allDefs.filter(d => metrics[d.type]).length;
-      const draftCount = allDefs.filter(d => window.HealthBulkEntry?.getDraft?.(d.type)).length;
-      document.getElementById('entry-tip').textContent = `已记录 ${recorded}/${allDefs.length}${draftCount ? ` · 待确认 ${draftCount}项` : ''}`;
-      const grid = document.getElementById('metric-grid');
-      const cards = allDefs.map(d => {
-        const m = metrics[d.type];
-        const draft = window.HealthBulkEntry?.getDraft?.(d.type);
-        const shown = draft ? { value: draft.value, value2: draft.value2 } : m;
-        const mainText = d.fmt(shown);
-        const unitText = draft ? '识别填充 · 点击可修改' : (m ? `${d.unit} · ${fmtTime(m.recorded_at)}` : '点击录入');
-        return `
-          <button class="entry-card ${draft ? 'entry-card-draft' : ''}" data-type="${d.type}" style="text-align:left;cursor:pointer">
-            ${draft ? '<span class="entry-draft-badge">待确认</span>' : ''}
-            <div class="entry-icon" style="background:${d.bg};color:${d.color}">${d.icon}</div>
-            <div class="entry-lbl">${d.name}</div>
-            <div class="entry-val">${mainText}</div>
-            <div class="entry-unit" style="color:${draft ? '#874018' : (m ? '#5A8045' : '#9C8B7A')}">${unitText}</div>
-          </button>
-        `;
-      }).join('');
-      grid.innerHTML = cards + `
-        <button class="entry-card entry-card-add" id="btn-add-metric" style="text-align:center;cursor:pointer">
-          <div class="entry-icon">+</div>
-          <div class="entry-lbl">添加采集项</div>
-          <div class="entry-unit">自定义指标</div>
-        </button>
-      `;
-      grid.querySelectorAll('button.entry-card[data-type]').forEach(btn => {
-        btn.addEventListener('click', () => openRecord(btn.dataset.type));
+  const customDialog = $('custom-modal');
+  const customForm = $('custom-form');
+  function selectOption(row, button) {
+    row.querySelectorAll('button').forEach(item => {
+      item.classList.toggle('selected', item === button);
+      item.setAttribute('aria-pressed', String(item === button));
+    });
+  }
+  for (const id of ['cm-icon-row','cm-color-row']) {
+    $(id).addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (button) selectOption($(id), button);
+    });
+  }
+  $('btn-add-metric').addEventListener('click', () => {
+    customForm.reset();
+    for (const id of ['cm-icon-row','cm-color-row']) selectOption($(id), $(id).querySelector('button'));
+    customDialog.showModal();
+  });
+  customDialog.querySelector('[data-close]').addEventListener('click', () => customDialog.close());
+  customForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const name = $('cm-name').value.trim();
+    const button = customForm.querySelector('[type=submit]');
+    if (!name || button.disabled) return;
+    button.disabled = true;
+    try {
+      await API.post('/api/prediction/custom-metrics', {
+        name, unit: $('cm-unit').value.trim(),
+        icon: $('cm-icon-row').querySelector('.selected').dataset.icon,
+        color: $('cm-color-row').querySelector('.selected').dataset.color,
+        ref_min: $('cm-min').value ? $('cm-min').valueAsNumber : null,
+        ref_max: $('cm-max').value ? $('cm-max').valueAsNumber : null,
       });
-      document.getElementById('btn-add-metric')?.addEventListener('click', openCustomMetricModal);
-    }
-
-    window.refreshTodayCards = () => renderMetrics(latestMetrics);
-
-    function renderDevices(devices) {
-      const list = document.getElementById('device-list');
-      if (!devices.length) {
-        list.innerHTML = '<div class="empty">还没有设备</div>';
-        return;
-      }
-      list.innerHTML = devices.map(d => `
-        <div class="device-row">
-          <div class="device-icon">${(d.name || '·').slice(0, 1)}</div>
-          <div class="device-text">
-            <div class="device-name">${escapeHTML(d.name)}</div>
-            <div class="device-status" style="color:${d.status === 'connected' ? '#5A8045' : '#9C8B7A'}">
-              ${d.status === 'connected' ? '已连接' : '未连接'}${d.last_sync ? ' · ' + fromNow(d.last_sync) : ''}
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function renderPred(metrics) {
-      try {
-        const bpHistory = await API.get('/api/health/metrics/bp/history?days=7');
-        const points = bpHistory.points;
-        document.getElementById('pred-desc').textContent =
-          `基于血压、血氧、睡眠和活动等 ${METRIC_DEFS.length + customDefs.length} 项数据综合评估；近 7 天共 ${points.length} 条血压记录。点击查看完整预测 →`;
-        document.getElementById('pred-suggest').textContent = '建议：维持规律作息，每日散步 30 分钟';
-        const sbpValues = points.map(p => p.value);
-        const avg = sbpValues.length ? Math.round(sbpValues.reduce((a,b)=>a+b,0) / sbpValues.length) : 0;
-        let badge = '正常', badgeColor = '#7FB069';
-        if (avg >= 140) { badge = '需关注'; badgeColor = '#E0784E'; }
-        else if (avg >= 130) { badge = '偏高'; badgeColor = '#F4A261'; }
-        document.getElementById('pred-badge').textContent = `● ${badge}`;
-        document.getElementById('pred-badge').setAttribute('aria-label', `综合趋势状态：${badge}`);
-        document.getElementById('pred-badge').style.background = badgeColor + '22';
-        document.getElementById('pred-badge').style.color = badgeColor;
-
-        // 绘制折线图
-        const svg = document.getElementById('pred-svg');
-        if (points.length === 0) {
-          svg.dataset.summary = '近7天血压趋势：暂无血压记录，无法判断上升、下降或稳定。';
-          svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#9C8B7A" font-size="13" font-family="sans-serif">暂无血压记录</text>';
-          return;
-        }
-        const W = 540, H = 80, padX = 12, padY = 14;
-        const xs = points.map((_, i) => i);
-        const ys = points.map(p => p.value);
-        const yMin = Math.min(...ys) - 5;
-        const yMax = Math.max(...ys) + 5;
-        const xToPx = (i) => padX + (xs.length === 1 ? (W - 2*padX)/2 : (i/(xs.length-1))*(W - 2*padX));
-        const yToPx = (v) => H - padY - ((v - yMin) / (yMax - yMin)) * (H - 2*padY);
-        const polyline = points.map((p, i) => `${xToPx(i)},${yToPx(p.value)}`).join(' ');
-        const first = points[0];
-        const latest = points.at(-1);
-        const change = Number(latest.value) - Number(first.value);
-        const direction = change > 0 ? '上升' : change < 0 ? '下降' : '持平';
-        svg.dataset.summary = `近7天收缩压趋势：共${points.length}条记录，从${first.value}变为${latest.value}毫米汞柱，总体${direction}${Math.abs(change).toFixed(1)}；平均${avg}毫米汞柱，页面状态标记为${badge}。此摘要只描述已有记录，不替代医学判断。`;
-        const dots = points.map((p, i) =>
-          `<circle cx="${xToPx(i)}" cy="${yToPx(p.value)}" r="3.5" fill="#F4A261"/>`
-        ).join('');
-        svg.innerHTML = `
-          <polyline points="${polyline}" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          ${dots}
-        `;
-      } catch (err) {
-        document.getElementById('pred-desc').textContent = '预测生成失败';
-      }
-    }
-
-    // ===== 录入浮窗 =====
-    function openRecord(type) {
-      const def = getMetricDef(type) || METRIC_DEFS.find(d => d.type === type);
-      if (!def) return;
-      document.getElementById('record-title').textContent = `录入${def.name}`;
-      document.getElementById('lbl-value').textContent = type === 'bp' ? '收缩压（高压）' : '数值';
-      document.getElementById('rec-hint').textContent = def.unit ? `单位：${def.unit}` : '请输入数值';
-      document.getElementById('rec-row2').hidden = type !== 'bp';
-      const draft = window.HealthBulkEntry?.getDraft?.(type);
-      document.getElementById('rec-value').value = draft?.value ?? '';
-      document.getElementById('rec-value2').value = draft?.value2 ?? '';
-      const modal = document.getElementById('record-modal');
-      modal.classList.add('show');
-      modal.dataset.type = type;
-      setTimeout(() => document.getElementById('rec-value').focus(), 50);
-    }
-    function closeRecord() {
-      document.getElementById('record-modal').classList.remove('show');
-    }
-    document.getElementById('record-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'record-modal' || e.target.dataset.close !== undefined) closeRecord();
-    });
-    document.getElementById('record-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const type = document.getElementById('record-modal').dataset.type;
-      const def = getMetricDef(type) || METRIC_DEFS.find(d => d.type === type);
-      if (!def) return;
-      const v1 = document.getElementById('rec-value').value.trim();
-      const v2 = type === 'bp' ? document.getElementById('rec-value2').value.trim() : null;
-      if (!v1) return;
-      const value = parseFloat(v1);
-      const value2 = v2 ? parseFloat(v2) : null;
-      const draft = window.HealthBulkEntry?.getDraft?.(type);
-      try {
-        await API.post('/api/health/metrics', {
-          type, value, value2, unit: def.unit || null, source: 'manual',
-          note: draft ? '由健康数据描述核对后录入' : null,
-          measurement_condition: draft?.measurement_condition,
-          measurement_context: draft ? { entry_mode: 'text_review', parser_version: 'health_text_v1', user_confirmed: true } : undefined,
-        });
-        window.HealthBulkEntry?.removeDraft?.(type);
-        toast('录入成功', 'success');
-        closeRecord();
-        loadAll();
-      } catch (err) {
-        toast(err.message, 'error');
-      }
-    });
-
-    function escapeHTML(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]); }
-
-    // ===== 自定义采集项 =====
-    let selectedIcon = '自';
-    let selectedColor = '#F4A261';
-
-    function openCustomMetricModal() {
-      const modal = document.getElementById('custom-modal');
-      modal.classList.add('show');
-      document.getElementById('cm-name').value = '';
-      document.getElementById('cm-unit').value = '';
-      document.getElementById('cm-min').value = '';
-      document.getElementById('cm-max').value = '';
-      selectedIcon = '自';
-      selectedColor = '#F4A261';
-      setTimeout(() => document.getElementById('cm-name').focus(), 50);
-    }
-
-    document.getElementById('custom-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'custom-modal' || e.target.dataset.close !== undefined) {
-        document.getElementById('custom-modal').classList.remove('show');
-      }
-    });
-
-    document.getElementById('cm-icon-row').addEventListener('click', (e) => {
-      const btn = e.target.closest('.custom-metric-icon-btn');
-      if (!btn) return;
-      document.querySelectorAll('#cm-icon-row .custom-metric-icon-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedIcon = btn.dataset.icon;
-    });
-
-    document.getElementById('cm-color-row').addEventListener('click', (e) => {
-      const btn = e.target.closest('.custom-metric-color-btn');
-      if (!btn) return;
-      document.querySelectorAll('#cm-color-row .custom-metric-color-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedColor = btn.dataset.color;
-    });
-
-    document.getElementById('custom-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('cm-name').value.trim();
-      const unit = document.getElementById('cm-unit').value.trim();
-      const ref_min = document.getElementById('cm-min').value ? parseFloat(document.getElementById('cm-min').value) : null;
-      const ref_max = document.getElementById('cm-max').value ? parseFloat(document.getElementById('cm-max').value) : null;
-      if (!name) return;
-      try {
-        await API.post('/api/prediction/custom-metrics', {
-          name, unit, icon: selectedIcon, color: selectedColor, ref_min, ref_max,
-        });
-        toast('添加成功', 'success');
-        document.getElementById('custom-modal').classList.remove('show');
-        loadAll();
-      } catch (err) {
-        toast(err.message, 'error');
-      }
-    });
-
-    // 录入自定义指标时更新提示
-    function getMetricDef(type) {
-      return [...METRIC_DEFS, ...customDefs].find(d => d.type === type);
-    }
-  </script>
+      customDialog.close();
+      toast('指标定义已保存', 'success');
+      await loadCards();
+    } catch (error) { toast(error.message || '暂时无法保存指标定义', 'error'); }
+    finally { button.disabled = false; }
+  });
+  document.addEventListener('auth:ready', window.loadAll);
+  Auth.init();
+</script>
 </template>
 
-<template data-view="assessment" data-layout="desktop">
+<template data-view="assessment" data-layout="desktop" class="health-measurement-page health-assessment-page">
 <title>健康评估 · 长寿康 Pro</title>
   <!-- shared-styles -->
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
+<link rel="stylesheet" href="/assets/css/health-measurements.css">
 <!-- view-content -->
 <div id="app-nav"></div>
 
-  <main class="main">
-    <header class="page-head">
-      <h1><span class="desktop-only">健康评估</span><span class="mobile-only">生活能力评估</span></h1>
-      <p class="subtitle"><span class="desktop-only">AI 综合评估你的健康状况</span><span class="mobile-only">用简单问题了解日常生活是否需要帮助</span></p>
+  <main class="main health-measurement-main">
+    <header class="health-page-header">
+      <div><h1>健康评估</h1><p>根据近期记录查看综合评分、分项依据和生活能力评估。</p></div>
+      <a class="health-button health-button-secondary" href="monitoring.html">补充健康记录</a>
     </header>
+    <div class="health-record-status" id="assessment-status" role="status">正在读取评估…</div>
 
     <section class="assess-row">
       <div class="total-card">
         <div class="total-header">
-          <span class="total-title">总健康评分</span>
-          <span class="total-badge" id="total-badge">—</span>
+          <h2 class="total-title">综合健康评分</h2>
+          <span class="health-status" id="total-badge">读取中</span>
         </div>
 
         <div class="ring-row">
@@ -1074,9 +645,10 @@
             </svg>
           </div>
           <div class="ring-side">
-            <div class="ring-side-label">AI 综合评分</div>
+            <div class="ring-side-label">近 7 天 · 分层加权</div>
             <div class="ring-side-desc" id="summary-text">—</div>
-            <div class="ring-side-comp" id="ring-meta">—</div>
+            <div class="ring-side-comp" id="ring-meta">数据覆盖率待读取</div>
+            <p id="score-missing" class="health-meta"></p>
             <button class="score-detail-trigger" id="score-detail-open" type="button">
               <span><strong>评分详情</strong><small id="score-detail-preview">分层加权计算</small></span>
               <b>查看方法 →</b>
@@ -1086,7 +658,7 @@
 
         <div class="divider"></div>
 
-        <div class="sub-title">分项评分</div>
+        <div class="sub-title">评估维度</div>
         <div class="sub-list" id="sub-list"></div>
 
         <div class="assess-footer">
@@ -1097,7 +669,7 @@
 
       <div class="assess-right">
         <div class="life-card">
-          <div class="life-title">生活能力评估</div>
+          <h2 class="life-title">生活能力评估</h2>
           <div class="life-sub" id="life-sub">—</div>
           <div class="life-row"><div class="life-icon" style="background:#E5F0DC;color:#5A8045">日</div><div class="life-text"><div class="life-name">基本生活 ADL</div><div class="life-desc">穿衣、洗澡、吃饭、上下床、如厕</div></div><div class="life-score-wrap"><div class="life-score" style="color:#5A8045" id="adl">--</div><small id="adl-status">尚未评估</small></div></div>
           <div class="life-row"><div class="life-icon" style="background:#FFE9D9;color:#F4A261">用</div><div class="life-text"><div class="life-name">工具性生活 IADL</div><div class="life-desc">购物、做饭、用药、钱款、家务</div></div><div class="life-score-wrap"><div class="life-score" style="color:#F4A261" id="iadl">--</div><small id="iadl-status">尚未评估</small></div></div>
@@ -1106,7 +678,7 @@
 
         <div class="improve-card">
           <div class="improve-title">改善建议</div>
-          <div class="improve-sub">AI 基于你的数据定制 · 最多 3 条</div>
+          <div class="improve-sub">根据本次评分和已记录的指标生成</div>
           <div id="suggest-list"></div>
         </div>
       </div>
@@ -1118,14 +690,12 @@
           <div class="disease-risk-title" id="disease-risk-title">健康预测与疾病发现</div>
           <div class="disease-risk-sub">曲线、四类疾病筛查、资料完整度和下一步行动已集中到健康发现中心</div>
         </div>
-        <span class="risk-horizon-badge">统一结果</span>
       </div>
       <div class="disease-risk-cta" style="display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;border-radius:14px;background:#FFF8F0;flex-wrap:wrap">
         <div style="font-size:16px;line-height:1.7;color:#625449">疾病概率只有通过严格验证门槛时才会显示；突发症状和异常测量会优先提示。</div>
-        <a class="btn btn-primary" href="prediction.html">查看完整健康发现 →</a>
+        <a class="btn btn-primary" href="prediction.html?tab=discover">查看完整健康发现 →</a>
       </div>
-      <div class="disease-risk-foot">这里不再重复计算，避免不同页面出现不一致结论。</div>
-    </section>
+      </section>
   </main>
 
   <dialog class="score-detail-dialog" id="score-detail-dialog" aria-labelledby="score-detail-title">
@@ -1137,7 +707,7 @@
       <div class="score-dialog-body">
         <section class="score-method-summary">
           <div><span>计算方式</span><strong>分层加权</strong></div>
-          <div><span>数据周期</span><strong>近 7 天</strong></div>
+          <div><span>数据周期</span><strong id="score-window">近 7 天</strong></div>
           <div><span>数据覆盖率</span><strong id="score-coverage">—</strong></div>
         </section>
         <div class="score-coverage-note" id="score-coverage-note"></div>
@@ -1184,142 +754,108 @@
   </dialog>
 
   <!-- shared-scripts -->
+<script src="/assets/js/health-overview.js"></script>
 <script>
     document.addEventListener('auth:ready', () => loadAll());
     Auth.init();
 
+    const assessmentStatus = document.getElementById('assessment-status');
+    const validScore = value => value != null && Number.isFinite(Number(value));
+    let currentAssessmentRequest = 0;
+
     async function loadAll() {
+      const request = ++currentAssessmentRequest;
+      assessmentStatus.textContent = '正在读取评估…';
+      document.getElementById('score-detail-open').disabled = true;
       try {
-        const d = await API.get('/api/assessments/latest');
-        renderTotal(d);
-        renderSubs(d.subscores);
-        renderScoreDetail(d);
-        renderAdlIadl(d);
-        renderSuggest(d.suggestions);
-        document.getElementById('evaluated-at').textContent = '最近评估：' + (d.evaluated_at || '').slice(0, 16).replace('T', ' ');
-      } catch (err) {
-        document.getElementById('summary-text').textContent = '加载失败：' + err.message;
+        const [assessment, rows] = await Promise.all([
+          API.get('/api/assessments/latest'),
+          API.get('/api/health/metrics').catch(() => null),
+        ]);
+        if (request !== currentAssessmentRequest) return;
+        const dimensions = assessment.scoring_details?.dimensions || [];
+        renderTotal(assessment, dimensions);
+        renderSubs(assessment.subscores, dimensions);
+        renderScoreDetail(assessment, dimensions, rows);
+        renderAdlIadl(assessment);
+        renderSuggest(assessment.suggestions);
+        document.getElementById('evaluated-at').textContent = assessment.evaluated_at
+          ? '本次计算：' + HealthOverview.date(assessment.evaluated_at) : '计算时间未标注';
+        assessmentStatus.textContent = '';
+        document.getElementById('score-detail-open').disabled = false;
+      } catch {
+        if (request !== currentAssessmentRequest) return;
+        assessmentStatus.textContent = '评估暂时无法读取。';
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'health-link';
+        retry.textContent = '重试';
+        retry.addEventListener('click', loadAll, { once:true });
+        assessmentStatus.append(' ', retry);
       }
     }
 
-    const diseaseRiskMeta = [
-      { key: 'hypertension', name: '高血压', icon: '压', tone: 'orange', desc: '关注血压变化' },
-      { key: 'diabetes', name: '糖尿病', icon: '糖', tone: 'purple', desc: '关注血糖记录' },
-      { key: 'heart_disease', name: '心脏病', icon: '心', tone: 'green', desc: '关注心血管状态' },
-      { key: 'stroke', name: '脑卒中', icon: '脑', tone: 'red', desc: '关注综合风险因素' },
-    ];
-
-    async function loadDiseaseRisks() {
-      const host = document.getElementById('disease-risk-grid');
-      const results = await Promise.all(diseaseRiskMeta.map(async meta => {
-        try { return { meta, data: await API.get('/api/prediction/disease/' + meta.key) }; }
-        catch (error) { return { meta, data: { success: false, error: error.message || '暂时无法获取' } }; }
-      }));
-      host.innerHTML = results.map(({ meta, data }) => renderDiseaseRisk(meta, data)).join('');
+    function renderTotal(data, dimensions) {
+      const hasTotal = validScore(data.total_score);
+      const total = Number(data.total_score);
+      const coverage = data.scoring_details?.coverage_percent;
+      document.getElementById('ring-num').textContent = hasTotal ? Math.round(total) : '—';
+      const dash = hasTotal ? Math.round((Math.max(0, Math.min(100, total)) / 100) * 628) : 0;
+      document.getElementById('ring-progress').setAttribute('stroke-dasharray', dash + ' 628');
+      document.getElementById('ring-container').hidden = !hasTotal;
+      document.getElementById('total-badge').textContent = !hasTotal || coverage == null || coverage < 40 ? '数据不足' : '已生成';
+      document.getElementById('summary-text').textContent = hasTotal
+        ? data.summary || '查看分项评分，了解本次评估依据。'
+        : '暂无可评分的测量。补充健康记录后可查看综合评分。';
+      document.getElementById('ring-meta').textContent = coverage == null ? '数据覆盖率未提供' : '数据覆盖率 ' + coverage + '%';
+      const missing = dimensions.filter(item => !validScore(item.score)).map(item => item.label);
+      document.getElementById('score-missing').textContent = missing.length ? '待补充：' + missing.join('、') : '';
     }
 
-    function renderDiseaseRisk(meta, data) {
-      if (!data || data.error === 'no_data') {
-        return `<article class="disease-risk-card ${meta.tone}">
-          <div class="risk-card-top"><span class="risk-icon">${meta.icon}</span><div><div class="risk-name">${meta.name}</div><div class="risk-desc">${meta.desc}</div></div><span class="risk-state muted">待记录</span></div>
-          <div class="risk-empty">还没有足够的监测数据<br><a href="monitoring.html">去记录数据 →</a></div>
-        </article>`;
-      }
-      if (!data.success) {
-        return `<article class="disease-risk-card ${meta.tone}"><div class="risk-card-top"><span class="risk-icon">${meta.icon}</span><div><div class="risk-name">${meta.name}</div><div class="risk-desc">${meta.desc}</div></div><span class="risk-state muted">暂不可用</span></div><div class="risk-empty">${escapeHTML(data.error || '风险服务暂时不可用')}</div></article>`;
-      }
-      const pct = Math.max(0, Math.min(100, Number(data.risk_percent) || 0));
-      const level = data.risk_level === 'higher' ? '需重点关注' : data.risk_level === 'moderate' ? '建议留意' : '相对较低';
-      const stateClass = data.risk_level === 'higher' ? 'high' : data.risk_level === 'moderate' ? 'mid' : 'low';
-      const confidence = data.confidence === 'low' ? '可信度较低' : data.confidence === 'medium' ? '可信度中等' : '可信度较高';
-      const missing = Array.isArray(data.missing_features) ? data.missing_features.length : 0;
-      const completeness = data.data_completeness || {};
-      const nextSteps = Array.isArray(completeness.next_steps) ? completeness.next_steps.slice(0, 2) : [];
-      const completenessText = missing
-        ? `建议先补充：${nextSteps.map(escapeHTML).join('、') || '个人病史和生活方式资料'}`
-        : '模型输入资料较完整，可结合复测继续观察';
-      return `<article class="disease-risk-card ${meta.tone}">
-        <div class="risk-card-top"><span class="risk-icon">${meta.icon}</span><div><div class="risk-name">${meta.name}</div><div class="risk-desc">${meta.desc}</div></div><span class="risk-state ${stateClass}">${level}</span></div>
-        <div class="risk-number-row"><span class="risk-number">${pct.toFixed(2)}</span><span class="risk-unit">%</span><span class="risk-confidence">${confidence}</span></div>
-        <div class="risk-bar"><span style="width:${Math.max(3, pct)}%"></span></div>
-        <div class="risk-meta"><span>模型：${data.model === 'xgboost' ? 'XGBoost' : 'Logistic'}</span><span>${missing ? '缺少 ' + missing + ' 项数据' : '数据较完整'}</span></div>
-        <div class="risk-desc" style="margin-top:8px;color:#9C8B7A">${completenessText}</div>
-      </article>`;
+    function renderSubs(subscores = {}, dimensions) {
+      const labels = { chronic:'慢病控制', activity:'活动', nutrition:'营养', sleep:'睡眠', mood:'情绪' };
+      const rows = dimensions.length ? dimensions : Object.entries(subscores).map(([key, score]) => ({ label:labels[key] || key, score }));
+      document.getElementById('sub-list').innerHTML = rows.length ? rows.map(row => {
+        const hasScore = validScore(row.score);
+        const value = hasScore ? Math.round(Number(row.score)) : null;
+        const progress = hasScore ? '<progress max="100" value="' + Math.min(100, Math.max(0, value)) + '" aria-label="' + escapeHTML(row.label) + '评分"></progress>' : '';
+        return '<div class="health-score-dimension"><strong>' + escapeHTML(row.label) + '</strong><div>' + progress +
+          '</div><span>' + (hasScore ? value + ' 分' : '待补充') + '</span></div>';
+      }).join('') : '<p class="health-empty">暂无可展示的评分维度。</p>';
     }
 
-    function renderTotal(d) {
-      const total = Number(d.total_score);
-      const hasTotal = Number.isFinite(total);
-      const coverage = Number(d.scoring_details?.coverage_percent) || 0;
-      document.getElementById('ring-num').textContent = hasTotal ? Math.round(total) : '--';
-      const dash = hasTotal ? Math.round((total / 100) * 628) : 0;
-      document.getElementById('ring-progress').setAttribute('stroke-dasharray', `${dash} 628`);
-      const lowCoverage = coverage < 40;
-      const badge = lowCoverage ? '数据不足' : total >= 80 ? '状态良好' : total >= 60 ? '需关注' : '需复诊';
-      const badgeBg = lowCoverage ? '#EEF1F0' : total >= 80 ? '#E5F0DC' : total >= 60 ? '#FFE9D9' : '#FBE4DD';
-      const badgeColor = lowCoverage ? '#66736F' : total >= 80 ? '#5A8045' : total >= 60 ? '#F4A261' : '#A04632';
-      const el = document.getElementById('total-badge');
-      el.textContent = badge;
-      el.style.background = badgeBg;
-      el.style.color = badgeColor;
-      document.getElementById('summary-text').textContent = d.summary;
-      document.getElementById('ring-meta').textContent = `· 分层加权计算 · 数据覆盖 ${coverage}%`;
-    }
-
-    function renderSubs(s) {
-      const order = [
-        { key: 'sleep',     label: '睡眠',     bg: '#F1E8F5', color: '#9C7BC9' },
-        { key: 'nutrition', label: '营养',     bg: '#FFE9D9', color: '#F4A261' },
-        { key: 'mood',      label: '情绪',     bg: '#FBE4DD', color: '#E0784E' },
-        { key: 'activity',  label: '活动',     bg: '#E5F0DC', color: '#7FB069' },
-        { key: 'chronic',   label: '慢病控制', bg: '#F4D5C9', color: '#A04632' },
-      ];
-      const list = document.getElementById('sub-list');
-      list.innerHTML = order.map(o => {
-        const hasValue = Number.isFinite(Number(s[o.key]));
-        const v = hasValue ? Math.round(Number(s[o.key])) : null;
-        const w = hasValue ? Math.max(0, Math.min(100, v)) : 0;
-        return `
-          <div class="sub-row${hasValue ? '' : ' is-empty'}">
-            <div class="sub-label">${o.label}</div>
-            <div class="sub-bar" style="background:${o.bg}"><div class="sub-fill" style="width:${w}%;background:${o.color}"></div></div>
-            <div class="sub-num">${hasValue ? v : '—'}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderScoreDetail(d) {
-      const details = d.scoring_details || {};
-      const dimensions = Array.isArray(details.dimensions) ? details.dimensions : [];
-      const available = dimensions.filter(item => Number.isFinite(Number(item.score)));
-      const total = Number(d.total_score);
-      const coverage = Number(details.coverage_percent) || 0;
-      const availableWeight = Number(details.available_weight) || available.reduce((sum, item) => sum + Number(item.weight || 0), 0);
-      document.getElementById('score-detail-preview').textContent = `数据覆盖 ${coverage}% · 点击查看算法`;
-      document.getElementById('score-coverage').textContent = `${coverage}%`;
-      const coverageNote = document.getElementById('score-coverage-note');
-      coverageNote.className = `score-coverage-note ${coverage < 40 ? 'low' : coverage < 70 ? 'mid' : 'good'}`;
-      coverageNote.textContent = coverage < 40
-        ? '当前数据覆盖较低，分数只能作为有限参考；建议继续补充睡眠、活动、营养和慢病指标。'
-        : coverage < 70 ? '当前已有部分关键数据，继续完善记录可提高评分稳定性。' : '当前数据覆盖较完整，评分更适合用于观察近期趋势。';
-
-      document.getElementById('score-detail-formula').textContent = available.length
-        ? `(${available.map(item => `${Math.round(item.score)}×${item.weight}%`).join(' + ')}) ÷ ${availableWeight}% = ${Number.isFinite(total) ? Math.round(total) : '—'} 分`
+    function renderScoreDetail(data, dimensions, rows) {
+      const details = data.scoring_details || {};
+      const available = dimensions.filter(item => validScore(item.score));
+      const coverage = details.coverage_percent;
+      const period = details.period_days;
+      document.getElementById('score-window').textContent = period == null ? '近 7 天' : '近 ' + period + ' 天';
+      document.getElementById('score-detail-preview').textContent = coverage == null ? '查看参与计算的记录' : '覆盖率 ' + coverage + '%';
+      document.getElementById('score-coverage').textContent = coverage == null ? '—' : coverage + '%';
+      document.getElementById('score-coverage-note').textContent = '覆盖率表示评分所需数据已记录的程度。缺项会降低覆盖率。';
+      const weight = details.available_weight ?? available.reduce((sum,item) => sum + Number(item.weight || 0), 0);
+      document.getElementById('score-detail-formula').textContent = available.length && validScore(data.total_score)
+        ? '(' + available.map(item => Math.round(item.score) + '×' + item.weight + '%').join(' + ') + ') ÷ ' + weight + '% = ' + Math.round(data.total_score) + ' 分'
         : '总分暂不可计算，请先记录健康数据。';
-
+      const provenance = metric => {
+        const current = rows?.[metric.type];
+        const sameRecord = current?.recorded_at === metric.recorded_at && current?.value === metric.value &&
+          (current?.value2 ?? null) === (metric.value2 ?? null);
+        return (metric.recorded_at ? HealthOverview.date(metric.recorded_at) : '测量时间未标注') +
+          ' · ' + (sameRecord ? HealthOverview.sources[current.source] || '来源未标注' : '来源未确认');
+      };
       document.getElementById('score-detail-items').innerHTML = dimensions.map(item => {
-        const hasScore = Number.isFinite(Number(item.score));
-        const metrics = Array.isArray(item.metrics) ? item.metrics : [];
+        const metrics = item.metrics || [];
         const metricRows = metrics.length ? metrics.map(metric => {
-          const value = metric.value2 == null ? metric.value : `${metric.value}/${metric.value2}`;
-          return `<div class="score-metric-row"><span><b>${escapeHTML(metric.label)}</b><small>最新 ${escapeHTML(value)}${escapeHTML(metric.unit || '')}</small></span><span><small>维度内权重 ${metric.weight}%</small><strong>${metric.score} 分</strong></span></div>`;
-        }).join('') : '<div class="score-metric-empty">近 7 天暂无可评分记录</div>';
-        return `<article class="score-dimension-card${hasScore ? '' : ' is-empty'}">
-          <header><span><b>${escapeHTML(item.label)}</b><small>总分权重 ${item.weight}%</small></span><strong>${hasScore ? `${Math.round(item.score)} 分` : '未参与'}</strong></header>
-          <div class="score-metric-list">${metricRows}</div>
-        </article>`;
-      }).join('') || '<div class="score-metric-empty">暂无评分明细</div>';
+          const value = metric.value2 == null ? metric.value : metric.value + '/' + metric.value2;
+          return '<div class="score-metric-row"><span><b>' + escapeHTML(metric.label) + '</b><small>' + escapeHTML(value) + ' ' + escapeHTML(metric.unit || '') +
+            '</small><small>' + escapeHTML(provenance(metric)) + '</small></span><span><small>维度内权重 ' + escapeHTML(metric.weight) + '%</small><strong>' +
+            escapeHTML(metric.score) + ' 分</strong></span></div>';
+        }).join('') : '<p class="score-metric-empty">这个维度暂无可评分记录。</p>';
+        return '<article class="score-dimension-card"><header><span><b>' + escapeHTML(item.label) + '</b><small>总分权重 ' + escapeHTML(item.weight) +
+          '%</small></span><strong>' + (validScore(item.score) ? Math.round(item.score) + ' 分' : '未参与评分') +
+          '</strong></header><div class="score-metric-list">' + metricRows + '</div></article>';
+      }).join('') || '<p class="health-empty">暂无评分明细。</p>';
     }
 
     const scoreDialog = document.getElementById('score-detail-dialog');
@@ -1329,8 +865,8 @@
 
     function renderAdlIadl(d) {
       // 数值代表“有困难或需要帮助”的项目数，越少越好。
-      const adl = Number.isFinite(Number(d.adl)) ? Number(d.adl) : null;
-      const iadl = Number.isFinite(Number(d.iadl)) ? Number(d.iadl) : null;
+      const adl = validScore(d.adl) ? Number(d.adl) : null;
+      const iadl = validScore(d.iadl) ? Number(d.iadl) : null;
       document.getElementById('adl').textContent = adl == null ? '--' : `${adl} 项`;
       document.getElementById('iadl').textContent = iadl == null ? '--' : `${iadl} 项`;
       document.getElementById('adl-status').textContent = adl == null ? '尚未评估' : adl === 0 ? '可独立完成' : '存在受限';
@@ -1343,17 +879,8 @@
     function renderSuggest(list) {
       const host = document.getElementById('suggest-list');
       if (!list || !list.length) { host.innerHTML = '<div class="empty">当前没有建议</div>'; return; }
-      const colors = ['#E8896E', '#F4A261', '#7FB069'];
-      const chars = ['1', '2', '3'];
-      host.innerHTML = list.slice(0, 3).map((s, i) => `
-        <div class="imp-row" style="background:${i === 0 ? '#FBE4DD' : i === 1 ? '#FFE9D9' : '#E5F0DC'}">
-          <div class="imp-icon" style="background:${colors[i]}">${chars[i]}</div>
-          <div class="imp-text">
-            <div class="imp-name" style="color:${i === 0 ? '#A04632' : i === 1 ? '#8C4520' : '#3D6630'}">${escapeHTML(s.title)}</div>
-            <div class="imp-desc" style="color:${i === 0 ? '#8A4538' : i === 1 ? '#A45F3D' : '#5A8045'}">${escapeHTML(s.detail)}</div>
-          </div>
-        </div>
-      `).join('');
+      host.innerHTML = list.slice(0, 3).map(item => '<article class="imp-row health-suggestion"><div class="imp-text"><strong>' +
+        escapeHTML(item.title) + '</strong><p>' + escapeHTML(item.detail) + '</p></div></article>').join('');
     }
 
     const functionDialog = document.getElementById('function-assess-dialog');
@@ -1928,12 +1455,7 @@
         const msgs = await API.get(`/api/chat/history?${query}`);
         if (query !== agentQuery()) return;
         if (!msgs.length) {
-          hist.innerHTML = renderMsg({
-            role: 'assistant',
-            content: '您好，我是小康，您的健康管家。想了解今天的身体状况吗？',
-            plan: null,
-            confidence: { type: 'common_sense' }
-          });
+          hist.innerHTML = '<section class="agent-welcome"><h3>您好，我是小康</h3><p>您可以问我最近的健康记录、待处理提醒或复测安排。</p></section>';
           return;
         }
         hist.innerHTML = msgs.map(renderMsg).join('');
@@ -2154,7 +1676,7 @@
         <p><strong>观察指标：</strong>${escapeHTML(p.proposal_details.target_metric || '')}</p><p><strong>为什么：</strong>${escapeHTML(p.proposal_details.why || '')}</p>
         <p><strong>证据来源：</strong>${(p.proposal_details.evidence_sources || []).map(x => escapeHTML(x.label || x.title || '')).join('；')}</p>
         <p><strong>停止并就医：</strong>${escapeHTML(p.proposal_details.stop_and_seek_care || '')}</p></div>` : '';
-      if (p.requires_confirmation || p.action_type) return `${detail}${schedule}<div class="agent-action-preview-controls"><button data-action="plan" ${attrs}>${p.action_type === 'n_of_1_intervention' ? '确认创建干预' : p.action_type === 'record_adherence' ? '确认记录' : '确认安排'}</button><button data-action="dismiss-plan">${p.action_type === 'n_of_1_intervention' ? '拒绝方案' : '暂不安排'}</button></div>`;
+      if (p.requires_confirmation || p.action_type) return `${detail}${schedule}<div class="agent-action-preview-controls"><button data-action="plan" ${attrs}>${p.intervention_payload?.draft ? '保存并编辑草案' : p.action_type === 'n_of_1_intervention' ? '确认创建干预' : p.action_type === 'record_adherence' ? '确认记录' : '确认安排'}</button><button data-action="dismiss-plan">${p.action_type === 'n_of_1_intervention' ? '拒绝方案' : '暂不安排'}</button></div>`;
       return `<button class="plan-card-check" data-action="plan" ${attrs} style="color:${planColorFg(p.color)};border:0;background:transparent;cursor:pointer" title="创建今日待办">＋</button>`;
     }
 
@@ -2215,9 +1737,11 @@
 
     function replySource(m) {
       const llmMeta = m.llm || {};
+      if (m.source === 'quality_policy' || llmMeta.provider === 'quality_policy') return '数据质量规则';
+      if (m.presentation?.temporal_memory) return '时序记忆与原始记录';
       return llmMeta.call_status === 'success'
         ? '健康智能分析'
-        : (llmMeta.call_status === 'fallback' ? '本地健康工具结果' : (m.source === 'mock' ? '本地演示结果' : m.source === 'tool' ? '健康工具结果' : '本地健康知识结果'));
+        : (llmMeta.call_status === 'fallback' ? '模型暂不可用，使用本地结果' : (m.source === 'mock' ? '本地演示结果' : m.source === 'tool' ? '健康工具结果' : '本地健康知识结果'));
     }
 
     function renderMsg(m) {
@@ -2245,6 +1769,8 @@
             <div>
               ${renderTaskState(m.task_state)}
               ${hasHealthCard ? renderHealthCard(m, providerLabel) : hasClarification ? renderClarificationCard(m) : `<div class="msg-bubble">${escapeHTML(visibleChinese(m.content)).replace(/\n/g, '<br/>')}</div>${sourceHtml}${planHtml}${renderToolTrace(m)}${renderEvidence(m.evidence)}`}
+              ${window.HealthOverview.researchQuality(m.presentation)}
+              ${window.HealthOverview.temporalSources(m.presentation)}
               ${renderMemoryCandidates(m)}
               ${renderActions(m)}
             </div>
@@ -2262,6 +1788,7 @@
       if (!text || !conversationId) return;
       input.value = '';
       lastUserMessage = text;
+      document.querySelector('.agent-welcome')?.remove();
       appendUserMsg(text);
       const typingEl = appendTyping();
       const btn = document.getElementById('btn-send');
@@ -2429,6 +1956,17 @@
       try {
         if (actionType === 'n_of_1_intervention') {
           const payload = JSON.parse(decodeURIComponent(btn.dataset.interventionPayload || ''));
+          if (payload.draft === true) {
+            btn.disabled = true;
+            try {
+              await API.post('/api/actions/interventions', { ...payload, subject_user_id: subjectId });
+              location.assign(`/intervention.html?subject_user_id=${encodeURIComponent(subjectId)}`);
+            } catch (error) {
+              btn.disabled = false;
+              throw error;
+            }
+            return;
+          }
           if (!window.confirm(`请再次核对卡片内容。确认创建并激活“${title}”吗？这不是药物调整，也不能替代就医。`)) return;
           const created = await API.post('/api/actions/interventions', { ...payload, subject_user_id: subjectId });
           if (!created.intervention?.intervention_id) throw new Error('没有生成待确认干预');
@@ -2677,21 +2215,43 @@
   </script>
 </template>
 
-<template data-view="prediction" data-layout="desktop">
-<title>健康预测与发现 · 长寿康 Pro</title><!-- shared-styles -->
+<template data-view="prediction" data-layout="desktop" class="health-measurement-page health-discovery-page">
+<title>健康发现与趋势 · 长寿康 Pro</title>
+<!-- shared-styles -->
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
+<link rel="stylesheet" href="/assets/css/health-measurements.css">
 <!-- view-content -->
-<div id="app-nav"></div><main class="main discovery-page">
-<header class="discovery-head"><a href="monitoring.html" class="discovery-back">← 返回健康监测</a><div class="discovery-head-row"><div><h1><span class="desktop-only">健康预测与发现</span><span class="mobile-only">趋势与风险</span></h1><p>先看现在怎么样，再看下一步做什么</p></div><label class="subject-picker" id="subject-picker-wrap" hidden>正在查看<select id="subject-picker"></select></label></div></header>
-<nav class="discovery-tabs" aria-label="健康预测功能"><button class="active" data-tab="trend">指标趋势</button><button data-tab="discover">健康发现</button><button data-tab="intake">完善档案</button></nav>
-<section data-pane="discover" hidden><div class="status-cards" id="status-cards" aria-live="polite"><article><span>现在怎么样</span><strong>正在读取健康记录…</strong></article><article><span>发现什么</span><strong>请稍候</strong></article><article class="action"><span>下一步</span><strong>正在生成建议</strong></article></div>
-<section class="discovery-panel"><div class="discovery-section-head"><div><h2>常见疾病风险筛查</h2><p>等级和行动优先；模型依据按需查看</p></div><span class="safe-badge">筛查 · 非诊断</span></div><div class="disease-discovery-grid" id="disease-grid"><div class="discovery-loading">正在读取四类风险…</div></div></section>
-<section class="discovery-panel"><div class="discovery-section-head"><div><h2>需要处理的健康发现</h2><p>急症信号优先于长期概率</p></div></div><div id="event-list" class="event-list"><div class="discovery-empty">正在检查…</div></div></section></section>
-<section data-pane="trend"><section class="discovery-panel"><div class="discovery-section-head trend-head"><div><h2>一个指标，一条清楚的趋势</h2><p>历史记录用于识别规律；数据质量达标时，虚线展示未来7或14天的保守估计</p></div><button class="btn btn-secondary" id="open-measurement" type="button">＋ 记录一次测量</button></div><div class="metric-choice" id="metric-choice"></div><div id="curve-host" class="curve-host"><div class="discovery-empty">请选择一个指标</div></div></section>
-<section class="discovery-panel measurement-panel" id="measurement-panel" hidden><div class="discovery-section-head"><div><h2>记录家庭测量</h2><p>测量条件越规范，趋势越可靠</p></div><button type="button" class="plain-close" id="close-measurement">关闭</button></div><form id="measurement-form" class="measurement-form"><label>指标<select id="measure-type"></select></label><label><span id="measure-value-label">数值</span><input id="measure-value" type="number" step="any" required></label><label id="measure-value2-row" hidden>舒张压（mmHg）<input id="measure-value2" type="number" step="any"></label><label>测量条件<select id="measure-condition"></select></label><label>记录时间<input id="measure-time" type="datetime-local"></label><label class="check-label" id="measure-rest-row" hidden><input id="measure-rested" type="checkbox"> 测量前已静坐休息</label><button class="btn btn-primary">保存并重新分析</button><div id="measurement-message" class="form-message" aria-live="polite"></div></form></section></section>
+<div id="app-nav"></div>
+<main class="main discovery-page health-measurement-main">
+  <a href="monitoring.html" id="discovery-back" class="health-link">← 返回健康监测</a>
+  <header class="health-page-header">
+    <div><h1>健康发现</h1><p>查看实测趋势、筛查依据和需要处理的事项。</p></div>
+    <label class="subject-picker" id="subject-picker-wrap" hidden>正在查看<select id="subject-picker"></select></label>
+  </header>
+  <nav class="discovery-tabs" aria-label="健康发现视图">
+    <button type="button" class="active" data-tab="trend" aria-pressed="true">指标趋势</button>
+    <button type="button" data-tab="discover" aria-pressed="false">健康发现</button>
+    <button type="button" data-tab="intake" aria-pressed="false">完善档案</button>
+  </nav>
+  <section data-pane="discover" hidden>
+    <div class="health-discovery-status" id="status-cards" aria-live="polite">正在读取健康记录…</div>
+    <section class="health-panel"><div class="health-panel-heading"><h2>需要处理的发现</h2></div><div id="event-list"></div></section>
+    <section class="health-panel"><div class="health-panel-heading"><h2>常见疾病风险筛查</h2></div><div class="health-disease-grid" id="disease-grid"></div><p class="health-meta" id="discovery-disclaimer"></p></section>
+  </section>
+  <section data-pane="trend">
+    <section class="health-panel">
+      <header class="health-panel-heading"><div><h2>指标趋势与预测</h2><p class="health-meta">按指标查看实测点和历史统计。预测达标时另行显示。</p></div>
+        <button class="health-button health-button-primary" id="open-measurement" type="button">记录测量</button></header>
+      <div class="metric-choice" id="metric-choice" aria-label="选择指标">正在读取指标…</div>
+      <div id="curve-host" class="curve-host" aria-live="polite"><p class="health-empty">正在读取趋势…</p></div>
+    </section>
+<section class="discovery-panel measurement-panel" id="measurement-panel" hidden><div class="discovery-section-head"><div><h2>记录家庭测量</h2><p>测量条件越规范，趋势越可靠</p></div><button type="button" class="plain-close" id="close-measurement">关闭</button></div><form id="measurement-form" class="measurement-form"><label>指标<select id="measure-type"></select></label><label><span id="measure-value-label">数值</span><input id="measure-value" type="number" step="any" required></label><label id="measure-value2-row" hidden>舒张压（mmHg）<input id="measure-value2" type="number" step="any"></label><label>测量条件<select id="measure-condition"></select></label><label>记录时间<input id="measure-time" type="datetime-local" required></label><label class="check-label" id="measure-rest-row" hidden><input id="measure-rested" type="checkbox"> 测量前已静坐休息</label><button type="submit" class="health-button health-button-primary">保存并重新分析</button><div id="measurement-message" class="form-message" aria-live="polite"></div></form></section></section>
 <section data-pane="intake" hidden><section class="discovery-panel intake-shell"><div class="discovery-section-head"><div><h2>用日常语言完善健康档案</h2><p id="intake-role-note">问卷已按健康主题分组，不确定可以跳过</p></div><span id="intake-progress-text">0 / 0</span></div><nav class="intake-module-nav" id="intake-module-nav" aria-label="问卷模块"></nav><div class="intake-module-progress"><div><strong id="intake-module-title">准备中</strong><small id="intake-overall-progress">总进度 0 / 0</small></div><div class="progress-track"><span id="intake-progress"></span></div></div><div id="intake-host" class="intake-host"><div class="discovery-loading">正在准备问题…</div></div><div class="intake-actions"><button class="btn btn-secondary" id="intake-prev" type="button">上一题</button><button class="btn btn-ghost" id="intake-skip" type="button">不确定，先跳过</button><button class="btn btn-primary" id="intake-next" type="button">下一题</button></div><div id="intake-message" class="form-message" aria-live="polite"></div></section></section>
 </main><!-- shared-scripts -->
+<script src="/assets/js/health-overview.js"></script>
+<script src="/assets/js/health-records.js"></script>
+<script src="/assets/js/health-discovery.js"></script>
 <script>
-const D={hypertension:{name:'高血压',icon:'压'},diabetes:{name:'糖尿病',icon:'糖'},heart_disease:{name:'心脏病',icon:'心'},stroke:{name:'脑卒中',icon:'脑'}};
 const M=[
 {type:'bp',name:'血压',unit:'mmHg',dual:true,group:'日常监测',recordable:true},{type:'glucose',name:'血糖',unit:'mmol/L',group:'日常监测',recordable:true},{type:'hr',name:'静息心率',unit:'bpm',group:'日常监测',recordable:true},{type:'weight',name:'体重',unit:'kg',group:'日常监测',recordable:true},
 {type:'sleep',name:'睡眠',unit:'小时',group:'活动与休息',recordable:true},{type:'steps',name:'步数',unit:'步',group:'活动与休息',recordable:true},
@@ -2699,26 +2259,383 @@ const M=[
 {type:'bmi',name:'BMI',unit:'kg/m²',group:'系统估算',recordable:false,derivedFrom:'身高和体重'},{type:'pulse_pressure',name:'脉压',unit:'mmHg',group:'系统估算',recordable:false,derivedFrom:'同次收缩压和舒张压'}];
 const R=M.filter(x=>x.recordable),curveLayers={clinical:true,peer:true};
 const C={glucose:[['fasting','空腹'],['postprandial_2h','餐后2小时'],['random','随机']],hr:[['resting','静息'],['active','活动后']],bp:[['morning_rest','早晨静坐'],['evening_rest','晚间静坐'],['other','其他']],weight:[['morning_fasting','晨起空腹'],['other','其他']]};
-let me,subjectId,selectedMetric,schema,index=0,answers={};const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const sq=()=>subjectId!==me.id?'?subject_user_id='+subjectId:'';
-Auth.init().then(init);async function init(){me=await API.get('/api/auth/me');subjectId=me.id;bind();await subjects();await Promise.all([discovery(),metricList(),intake()])}
-function bind(){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);if(b.dataset.tab==='trend'&&selectedMetric)curve(selectedMetric)});$('open-measurement').onclick=()=>openMeasurement();$('close-measurement').onclick=()=>{$('measurement-panel').hidden=true};$('measure-type').innerHTML=R.map(x=>`<option value="${x.type}">${x.name}（${x.unit}）</option>`).join('');$('measure-type').onchange=measureForm;$('measure-time').value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);measureForm();$('measurement-form').onsubmit=saveMeasure;$('intake-prev').onclick=()=>{if(index){index--;question()}};$('intake-skip').onclick=()=>advance(true);$('intake-next').onclick=()=>advance(false)}
-function openMeasurement(type){const source=type==='bmi'?'weight':type==='pulse_pressure'?'bp':type;if(source&&R.some(x=>x.type===source)){$('measure-type').value=source;measureForm()}$('measurement-panel').hidden=false;$('measurement-panel').scrollIntoView({behavior:'smooth'})}
-async function subjects(){let r={as_member:[]};try{r=await API.get('/api/care/relationships')}catch{}if(!r.as_member?.length)return;$('subject-picker-wrap').hidden=false;$('subject-picker').innerHTML=`<option value="${me.id}">${esc(me.name)}（本人）</option>`+r.as_member.map(x=>`<option value="${x.senior_id}">${esc(x.name)}（家属协助）</option>`).join('');$('subject-picker').onchange=async()=>{subjectId=+$('subject-picker').value;answers={};index=0;$('intake-role-note').textContent=subjectId===me.id?'一次一题，不确定可以跳过':'你正在为已授权的老人代填，系统会保留代填记录';await Promise.all([discovery(),metricList(),intake()])}}
-async function discovery(){const x=await API.get('/api/prediction/discovery/overview'+sq());$('status-cards').className='status-cards is-'+x.summary.severity;$('status-cards').innerHTML=`<article><span>现在怎么样</span><strong>${esc(x.summary.current)}</strong><small>最近测量：${esc(x.data.latest_measurement_at?.slice(0,10)||'暂无')}</small></article><article><span>发现什么</span><strong>${esc(x.summary.change)}</strong><small>只显示经过规则或模型门禁的结果</small></article><article class="action"><span>下一步</span><strong>${esc(x.summary.action)}</strong><small>不适加重时不要等待系统更新</small></article>`;diseases(x.diseases||{});events(x.events||[])}
-function diseases(ds){const L={low:'相对较低',watch:'建议留意',high:'重点关注',evidence_limited:'证据有限',management:'已确诊转管理'};$('disease-grid').innerHTML=Object.entries(D).map(([k,m])=>{const x=ds[k]||{},t=x.risk_tier||(x.error==='no_data'?'insufficient':'evidence_limited'),c=x.data_completeness||{},g=x.gate_result,mm=g?.metrics||{},next=x.actions?.[0]?.label||c.next_steps?.[0]||'继续规范记录';return `<article class="disease-discovery-card tier-${t}"><div class="disease-card-head"><span class="disease-icon">${m.icon}</span><div><h3>${m.name}</h3><p>未来两年新发风险筛查</p></div><b>${t==='insufficient'?'资料不足':L[t]||'暂不可用'}</b></div><div class="disease-action"><span>建议</span><strong>${esc(next)}</strong></div><div class="data-meter"><span style="width:${Math.round((+c.ratio||0)*100)}%"></span></div><small>资料完整度 ${Math.round((+c.ratio||0)*100)}%</small><details><summary>查看模型依据</summary>${x.existing_diagnosis?'<p>已经确诊，因此不计算新发概率，转为日常管理。</p>':''}${g&&!g.passed?'<p>模型未通过个人概率准入，已隐藏精确概率。</p>':''}${x.research_details?.risk_percent!=null?`<p>研究概率：${(+x.research_details.risk_percent).toFixed(1)}%</p>`:''}${mm.roc_auc!=null?`<p>时间验证 AUROC：${(+mm.roc_auc).toFixed(3)}；ECE：${(+mm.ece).toFixed(3)}</p>`:''}<p>这是筛查依据，不是病因分析或临床诊断。</p></details></article>`}).join('')}
-function events(es){$('event-list').innerHTML=es.length?es.map(e=>`<article class="event-card ${e.severity}"><span>${e.severity==='critical'?'立即处理':'需要关注'}</span><div><h3>${esc(e.title)}</h3><p>${esc(e.message)}</p><strong>${esc(e.action)}</strong></div></article>`).join(''):'<div class="discovery-empty good">暂未发现需要立即处理的信号。请继续规律测量。</div>'}
-async function metricList(){let rows=[];try{rows=await API.get('/api/prediction/overview/list?days=365'+(subjectId!==me.id?'&subject_user_id='+subjectId:''))}catch{}const byType=new Map(rows.map(x=>[x.type,x]));$('metric-choice').innerHTML=[...new Set(M.map(x=>x.group))].map(group=>`<div class="metric-choice-group"><strong>${group}</strong><div>${M.filter(x=>x.group===group).map(x=>{const row=byType.get(x.type),count=+(row?.count||0),status=row?.data_status||'no_data',hint=status==='missing_height'?'缺身高':status==='no_paired_bp'?'缺成对血压':count?`${count}条`:'暂无数据';return `<button type="button" data-metric="${x.type}" class="${count?'has-data':'no-data'}"><span>${x.name}</span><small>${hint}</small></button>`}).join('')}</div></div>`).join('');document.querySelectorAll('[data-metric]').forEach(b=>b.onclick=()=>curve(b.dataset.metric));selectedMetric=M.some(x=>x.type===selectedMetric)?selectedMetric:(M.find(x=>+(byType.get(x.type)?.count||0))?.type||'bp');curve(selectedMetric)}
-async function curve(type){selectedMetric=type;document.querySelectorAll('[data-metric]').forEach(b=>b.classList.toggle('active',b.dataset.metric===type));$('curve-host').innerHTML='<div class="discovery-loading">正在分析这一项记录…</div>';try{drawV2(await API.get(`/api/prediction/${encodeURIComponent(type)}?days=365${subjectId!==me.id?'&subject_user_id='+subjectId:''}`))}catch(e){$('curve-host').innerHTML=`<div class="discovery-empty">加载失败：${esc(e.message)}</div>`}}
-function draw(d){const s=d.series?.[0]||{observed:d.raw||d.actual||[],trend:d.fitted||[],forecast:{points:d.predicted||[]}},o=s.observed||[],t=s.trend||[],f=s.forecast?.points||[],all=[...o,...t,...f].filter(p=>Number.isFinite(+p.value));if(!all.length){$('curve-host').innerHTML='<div class="discovery-empty">还没有这项记录。先保存一次测量吧。</div>';return}const ts=all.map((p,i)=>Date.parse(p.recorded_at)||i*864e5),vs=all.map(p=>+p.value),lo=Math.min(...vs,...f.map(p=>+p.lower).filter(Number.isFinite)),hi=Math.max(...vs,...f.map(p=>+p.upper).filter(Number.isFinite)),a=Math.min(...ts),b=Math.max(...ts),W=960,H=330,L=62,R=24,T=30,B=50,X=v=>L+(v-a)/Math.max(b-a,1)*(W-L-R),Y=v=>T+(1-(v-lo)/Math.max(hi-lo,1))*(H-T-B),line=p=>p.map((v,i)=>`${i?'L':'M'} ${X(Date.parse(v.recorded_at)||ts[i]).toFixed(1)} ${Y(v.value).toFixed(1)}`).join(' '),band=f.length?f.map((p,i)=>`${i?'L':'M'} ${X(Date.parse(p.recorded_at))} ${Y(p.upper)}`).join(' ')+' '+f.slice().reverse().map(p=>`L ${X(Date.parse(p.recorded_at))} ${Y(p.lower)}`).join(' ')+' Z':'';const latest=o.at(-1),change=o.length>1?+latest.value-(+o.at(-2).value):0,state=d.display_state==='forecast'?`可保守估计未来${d.recommended_horizon_days}天`:d.display_state==='trend_only'?'当前只展示历史趋势':(d.readiness?.reason||d.analysis?.forecastReason||'暂时无法生成预测'),an=d.analysis||{};$('curve-host').innerHTML=`<div class="curve-summary"><article><span>现在</span><strong>${(+latest.value).toFixed(1)} ${esc(d.meta?.unit||'')}</strong></article><article><span>最近变化</span><strong>${change>0?'+':''}${change.toFixed(1)} ${change>0?'上升':change<0?'下降':'基本稳定'}</strong></article><article><span>预测能力</span><strong>${esc(state)}</strong></article><article class="action"><span>下一步</span><strong>${esc(d.action?.label||'继续规律记录')}</strong></article></div><div class="curve-legend"><span><i class="dot"></i>实际测量</span><span><i class="solid"></i>历史趋势</span><span><i class="dash"></i>未来范围</span><span><i class="alert-dot"></i>建议复测</span></div><div class="curve-svg-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(d.meta?.name||d.type)}趋势图"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="#cdbfb2"/>${band?`<path d="${band}" fill="#dbe7fb" opacity=".8"/>`:''}${t.length?`<path d="${line(t)}" fill="none" stroke="#e48645" stroke-width="4"/>`:''}${f.length?`<path d="${line(f)}" fill="none" stroke="#386fbd" stroke-width="4" stroke-dasharray="10 8"/>`:''}${o.map((p,i)=>`<circle cx="${X(Date.parse(p.recorded_at)||ts[i])}" cy="${Y(p.value)}" r="${p.outlier?7:5}" fill="${p.outlier?'#b83232':'#fff'}" stroke="${p.outlier?'#b83232':'#e48645'}" stroke-width="3"><title>${esc(String(p.recorded_at).slice(0,10))}：${p.value}</title></circle>`).join('')}<text x="${L}" y="${H-18}" fill="#76685d">${new Date(a).toLocaleDateString('zh-CN')}</text><text x="${W-R}" y="${H-18}" text-anchor="end" fill="#76685d">${new Date(b).toLocaleDateString('zh-CN')}</text></svg></div><p class="curve-text-summary">文字说明：${esc(an.forecastReason||state)}。${esc(d.action?.label||'')}</p><details class="model-evidence"><summary>查看模型和数据依据</summary><p>共有 ${+(an.totalHistoryPoints||an.dataPoints||o.length)} 条历史记录；模型使用最近 ${+(an.modelWindowPoints||an.dataPoints||o.length)} 条同条件记录计算未来曲线。</p><p>预测要求至少 ${d.readiness?.required_points||21} 个有效点并覆盖 ${d.readiness?.required_span_days||28} 天。</p><p>滚动回测 MASE：${an.modelScore?.mase==null?'暂无':(+an.modelScore.mase).toFixed(2)}。只有稳定优于简单基线时才绘制未来线。</p></details>`}
+let me, subjectId, selectedMetric, schema, index = 0, answers = {};
+let metricDefinitions = [];
+let curveRequest = 0;
+let discoveryRequest = 0;
+let intakeRequest = 0;
+let intakeSaving = false;
+const $ = id => document.getElementById(id);
+const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
+const params = new URLSearchParams(location.search);
+const sq = () => subjectId !== me.id ? '?subject_user_id=' + encodeURIComponent(subjectId) : '';
+
+document.addEventListener('auth:ready', event => init(event.detail), { once:true });
+Auth.init();
+
+async function init(user) {
+  me = user;
+  subjectId = me.id;
+  selectedMetric = M.find(item => item.type === params.get('type'))?.type;
+  if (params.get('from') === 'mobile') $('discovery-back').href = '/mobile?view=trends';
+  bind();
+  await subjects();
+  await refreshSubject();
+}
+
+function selectTab(tab) {
+  document.querySelectorAll('[data-tab]').forEach(button => {
+    const active = button.dataset.tab === tab;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  document.querySelectorAll('[data-pane]').forEach(panel => { panel.hidden = panel.dataset.pane !== tab; });
+}
+function bind() {
+  const tabs = [...document.querySelectorAll('[data-tab]')];
+  selectTab(tabs.some(button => button.dataset.tab === params.get('tab')) ? params.get('tab') : 'trend');
+  tabs.forEach(button => { button.onclick = () => selectTab(button.dataset.tab); });
+  $('open-measurement').onclick = () => openMeasurement(selectedMetric);
+  $('close-measurement').onclick = () => { $('measurement-panel').hidden = true; $('open-measurement').focus(); };
+  $('measure-type').onchange = measureForm;
+  $('measurement-form').onsubmit = saveMeasure;
+  $('intake-prev').onclick = () => { if (index) { index--; question(); } };
+  $('intake-skip').onclick = () => advance(true);
+  $('intake-next').onclick = () => advance(false);
+}
+
+async function openMeasurement(type) {
+  if (subjectId !== me.id) return;
+  $('measurement-panel').hidden = false;
+  const status = $('measurement-message');
+  status.textContent = '';
+  const send = $('measurement-form').querySelector('[type=submit]');
+  send.disabled = true;
+  try {
+    if (!metricDefinitions.length) metricDefinitions = await API.get('/api/health/metric-defs');
+    if ($('measurement-panel').hidden || subjectId !== me.id) return;
+    const supported = R.filter(item => metricDefinitions.some(definition => definition.type === item.type));
+    if (!supported.length) throw new Error('no definitions');
+    $('measure-type').replaceChildren(...supported.map(item => new Option(item.name, item.type)));
+    const linkedType = type === 'bmi' ? 'weight' : type === 'pulse_pressure' ? 'bp' : type;
+    if (supported.some(item => item.type === linkedType)) $('measure-type').value = linkedType;
+    const now = new Date();
+    $('measure-time').value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+    measureForm();
+    send.disabled = false;
+    $('measurement-panel').scrollIntoView({ block:'nearest' });
+    $('measure-value').focus({ preventScroll:true });
+  } catch {
+    status.textContent = '指标选项暂时无法读取，请关闭后重新打开。';
+  }
+}
+
+async function subjects() {
+  const result = await API.get('/api/care/relationships').catch(() => null);
+  const allowed = (result?.as_member || []).filter(item => (item.effective_status || item.status) === 'active');
+  if (!allowed.length) return;
+  $('subject-picker-wrap').hidden = false;
+  const select = $('subject-picker');
+  select.replaceChildren(new Option(me.name + '（本人）', String(me.id)),
+    ...allowed.map(item => new Option(item.name + '（已授权）', String(item.senior_id))));
+  const initialId = Number(params.get('subject_user_id'));
+  if (allowed.some(item => item.senior_id === initialId)) subjectId = initialId;
+  select.value = String(subjectId);
+  select.onchange = () => { subjectId = Number(select.value); refreshSubject(); };
+}
+
+function refreshSubject() {
+  $('measurement-panel').hidden = true;
+  $('open-measurement').hidden = subjectId !== me.id;
+  $('intake-role-note').textContent = subjectId === me.id ? '一次一题，不确定可以跳过' : '你正在为已授权的老人代填，系统会保留代填记录';
+  return Promise.allSettled([discovery(), metricList(), intake()]);
+}
+
+function showRetry(host, message, retry) {
+  host.textContent = message;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'health-link';
+  button.textContent = '重试';
+  button.addEventListener('click', retry, { once:true });
+  host.append(' ', button);
+}
+async function discovery() {
+  const request = ++discoveryRequest;
+  $('status-cards').textContent = '正在读取健康记录…';
+  $('disease-grid').replaceChildren();
+  $('event-list').replaceChildren();
+  $('discovery-disclaimer').textContent = '';
+  try {
+    const result = await API.get('/api/prediction/discovery/overview' + sq());
+    if (request !== discoveryRequest) return;
+    $('status-cards').classList.toggle('is-critical', result.summary?.severity === 'critical');
+    $('status-cards').innerHTML = HealthDiscovery.summary(result);
+    $('disease-grid').innerHTML = HealthDiscovery.cards(result.diseases);
+    $('event-list').innerHTML = HealthDiscovery.events(result.events, Boolean(result.data?.metric_count));
+    $('discovery-disclaimer').textContent = result.disclaimer || '筛查用于日常健康管理参考。';
+  } catch (error) {
+    if (request !== discoveryRequest) return;
+    $('status-cards').classList.remove('is-critical');
+    if (error.status === 403) $('status-cards').textContent = '当前授权未包含完整健康发现。';
+    else showRetry($('status-cards'), '健康发现暂时无法读取。', discovery);
+  }
+}
+async function metricList() {
+  const id = subjectId;
+  const request = ++curveRequest;
+  $('metric-choice').textContent = '正在读取指标…';
+  $('curve-host').textContent = '';
+  const query = new URLSearchParams({ days:'365' });
+  if (id !== me.id) query.set('subject_user_id', id);
+  const rows = await API.get('/api/prediction/overview/list?' + query).catch(() => null);
+  if (request !== curveRequest) return;
+  const host = $('metric-choice');
+  const counts = new Map((rows || []).map(row => [row.type, row]));
+  const groups = [...new Set(M.map(item => item.group))];
+  host.innerHTML = groups.map(group => '<div class="metric-choice-group"><strong>' + group + '</strong><div>' +
+    M.filter(item => item.group === group).map(item => {
+      const row = counts.get(item.type);
+      const hint = !rows ? '记录数未读取' : row?.data_status === 'missing_height' ? '缺身高' :
+        row?.data_status === 'no_paired_bp' ? '缺成对血压' : row?.count ? row.count + ' 条' : '暂无实测';
+      return '<button type="button" data-metric="' + item.type + '" aria-pressed="false"><span>' + item.name + '</span><small>' + esc(hint) + '</small></button>';
+    }).join('') + '</div></div>').join('');
+  host.querySelectorAll('[data-metric]').forEach(button => { button.onclick = () => curve(button.dataset.metric); });
+  return curve(selectedMetric || M.find(item => counts.get(item.type)?.count)?.type || 'bp');
+}
+async function curve(type) {
+  selectedMetric = type;
+  const request = ++curveRequest;
+  document.querySelectorAll('[data-metric]').forEach(button => {
+    const active = button.dataset.metric === type;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  const host = $('curve-host');
+  host.textContent = '正在读取历史与分析结果…';
+  try {
+    const parameters = new URLSearchParams({ days:'365' });
+    if (subjectId !== me.id) parameters.set('subject_user_id', subjectId);
+    const result = await API.get('/api/prediction/' + encodeURIComponent(type) + '?' + parameters);
+    if (request === curveRequest) drawV2(result);
+  } catch (error) {
+    if (request !== curveRequest) return;
+    if (error.status === 403) host.textContent = '当前授权未包含完整趋势。';
+    else showRetry(host, '趋势暂时无法读取。', () => curve(type));
+  }
+}
 function referenceCards(d){const c=d.reference?.clinical,p=d.reference?.peer,clinical=c?.status==='available'?c.series.map(x=>`${x.label} ${x.lower}–${x.upper} ${d.meta?.unit||''}`).join('；'):'暂无通用单一范围',peer=p?.status==='available'?`${p.age_group}岁${p.fallback?'同龄总体':'同性别人群'}，样本量 ${Math.min(...p.series.map(x=>+x.n||0))}；中位数 ${p.series.map(x=>`${x.label}${x.median}`).join('、')}`:(p?.reason||'暂无同口径同龄人群数据');return `<div class="reference-cards"><article><span>医学健康管理参考</span><strong>${esc(clinical)}</strong><small>${esc(c?.note||'个体目标以医生建议为准')}</small></article><article><span>同龄同性别人群参考</span><strong>${esc(peer)}</strong><small>${esc(p?.note||'人群统计不等于医学正常')}</small></article></div>`}
 function niceScale(min,max){if(!Number.isFinite(min)||!Number.isFinite(max))return {min:0,max:1,ticks:[0,.25,.5,.75,1]};if(min===max){const p=Math.max(Math.abs(min)*.08,1);min-=p;max+=p}else{const p=(max-min)*.08;min-=p;max+=p}const rough=(max-min)/4,pow=10**Math.floor(Math.log10(Math.max(rough,1e-9))),f=rough/pow,step=(f<=1?1:f<=2?2:f<=5?5:10)*pow,lo=Math.floor(min/step)*step,hi=Math.ceil(max/step)*step,ticks=[];for(let v=lo;v<=hi+step/2&&ticks.length<7;v+=step)ticks.push(+v.toFixed(6));return {min:lo,max:hi,ticks}}
-function drawV2(d){const fallback={id:d.type,label:d.meta?.name||d.type,color:d.meta?.color||'#e48645',observed:d.raw||d.actual||[],trend:d.fitted||[],forecast:{points:d.predicted||[]}},series=(d.series?.length?d.series:[fallback]).map((s,i)=>{const observed=(s.observed||[]).slice(-90),start=observed[0]?Date.parse(observed[0].recorded_at):-Infinity;return {...s,color:s.color||['#e48645','#7a58a6','#386fbd'][i%3],observed,trend:(s.trend||[]).filter(p=>(Date.parse(p.recorded_at)||0)>=start),forecast:{...(s.forecast||{}),points:s.forecast?.points||[]}}}),points=series.flatMap(s=>[...s.observed,...s.trend,...s.forecast.points]).filter(p=>Number.isFinite(+p.value)),cfg=M.find(x=>x.type===d.type)||{};if(!points.length){const reason=d.analysis?.forecastReason||d.readiness?.reason||(d.type==='bmi'?'请先在健康档案填写身高，并记录体重。':d.type==='pulse_pressure'?'请先记录一次完整的收缩压和舒张压。':'还没有这项记录。先保存一次测量吧。');$('curve-host').innerHTML=`${referenceCards(d)}<div class="discovery-empty curve-no-data"><strong>暂时没有可绘制的数据</strong><p>${esc(reason)}</p><button type="button" class="btn btn-primary" id="curve-record-cta">${cfg.recordable?'记录这项指标':`去记录${d.type==='bmi'?'体重':'血压'}`}</button></div>`;$('curve-record-cta').onclick=()=>openMeasurement(d.type);return}const clinical=d.reference?.clinical?.series||[],peer=d.reference?.peer?.series||[],refValues=[];if(curveLayers.clinical)clinical.forEach(x=>refValues.push(+x.lower,+x.upper));if(curveLayers.peer)peer.forEach(x=>refValues.push(+x.p25,+x.p75,+x.median));const values=[...points.map(x=>+x.value),...series.flatMap(s=>s.forecast.points.flatMap(x=>[+x.lower,+x.upper]).filter(Number.isFinite)),...refValues.filter(Number.isFinite)],times=points.map((p,i)=>Date.parse(p.recorded_at)||Date.now()+i*864e5),a=Math.min(...times),rawB=Math.max(...times),b=rawB===a?a+864e5:rawB,scale=niceScale(Math.min(...values),Math.max(...values)),W=980,H=390,L=92,R=30,T=28,B=58,X=v=>L+(v-a)/Math.max(b-a,1)*(W-L-R),Y=v=>T+(1-(v-scale.min)/Math.max(scale.max-scale.min,1))*(H-T-B),path=rows=>rows.filter(x=>Number.isFinite(+x.value)).map((v,i)=>`${i?'L':'M'} ${X(Date.parse(v.recorded_at)||a+i*864e5).toFixed(1)} ${Y(+v.value).toFixed(1)}`).join(' '),forecastBand=rows=>rows.length?rows.map((p,i)=>`${i?'L':'M'} ${X(Date.parse(p.recorded_at)||a+i*864e5).toFixed(1)} ${Y(+p.upper).toFixed(1)}`).join(' ')+' '+rows.slice().reverse().map((p,i)=>`L ${X(Date.parse(p.recorded_at)||b-i*864e5).toFixed(1)} ${Y(+p.lower).toFixed(1)}`).join(' ')+' Z':'';const forecastTimes=series.flatMap(s=>s.forecast.points).map(p=>Date.parse(p.recorded_at)).filter(Number.isFinite),observedTimes=series.flatMap(s=>s.observed).map(p=>Date.parse(p.recorded_at)).filter(Number.isFinite),forecastStart=forecastTimes.length?Math.min(...forecastTimes):NaN,observedEnd=observedTimes.length?Math.max(...observedTimes):NaN,boundaryTime=Number.isFinite(forecastStart)&&Number.isFinite(observedEnd)?(forecastStart+observedEnd)/2:NaN,futureLayer=Number.isFinite(boundaryTime)?'<rect x="'+X(boundaryTime)+'" y="'+T+'" width="'+Math.max(0,W-R-X(boundaryTime))+'" height="'+(H-T-B)+'" fill="#f2f8f6"/><line x1="'+X(boundaryTime)+'" y1="'+T+'" x2="'+X(boundaryTime)+'" y2="'+(H-B)+'" stroke="#397b73" stroke-width="2" stroke-dasharray="6 6"/><text x="'+(X(boundaryTime)+8)+'" y="'+(T+18)+'" fill="#2f6d66" font-size="15" font-weight="700">未来预测开始</text>':'';const primary=series[0],o=primary.observed,latest=o.at(-1),change=o.length>1?+latest.value-(+o.at(-2).value):0,state=d.display_state==='forecast'?`可保守估计未来${d.recommended_horizon_days}天`:d.display_state==='trend_only'?'当前只展示历史趋势':(d.readiness?.reason||d.analysis?.forecastReason||'暂时无法生成预测'),an=d.analysis||{},match=(rows,id)=>rows.find(x=>x.series_id===id||id.startsWith(x.series_id)||x.series_id===id.split('.')[0]),cr=match(clinical,primary.id),pr=match(peer,primary.id),clinicalText=cr?(+latest.value<+cr.lower?'低于医学参考范围':+latest.value>+cr.upper?'高于医学参考范围':'位于医学参考范围内'):'暂无可直接比较的医学范围',peerText=pr?(+latest.value<+pr.median?'低于':+latest.value>+pr.median?'高于':'接近')+`${d.reference.peer.fallback?'同龄总体':'同龄同性别'}中位数`:'暂无同口径同龄人群数据';const grid=scale.ticks.map(v=>`<line x1="${L}" y1="${Y(v)}" x2="${W-R}" y2="${Y(v)}" class="axis-grid"/><text x="${L-14}" y="${Y(v)+6}" text-anchor="end" class="axis-label">${Number(v).toLocaleString('zh-CN',{maximumFractionDigits:stepDigits(scale.ticks)})}</text>`).join(''),refBands=(curveLayers.clinical?clinical.map(x=>`<rect x="${L}" y="${Y(x.upper)}" width="${W-L-R}" height="${Math.max(0,Y(x.lower)-Y(x.upper))}" class="clinical-band"><title>${esc(x.label)}医学参考 ${x.lower}–${x.upper}</title></rect>`).join(''):'')+(curveLayers.peer?peer.map(x=>`<rect x="${L}" y="${Y(x.p75)}" width="${W-L-R}" height="${Math.max(0,Y(x.p25)-Y(x.p75))}" class="peer-band"><title>${esc(x.label)}同龄人群P25–P75</title></rect><line x1="${L}" y1="${Y(x.median)}" x2="${W-R}" y2="${Y(x.median)}" class="peer-median"/>`).join(''):'');const drawn=series.map(s=>{const f=s.forecast.points,band=forecastBand(f);return `${band?`<path d="${band}" fill="${s.color}" opacity=".12"/>`:''}${s.trend.length?`<path d="${path(s.trend)}" fill="none" stroke="${s.color}" stroke-width="4"/>`:''}${f.length?`<path d="${path(f)}" fill="none" stroke="${s.color}" stroke-width="4" stroke-dasharray="10 8"/>`:''}${s.observed.map((p,i)=>`<circle cx="${X(Date.parse(p.recorded_at)||a+i*864e5)}" cy="${Y(p.value)}" r="${p.outlier?7:5}" fill="${p.outlier?'#b83232':'#fff'}" stroke="${p.outlier?'#b83232':s.color}" stroke-width="3"><title>${esc(s.label)} ${esc(String(p.recorded_at).slice(0,10))}：${p.value} ${esc(s.unit||d.meta?.unit||'')}</title></circle>`).join('')}`}).join('');$('curve-host').innerHTML=`<div class="curve-summary"><article><span>现在</span><strong>${(+latest.value).toFixed(1)} ${esc(d.meta?.unit||'')}</strong></article><article><span>最近变化</span><strong>${change>0?'+':''}${change.toFixed(1)} ${change>0?'上升':change<0?'下降':'基本稳定'}</strong></article><article><span>预测能力</span><strong>${esc(state)}</strong></article><article class="action"><span>下一步</span><strong>${esc(d.action?.label||'继续规律记录')}</strong></article></div>${referenceCards(d)}<div class="curve-layer-controls" aria-label="曲线参考图层"><label><input type="checkbox" data-layer="clinical" ${curveLayers.clinical?'checked':''}> 显示医学参考范围</label><label><input type="checkbox" data-layer="peer" ${curveLayers.peer?'checked':''} ${peer.length?'':'disabled'}> 显示同龄同性别人群参考</label></div><div class="curve-legend">${series.map(s=>`<span><i class="series-line" style="border-color:${s.color}"></i>${esc(s.label)}</span>`).join('')}<span><i class="dot"></i>实际测量</span><span><i class="dash"></i>未来估计</span><span><i class="alert-dot"></i>建议复测</span></div><div class="curve-svg-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(d.meta?.name||d.type)}趋势图，纵轴单位${esc(d.meta?.unit||'')}">${futureLayer}${grid}${refBands}<line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" class="axis-main"/><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" class="axis-main"/>${drawn}<text x="24" y="${(T+H-B)/2}" transform="rotate(-90 24 ${(T+H-B)/2})" text-anchor="middle" class="axis-title">${esc(d.meta?.name||d.type)}（${esc(d.meta?.unit||'')}）</text><text x="${L}" y="${H-18}" class="axis-label">${new Date(a).toLocaleDateString('zh-CN')}</text><text x="${W-R}" y="${H-18}" text-anchor="end" class="axis-label">${new Date(rawB).toLocaleDateString('zh-CN')}</text></svg></div><p class="curve-text-summary">文字说明：当前${esc(clinicalText)}，${esc(peerText)}。${esc(an.forecastReason||state)}。${esc(d.action?.label||'')}</p><details class="model-evidence"><summary>查看模型和数据依据</summary><p>共有 ${+(an.totalHistoryPoints||an.dataPoints||o.length)} 条历史记录；模型使用最近 ${+(an.modelWindowPoints||an.dataPoints||o.length)} 条同条件记录计算未来曲线。</p><p>预测要求至少 ${d.readiness?.required_points||21} 个有效点并覆盖 ${d.readiness?.required_span_days||28} 天。</p><p>滚动回测 MASE：${an.modelScore?.mase==null?'暂无':(+an.modelScore.mase).toFixed(2)}。只有稳定优于简单基线时才绘制未来线。</p><p>同龄参考：${esc(d.reference?.peer?.source||d.reference?.peer?.reason||'暂无')}；人群统计不代表医学正常。</p></details>`;document.querySelectorAll('[data-layer]').forEach(x=>x.onchange=()=>{curveLayers[x.dataset.layer]=x.checked;drawV2(d)})}
+function drawV2(data) {
+  const host = $('curve-host');
+  const analysis = data.analysis || {};
+  const derived = ['bmi', 'pulse_pressure'].includes(data.type);
+  const keep = point => point.value != null && Number.isFinite(Number(point.value)) && Number.isFinite(Date.parse(point.recorded_at));
+  const usable = points => (points || []).filter(keep).sort((a,b) => Date.parse(a.recorded_at) - Date.parse(b.recorded_at));
+  const canForecast = data.display_state === 'forecast' && analysis.forecastAvailable === true;
+  const fallback = {
+    id:data.type, label:data.meta?.name, unit:data.meta?.unit, observed:data.raw || data.actual, trend:data.fitted,
+    forecast:{ available:canForecast, points:data.predicted },
+  };
+  const series = (data.series?.length ? data.series : [fallback]).map((row,index) => {
+    const observed = usable(row.observed).slice(-90);
+    const start = observed[0] ? Date.parse(observed[0].recorded_at) : -Infinity;
+    return {
+      ...row, observed,
+      color: /^#[0-9a-f]{6}$/i.test(row.color || '') ? row.color : ['#a61e24','#386fbd','#6f4899'][index % 3],
+      trend: usable(row.trend).filter(point => Date.parse(point.recorded_at) >= start),
+      forecast: canForecast && row.forecast?.available === true ? usable(row.forecast.points) : [],
+    };
+  }).filter(row => row.observed.length);
+  const cfg = M.find(item => item.type === data.type) || {};
+  if (!series.length) {
+    const reason = data.readiness?.reason || analysis.forecastReason ||
+      (data.type === 'bmi' ? '请补充身高和体重。' : data.type === 'pulse_pressure' ? '请记录同一次收缩压和舒张压。' : '请先保存一次测量。');
+    host.innerHTML = '<div class="health-panel"><strong>暂无可绘制的记录</strong><p>' + esc(reason) + '</p>' +
+      (subjectId === me.id ? '<button type="button" class="health-button health-button-secondary" id="curve-record-cta">记录相关测量</button>' : '') + '</div>';
+    if ($('curve-record-cta')) $('curve-record-cta').onclick = () => openMeasurement(data.type);
+    return;
+  }
+
+  const actual = series.flatMap(row => row.observed);
+  const fitted = series.flatMap(row => row.trend);
+  const forecast = series.flatMap(row => row.forecast);
+  const all = [...actual, ...fitted, ...forecast];
+  const clinical = data.reference?.clinical?.series || [];
+  const peer = data.reference?.peer?.series || [];
+  const intervals = forecast.flatMap(point => [point.lower, point.upper]).filter(value => value != null && Number.isFinite(Number(value)));
+  const references = [...(curveLayers.clinical ? clinical.flatMap(item => [item.lower,item.upper]) : []),
+    ...(curveLayers.peer ? peer.flatMap(item => [item.p25,item.p75]) : [])].filter(value => value != null && Number.isFinite(Number(value)));
+  const values = [...all.map(point => +point.value), ...intervals, ...references];
+  const scale = niceScale(Math.min(...values), Math.max(...values));
+  const times = all.map(point => Date.parse(point.recorded_at));
+  const first = Math.min(...times), last = Math.max(...times);
+  const W = 940, H = 360, L = 74, R = 28, T = 24, B = 48;
+  const x = time => L + (last === first ? (W-L-R)/2 : (time-first)/(last-first)*(W-L-R));
+  const y = value => T + (scale.max-value)/(scale.max-scale.min)*(H-T-B);
+  const line = rows => rows.map((point,i) => (i?'L':'M') + x(Date.parse(point.recorded_at)).toFixed(1) + ',' + y(point.value).toFixed(1)).join(' ');
+  const band = points => {
+    const valid = points.filter(point => point.lower != null && point.upper != null && Number.isFinite(+point.lower) && Number.isFinite(+point.upper));
+    if (valid.length < 2) return '';
+    const upper = line(valid.map(point => ({ ...point,value:point.upper })));
+    const lower = line([...valid].reverse().map(point => ({ ...point,value:point.lower }))).replace(/^M/,'L');
+    return upper + ' ' + lower + ' Z';
+  };
+  const fmt = value => new Intl.NumberFormat('zh-CN', { maximumFractionDigits:2 }).format(value);
+  const unit = data.meta?.unit || series[0].unit || '';
+  const latest = actual.reduce((current,point) => Date.parse(point.recorded_at) > Date.parse(current.recorded_at) ? point : current);
+  const state = forecast.length ? '可显示 ' + data.recommended_horizon_days + ' 天模型预测' :
+    data.display_state === 'trend_only' ? '当前只展示历史趋势' : '当前只展示已有记录';
+  const axis = scale.ticks.map(value => '<line x1="' + L + '" x2="' + (W-R) + '" y1="' + y(value) + '" y2="' + y(value) +
+    '" class="axis-grid"/><text x="' + (L-10) + '" y="' + (y(value)+4) + '" text-anchor="end" class="axis-label">' +
+    Number(value).toLocaleString('zh-CN', { maximumFractionDigits:stepDigits(scale.ticks) }) + '</text>').join('');
+  const rangeBand = (rows, top, bottom, cls) => rows.filter(row => row[top] != null && row[bottom] != null && Number.isFinite(+row[top]) && Number.isFinite(+row[bottom]))
+    .map(row => '<rect x="' + L + '" y="' + y(row[top]) + '" width="' + (W-L-R) + '" height="' + Math.max(0,y(row[bottom])-y(row[top])) +
+      '" class="' + cls + '"><title>' + esc(row.label || '参考区间') + ' ' + esc(row[bottom]) + '–' + esc(row[top]) + '</title></rect>').join('');
+  const plots = series.map(row => {
+    const bounds = band(row.forecast);
+    const path = (rows, dashed) => rows.length ? '<path d="' + line(rows) + '" fill="none" stroke="' + row.color + '" stroke-width="3"' +
+      (dashed ? ' stroke-dasharray="8 6"' : '') + '/>' : '';
+    return (bounds ? '<path d="' + bounds + '" fill="' + row.color + '" opacity=".15"/>' : '') +
+      path(row.trend, false) + path(row.forecast, true) + row.observed.map(point => '<circle cx="' + x(Date.parse(point.recorded_at)) +
+      '" cy="' + y(point.value) + '" r="4" fill="#fff" stroke="' + (point.outlier ? '#a61e24' : row.color) + '" stroke-width="2"><title>' +
+      esc(HealthRecords.date(point.recorded_at) + ' · ' + fmt(point.value) + ' ' + (row.unit || unit) + ' · ' + HealthRecords.source(point.source) +
+        ' · 条件：' + HealthRecords.condition(point.measurement_condition)) + '</title></circle>').join('');
+  }).join('');
+  const metricName = data.meta?.name || cfg.name || data.type;
+  const recordLabel = derived ? '根据记录估算' : '实际测量';
+  const legends = ['<span><i class="dot"></i>' + recordLabel + '</span>'];
+  if (fitted.length) legends.push('<span><i class="solid"></i>历史统计趋势</span>');
+  if (forecast.length) legends.push('<span><i class="dash"></i>模型预测与区间</span>');
+  const seriesNames = series.map(row => '<span><i class="series-line" style="border-color:' + row.color + '"></i>' + esc(row.label || metricName) + '</span>').join('');
+  const formatDay = value => new Date(value).toLocaleDateString('zh-CN');
+  host.innerHTML =
+    '<div class="curve-summary"><article><span>' + (derived ? '最新估算' : '最近实测') + '</span><strong>' + esc(fmt(latest.value) + ' ' + unit) +
+    '</strong><p>' + esc(HealthRecords.date(latest.recorded_at) + ' · ' + HealthRecords.source(latest.source)) +
+    '</p><p>条件：' + esc(HealthRecords.condition(latest.measurement_condition)) + '</p></article>' +
+    '<article><span>分析状态</span><strong>' + esc(state) + '</strong><p>图中共 ' + actual.length + ' 个历史点</p></article>' +
+    '<article><span>下一步</span><strong>' + esc(data.action?.label || '按相同条件继续记录') + '</strong></article></div>' +
+    '<div class="curve-layer-controls"><label><input type="checkbox" data-layer="clinical" ' + (curveLayers.clinical ? 'checked' : '') + (clinical.length ? '' : ' disabled') +
+    '> 医学参考范围</label><label><input type="checkbox" data-layer="peer" ' + (curveLayers.peer ? 'checked' : '') + (peer.length ? '' : ' disabled') +
+    '> 同龄同性别人群参考</label></div>' +
+    '<div class="curve-legend">' + seriesNames + legends.join('') + '</div><div class="curve-svg-wrap"><svg viewBox="0 0 ' + W + ' ' + H +
+    '" role="img" aria-label="' + esc(metricName + '曲线，单位 ' + unit) + '" data-a11y-chart-summary="off">' + axis +
+    (curveLayers.clinical ? rangeBand(clinical,'upper','lower','clinical-band') : '') +
+    (curveLayers.peer ? rangeBand(peer,'p75','p25','peer-band') + peer.filter(row => row.median != null && Number.isFinite(+row.median))
+      .map(row => '<line x1="' + L + '" x2="' + (W-R) + '" y1="' + y(row.median) + '" y2="' + y(row.median) + '" class="peer-median"/>').join('') : '') +
+    plots + '<text x="' + L + '" y="' + (H-14) + '" class="axis-label">' + formatDay(first) + '</text><text x="' + (W-R) + '" y="' +
+    (H-14) + '" text-anchor="end" class="axis-label">' + formatDay(last) + '</text></svg></div>' +
+    '<details class="model-evidence"><summary>查看模型和数据依据</summary><p>' + esc(data.readiness?.reason || analysis.forecastReason || state) +
+    '</p><p>本次分析记录数：' + esc(data.readiness?.data_points ?? actual.length) + (data.readiness?.required_points ? '。预测所需点数：' +
+      esc(data.readiness.required_points) + '。' : '。') + '</p><p>滚动回测 MASE：' +
+    (analysis.modelScore?.mase == null ? '暂无' : esc(Number(analysis.modelScore.mase).toFixed(2))) + '</p>' + referenceCards(data) + '</details>';
+  host.querySelectorAll('[data-layer]').forEach(input => { input.onchange = () => { curveLayers[input.dataset.layer] = input.checked; drawV2(data); }; });
+}
 function stepDigits(ticks){if(ticks.length<2)return 1;const step=Math.abs(ticks[1]-ticks[0]);return step<1?2:step<10?1:0}
-function measureForm(){const m=R.find(x=>x.type===$('measure-type').value);$('measure-value-label').textContent=`${m.name}（${m.unit}）`;$('measure-value2-row').hidden=!m.dual;$('measure-rest-row').hidden=m.type!=='bp';$('measure-condition').innerHTML=(C[m.type]||[['unknown','未注明']]).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}
-async function saveMeasure(e){e.preventDefault();const msg=$('measurement-message');if(subjectId!==me.id){msg.textContent='家属可代填健康问卷；家庭测量需由老人账号或设备保存。';msg.className='form-message error';return}const m=M.find(x=>x.type===$('measure-type').value),v=+$('measure-value').value,v2=m.dual?+$('measure-value2').value:null;if(!Number.isFinite(v)||(m.dual&&!Number.isFinite(v2))){msg.textContent='请填写完整数值';return}try{await API.post('/api/health/metrics',{type:m.type,value:v,value2:v2,unit:m.unit,recorded_at:new Date($('measure-time').value).toISOString(),source:'manual',measurement_condition:$('measure-condition').value,measurement_context:{rested:$('measure-rested').checked}});msg.textContent='已保存并重新分析';msg.className='form-message success';await Promise.all([discovery(),metricList()])}catch(x){msg.textContent='保存失败：'+x.message;msg.className='form-message error'}}
-async function intake(){schema=await API.get('/api/prediction/intake/schema');try{const x=await API.get('/api/prediction/intake/latest'+sq());answers={...(x.answers||{})}}catch{answers={}}index=0;question()}
+function measureForm() {
+  const definition = metricDefinitions.find(item => item.type === $('measure-type').value);
+  if (!definition) return;
+  const dual = definition.value_type === 'dual';
+  $('measure-value-label').textContent = (dual ? '收缩压' : definition.name) + '（' + definition.unit + '）';
+  $('measure-value').value = '';
+  $('measure-value2').value = '';
+  $('measure-value').min = definition.min_value ?? '';
+  $('measure-value').max = definition.max_value ?? '';
+  $('measure-value2-row').hidden = !dual;
+  $('measure-value2').required = dual;
+  $('measure-value2').disabled = !dual;
+  $('measure-rest-row').hidden = !dual;
+  $('measure-rested').checked = false;
+  $('measure-condition').replaceChildren(
+    new Option('未注明', 'unknown'), ...(C[definition.type] || []).map(([value,label]) => new Option(label, value))
+  );
+}
+async function saveMeasure(event) {
+  event.preventDefault();
+  if (subjectId !== me.id) return;
+  const form = event.currentTarget;
+  const submit = form.querySelector('[type=submit]');
+  if (submit.disabled || !form.reportValidity()) return;
+  const status = $('measurement-message');
+  const time = new Date($('measure-time').value);
+  if (!Number.isFinite(time.getTime()) || time.getTime() > Date.now()+60000) {
+    status.textContent = '请选择不晚于当前的测量时间。';
+    return;
+  }
+  const definition = metricDefinitions.find(item => item.type === $('measure-type').value);
+  if (!definition) return;
+  submit.disabled = true;
+  status.textContent = '正在保存测量…';
+  try {
+    const row = await API.post('/api/health/metrics', {
+      type:definition.type, unit:definition.unit, value:$('measure-value').valueAsNumber,
+      value2:$('measure-value2').disabled ? null : $('measure-value2').valueAsNumber,
+      recorded_at:time.toISOString(), source:'manual', measurement_condition:$('measure-condition').value,
+      measurement_context:definition.type === 'bp' ? { rested:$('measure-rested').checked } : undefined,
+    });
+    status.textContent = row.duplicate ? '这次测量已记录。' : '测量已保存，正在更新分析。';
+    await Promise.allSettled([discovery(), metricList()]);
+    if (subjectId === me.id) status.textContent = row.duplicate ? '这次测量已记录。' : '测量已保存。';
+  } catch { status.textContent = '保存失败，请检查数值和测量时间。'; }
+  finally { submit.disabled = false; }
+}
+async function intake() {
+  const id = subjectId;
+  const request = ++intakeRequest;
+  schema = null;
+  $('intake-host').textContent = '正在读取问卷…';
+  try {
+    const [questions, previous] = await Promise.all([
+      API.get('/api/prediction/intake/schema'),
+      API.get('/api/prediction/intake/latest' + sq()).catch(error => {
+        if (id !== me.id && error.status === 403) return null;
+        throw error;
+      }),
+    ]);
+    if (request !== intakeRequest) return;
+    schema = questions;
+    answers = { ...(previous?.answers || {}) };
+    index = 0;
+    question();
+  } catch {
+    if (request !== intakeRequest) return;
+    showRetry($('intake-host'), '问卷暂时无法读取，请重试。', intake);
+  }
+}
 function question(){const qs=schema?.questions||[],sections=(schema?.sections||[]).filter(s=>qs.some(q=>q.section===s.id)),q=qs[index];if(!q)return;const sec=sections.find(s=>s.id===q.section),secIndex=Math.max(0,sections.findIndex(s=>s.id===q.section)),sectionQs=qs.filter(x=>x.section===q.section),sectionPosition=Math.max(0,sectionQs.findIndex(x=>x.id===q.id));$('intake-progress-text').textContent=`模块 ${secIndex+1} / ${sections.length} · ${sectionPosition+1} / ${sectionQs.length}`;$('intake-module-title').textContent=sec?.title||'健康档案';$('intake-overall-progress').textContent=`总进度 ${index+1} / ${qs.length}`;$('intake-progress').style.width=((sectionPosition+1)/Math.max(1,sectionQs.length)*100)+'%';$('intake-module-nav').innerHTML=sections.map((s,i)=>{const count=qs.filter(x=>x.section===s.id).length;return `<button type="button" data-intake-section="${esc(s.id)}" class="${i===secIndex?'active':i<secIndex?'completed':''}" aria-current="${i===secIndex?'step':'false'}"><span>${i<secIndex?'✓':i+1}</span><strong>${esc(s.title)}</strong><small>${count}题</small></button>`}).join('');document.querySelectorAll('[data-intake-section]').forEach(button=>button.onclick=()=>{const next=qs.findIndex(x=>x.section===button.dataset.intakeSection);if(next>=0){const current=qs[index];if(current?.type==='number'&&$('number-answer')?.value!=='')answers[current.id]=+$('number-answer').value;index=next;question()}});$('intake-prev').disabled=!index;const atEnd=index===qs.length-1,isSectionEnd=sectionPosition===sectionQs.length-1;$('intake-next').textContent=atEnd?'完成并查看发现':isSectionEnd?'进入下一模块':'下一题';let ctl=q.type==='choice'?`<div class="answer-options">${q.options.map(o=>`<button type="button" class="${String(answers[q.id])===String(o.value)?'selected':''}" data-answer="${esc(o.value)}">${esc(o.label)}</button>`).join('')}</div>`:`<label class="number-answer"><input type="number" id="number-answer" min="${q.min}" max="${q.max}" step="${q.step||1}" value="${esc(answers[q.id]??'')}"><span>${esc(q.unit||'')}</span></label>`;$('intake-host').innerHTML=`<div class="intake-section-label">${esc(sec?.title)} · 第 ${sectionPosition+1} 题</div><h3>${esc(q.prompt)}</h3><p>${esc(sec?.description)}</p>${ctl}`;document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>{answers[q.id]=b.dataset.answer;question()})}
-async function advance(skip){const q=schema.questions[index];if(q.type==='number'&&$('number-answer').value!=='')answers[q.id]=+$('number-answer').value;if(skip)delete answers[q.id];const done=index===schema.questions.length-1,msg=$('intake-message');msg.textContent=done?'正在完成评估…':'正在保存进度…';try{await API.post('/api/prediction/intakes',{subject_user_id:subjectId,answers,status:done?'completed':'in_progress'});msg.textContent=done?'健康档案已更新':'进度已自动保存';msg.className='form-message success';if(done){await discovery();document.querySelector('[data-tab="discover"]').click();scrollTo({top:0,behavior:'smooth'})}else{index++;question()}}catch(x){msg.textContent='保存失败：'+x.message;msg.className='form-message error'}}
+async function advance(skip) {
+  const current = schema?.questions?.[index];
+  if (!current || intakeSaving) return;
+  const request = intakeRequest;
+  if (current.type === 'number' && $('number-answer').value !== '') answers[current.id] = Number($('number-answer').value);
+  if (skip) delete answers[current.id];
+  const done = index === schema.questions.length - 1;
+  const status = $('intake-message');
+  intakeSaving = true;
+  status.textContent = done ? '正在完成评估…' : '正在保存进度…';
+  try {
+    await API.post('/api/prediction/intakes', { subject_user_id:subjectId, answers, status:done ? 'completed' : 'in_progress' });
+    if (request !== intakeRequest) return;
+    status.textContent = done ? '健康档案已更新' : '进度已保存';
+    status.className = 'form-message success';
+    if (done) {
+      await discovery();
+      if (request === intakeRequest) {
+        selectTab('discover');
+        scrollTo({ top:0 });
+      }
+    } else {
+      index++;
+      question();
+    }
+  } catch {
+    if (request !== intakeRequest) return;
+    status.textContent = '进度暂时无法保存，请重试。';
+    status.className = 'form-message error';
+  } finally {
+    intakeSaving = false;
+  }
+}
 </script>
 </template>
 
@@ -3401,13 +3318,15 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
 <template data-view="care" data-layout="desktop" class="care-page">
 <title>照护协同驾驶舱 · 长寿康 Pro</title>
   <!-- shared-styles -->
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
+<link rel="stylesheet" href="/assets/css/health-measurements.css">
+<link rel="stylesheet" href="/assets/css/health-care.css">
 <!-- view-content -->
 <div id="app-nav"></div>
   <main class="main care-main" id="main-content">
     <header class="page-head care-head">
       <div>
-        <p class="care-eyebrow">授权可控 · 能力分离 · 全程留痕</p>
-        <h1><span class="desktop-only">照护协同驾驶舱</span><span class="mobile-only">照护协同</span></h1>
+        <h1>照护协同</h1>
         <p class="subtitle">只展示老人明确授权的信息；查看、代录和临床审核分别控制。</p>
       </div>
       <button class="btn btn-secondary" id="care-refresh" type="button">↻ 刷新授权状态</button>
@@ -3415,7 +3334,7 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
 
     <section class="care-trust" aria-label="隐私与安全说明">
       <span aria-hidden="true">盾</span>
-      <div><strong>每次访问都重新核验授权</strong><p>授权撤回或到期后，旧登录会话也会立即失去相关能力；修改网址中的照护对象编号不能绕过校验。</p></div>
+      <div><strong>每次访问都重新核验授权</strong><p>您可以调整权限或撤回授权。授权到期后，协作者将失去相应的访问权限。</p></div>
     </section>
 
     <div id="care-live" class="care-live" role="status" aria-live="polite">正在核验角色与授权…</div>
@@ -3425,7 +3344,7 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
     </section>
 
     <section id="accept-panel" class="care-panel" hidden aria-labelledby="accept-title">
-      <div class="care-panel-head"><div><p class="care-kicker">收到老人邀请</p><h2 id="accept-title">接受照护授权</h2></div></div>
+      <div class="care-panel-head"><div><h2 id="accept-title">接受照护授权</h2></div></div>
       <form id="accept-form" class="care-inline-form">
         <label><span>授权码</span><input id="invite-code" name="code" maxlength="24" autocomplete="one-time-code" required placeholder="请输入老人提供的授权码"></label>
         <button class="btn btn-primary" type="submit">核验并接受</button>
@@ -3435,7 +3354,7 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
 
     <section id="owner-console" hidden>
       <section class="care-panel" aria-labelledby="invite-title">
-        <div class="care-panel-head"><div><p class="care-kicker">新增协作者</p><h2 id="invite-title">创建限时授权</h2></div><span class="care-step">1 选择角色与范围</span></div>
+        <div class="care-panel-head"><div><h2 id="invite-title">创建限时授权</h2></div></div>
         <form id="invite-form" class="care-invite-form">
           <div class="care-form-row">
             <label><span>协作者角色</span><select id="invite-role" name="member_role"><option value="caregiver">家属</option><option value="doctor">医生</option></select></label>
@@ -3449,14 +3368,15 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
       </section>
 
       <section class="care-section" aria-labelledby="relations-title">
-        <div class="care-section-head"><div><p class="care-kicker">我的数据由谁协助</p><h2 id="relations-title">授权关系</h2></div><span id="relations-count" class="care-count">0 项</span></div>
+        <div class="care-section-head"><div><h2 id="relations-title">授权关系</h2></div><span id="relations-count" class="care-count">0 项</span></div>
         <div id="relationships-list" class="care-grid"></div>
       </section>
     </section>
 
     <section id="member-console" hidden>
       <section class="care-section" aria-labelledby="subjects-title">
-        <div class="care-section-head"><div><p class="care-kicker">仅显示已授权字段</p><h2 id="subjects-title">我的照护对象</h2></div><span id="subjects-count" class="care-count">0 位</span></div>
+        <div class="care-section-head"><div><h2 id="subjects-title">我的照护对象</h2></div><span id="subjects-count" class="care-count">0 位</span></div>
+        <label class="care-subject-picker" id="care-subject-picker" hidden>选择长辈<select id="care-subject"></select></label>
         <div id="subjects-list" class="care-grid care-subject-grid"></div>
       </section>
     </section>
@@ -3479,6 +3399,7 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
       <label><span>自评健康</span><select id="entry-health" required><option value="">请选择</option><option value="5">很好</option><option value="4">较好</option><option value="3">一般</option><option value="2">较差</option><option value="1">很差</option></select></label>
       <label><span>近一年是否跌倒</span><select id="entry-fall" required><option value="">请选择</option><option value="0">否</option><option value="1">是</option></select></label>
       <label class="care-confirm-line"><input id="entry-confirm" type="checkbox"><span>我确认这是老人本人提供的信息</span></label>
+      <p id="entry-error" role="alert" hidden></p>
       <div class="care-dialog-actions"><button class="btn btn-ghost" type="button" data-entry-cancel>返回</button><button class="btn btn-primary" id="entry-submit" type="submit" disabled>确认代录</button></div>
     </form>
   </dialog>
@@ -3491,39 +3412,24 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
 <template data-view="intervention" data-layout="desktop" class="intervention-page">
 <title>我的改善计划 · 长寿康 Pro</title>
   <!-- shared-styles -->
+<link rel="stylesheet" href="/assets/css/health-workspace.css">
+<link rel="stylesheet" href="/assets/css/health-measurements.css">
+<link rel="stylesheet" href="/assets/css/health-care.css">
 <!-- view-content -->
 <div id="app-nav"></div>
 
   <main class="main intervention-main" id="main-content">
     <header class="page-head intervention-head">
       <div>
-        <p class="intervention-eyebrow">N-of-1 个体干预闭环</p>
-        <h1><span class="desktop-only">我的改善计划</span><span class="mobile-only">今日计划</span></h1>
-        <p class="subtitle">从本人确认、每日执行到复测评价，每一步都清楚可追溯。</p>
+        <h1>改善计划</h1>
+        <p class="subtitle" id="intervention-subtitle">确认计划、记录执行情况并查看复测结果。</p>
       </div>
-      <a class="btn btn-secondary intervention-agent-link" href="agent.html">和智能管家调整计划</a>
+      <a class="health-button health-button-secondary intervention-agent-link" href="agent.html">打开智能管家</a>
     </header>
 
     <section class="intervention-notice" aria-label="使用说明">
       <span class="intervention-notice-icon" aria-hidden="true">盾</span>
       <div><strong>先确认，再执行；不舒服，先暂停。</strong><p>计划用于个人健康管理，不替代诊断、处方或紧急就医。效果评价只代表您的个人记录。</p></div>
-    </section>
-
-    <section class="desktop-plan-board desktop-only" aria-label="今日计划摘要">
-      <div class="desktop-plan-focus">
-        <div class="desktop-section-heading"><div><h2>今天的安排</h2><p>按顺序完成，轻松一点就好</p></div><span>3 项任务</span></div>
-        <ol class="desktop-plan-timeline">
-          <li><i>08:00</i><span class="done">✓</span><div><strong>晨起血压测量</strong><small>静坐 5 分钟后测量并记录</small></div><b>已完成</b></li>
-          <li><i>12:30</i><span>步</span><div><strong>午饭后散步</strong><small>舒缓步行 20 分钟，量力而行</small></div><b>待完成</b></li>
-          <li><i>21:30</i><span>月</span><div><strong>睡前放松练习</strong><small>5 分钟呼吸练习，帮助入睡</small></div><b>待完成</b></li>
-        </ol>
-      </div>
-      <aside class="desktop-function-card">
-        <div class="desktop-card-title"><div><span class="desktop-icon-tile">评</span><strong>生活能力评估</strong></div><a href="assessment.html">重新评估 ›</a></div>
-        <div class="function-score"><strong>92</strong><span>/ 100</span><em>独立能力良好</em></div>
-        <div class="function-bars"><label><span>日常生活能力 ADL</span><b>96%</b></label><i><u style="width:96%"></u></i><label><span>工具性活动能力 IADL</span><b>88%</b></label><i><u style="width:88%"></u></i></div>
-        <p>目前可独立完成大部分日常活动，建议继续保持规律运动。</p>
-      </aside>
     </section>
 
     <div class="intervention-live" id="intervention-live" role="status" aria-live="polite">正在读取改善计划…</div>
@@ -3534,14 +3440,14 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
     </section>
 
     <div class="intervention-sections" id="intervention-sections" aria-busy="true">
+      <nav class="plan-jump" aria-label="改善计划内容">
+        <a class="health-button health-button-secondary" href="#pending-title">待确认</a>
+        <a class="health-button health-button-secondary" href="#today-title">今日执行</a>
+        <a class="health-button health-button-secondary" href="#retest-title">复测记录</a>
+      </nav>
       <section class="intervention-section" aria-labelledby="pending-title">
         <header><div><span class="section-symbol symbol-pending" aria-hidden="true">?</span><div><h2 id="pending-title">待确认计划</h2><p>请本人看清内容后选择接受或拒绝</p></div></div><span class="section-count" data-count="pending">0 项</span></header>
         <div class="intervention-grid" data-list="pending"></div>
-      </section>
-
-      <section class="intervention-section" aria-labelledby="active-title">
-        <header><div><span class="section-symbol symbol-active" aria-hidden="true">行</span><div><h2 id="active-title">进行中计划</h2><p>查看周期、目标和下一次复测安排</p></div></div><span class="section-count" data-count="active">0 项</span></header>
-        <div class="intervention-grid" data-list="active"></div>
       </section>
 
       <section class="intervention-section intervention-today" aria-labelledby="today-title">
@@ -3549,9 +3455,15 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
         <div class="intervention-grid" data-list="today"></div>
       </section>
 
+      <section class="intervention-section" aria-labelledby="active-title">
+        <header><div><span class="section-symbol symbol-active" aria-hidden="true">行</span><div><h2 id="active-title">进行中计划</h2><p>查看周期、目标和下一次复测安排</p></div></div><span class="section-count" data-count="active">0 项</span></header>
+        <div class="intervention-grid" data-list="active"></div>
+      </section>
+
       <section class="intervention-section" aria-labelledby="retest-title">
         <header><div><span class="section-symbol symbol-retest" aria-hidden="true">测</span><div><h2 id="retest-title">待复测</h2><p>按原测量条件复测，减少偶然差异</p></div></div><span class="section-count" data-count="retest">0 项</span></header>
         <div class="intervention-grid" data-list="retest"></div>
+        <div id="plan-followups" class="plan-followups" aria-live="polite"></div>
       </section>
 
       <section class="intervention-section" aria-labelledby="completed-title">
@@ -3571,9 +3483,16 @@ async function advance(skip){const q=schema.questions[index];if(q.type==='number
       <div class="dialog-icon" id="dialog-icon" aria-hidden="true">?</div>
       <h2 id="dialog-title">再次确认</h2>
       <p id="dialog-message"></p>
+      <div id="dialog-plan-summary"></div>
+      <div id="dialog-plan-edit" hidden>
+        <label>计划名称<input id="draft-title" maxlength="120"></label>
+        <label>执行内容<textarea id="draft-action" rows="2" maxlength="300"></textarea></label>
+        <label>执行频率<input id="draft-frequency" maxlength="120"></label>
+      </div>
+      <label id="dialog-feedback-wrap" hidden>执行反馈（选填）<textarea id="dialog-feedback" rows="2" maxlength="1000"></textarea></label>
       <label id="dialog-reason-wrap" hidden><span id="dialog-reason-label">请填写原因</span><textarea id="dialog-reason" rows="3" maxlength="300"></textarea></label>
       <label id="dialog-time-wrap" hidden><span>补记时间</span><input id="dialog-time" type="datetime-local"></label>
-      <label class="dialog-check"><input id="dialog-confirm-check" type="checkbox"><span id="dialog-check-label">我已看清内容，并确认继续</span></label>
+      <label class="dialog-check" id="dialog-confirm-wrap"><input id="dialog-confirm-check" type="checkbox"><span id="dialog-check-label">我已看清内容，并确认继续</span></label>
       <div class="dialog-actions"><button class="btn btn-ghost" value="cancel" type="button" id="dialog-cancel">返回</button><button class="btn btn-primary" value="confirm" type="submit" id="dialog-confirm" disabled>确认</button></div>
     </form>
   </dialog>
